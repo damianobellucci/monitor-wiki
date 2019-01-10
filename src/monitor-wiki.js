@@ -67,8 +67,8 @@ if (modality === 'export') {
                 let allPagesOfCategory = await wrapper.wrapperGetPagesByCategory(categoryParams);
                 allPagesQuery = allPagesQuery.concat(allPagesOfCategory);
             }
-            else { //devo prendere id della pagina singola
-                allPagesQuery.push(el);
+            else {
+                allPagesQuery.push(await wrapper.wrapperGetPageId({ action: 'query', titles: el }));
             }
 
             //console.log(allPagesQuery);
@@ -274,9 +274,9 @@ if (modality === 'export') {
                 for (elId in finalExport.pages) {
                     arrayOfPagesId.push(elId);
                 }
-                console.log('\narrayOfPagesId',arrayOfPagesId.length);
+                //console.log('\narrayOfPagesId',arrayOfPagesId.length);
                 while (arrayOfPagesId.length > 0) {
-                    console.log('\narrayOfPagesId',arrayOfPagesId.length);
+                    console.log('\narrayOfPagesId', arrayOfPagesId.length);
 
                     conta += 1;
                     //console.log(conta);

@@ -197,6 +197,17 @@ var wrapperTalks = (params3, utilParams) => {
     });
 };
 
+var wrapperGetPageId = (params) => {
+    return new Promise((resolve, reject) => {
+        client.getAllParametricData(params, function (err, data) {
+            if (err) { console.log(err); return; }
+            else {
+                resolve(data[0].pages[Object.keys(data[0].pages)[0]].pageid);
+            }
+        });
+    });
+};
+
 
 var wrapperViews = (params) => {
     return new Promise((resolve, reject) => {
@@ -324,4 +335,5 @@ module.exports.wrapperViews = wrapperViews;
 module.exports.wrapperTalks = wrapperTalks;
 module.exports.wrapperGetParametricRevisionsTalks = wrapperGetParametricRevisionsTalks;
 module.exports.wrapperFirstRevision = wrapperFirstRevision;
+module.exports.wrapperGetPageId = wrapperGetPageId;
 
