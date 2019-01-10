@@ -15,10 +15,10 @@
 
 
 #### Esempi:
-esempio per l'export (senza download, solo preview): `node monitor-wiki.js export Category:Emerging_technologies,Computer_science,Chemistry 20180101,20190101 200 300`
-In questo modo si ottiene una preview di disallineamento delle pagine appartenenti alla categoria Emerging technologies e delle pagine Computer Science e Chemistry, riguardante il periodo tra il l'1 Gennaio 2018 e l'1 Gennaio 2019, con parametri di disallineamento n. Edit e frequenza di Edit rispettivamente di 200 e 300
+esempio per l'export (senza download, solo preview): `node monitor-wiki.js export Category:Emerging_technologies,Computer_science,Chemistry 20180801,20190101 200 300`
+In questo modo si ottiene una preview di disallineamento delle pagine appartenenti alla categoria Emerging technologies e delle pagine Computer Science e Chemistry, riguardante il periodo tra il l'1 Agosto 2018 e l'1 Gennaio 2019, con parametri di disallineamento n. Edit e frequenza di Edit rispettivamente di 200 e 300
 
-esempio per l'export (con preview e download): `node monitor-wiki.js export Category:Emerging_technologies,Computer_science,Chemistry 20180101,20190101 200 300 exportedFile`
+esempio per l'export (con preview e download): `node monitor-wiki.js export Category:Emerging_technologies,Computer_science,Chemistry 20180801,20190101 200 300 exportedFile`
 In questo modo si ottiene il risultato dell'esempio precedente con download dell'export sotto il nome di exportedFile
 
 ### sintassi per analisi (step2):
@@ -32,6 +32,6 @@ In questo modo si ottiene il risultato dell'esempio precedente con download dell
 `[analizeFileName]`: si ottiene un file in formato JSON relativo all'analisi del file `[exportFileName]`, con nome del file ottenuto che è il valore del parametro `[analizeFileName]`.
 
 #### Esempio:
-`node path/monitor-wiki.js analyze exportedFile 20180110,20180405 analyzedFile `
-In questo modo si ottiene il file analyzedFile, che è il file relativo all'analisi del file exportedFile riguardante il periodo tra il 10 Gennaio 2018 e il 5 Aprile 2018. 
+`node path/monitor-wiki.js analyze exportedFile 20181010,20181205 analyzedFile `
+In questo modo si ottiene il file analyzedFile, che è il file relativo all'analisi del file exportedFile riguardante il periodo tra il 10 Ottobre 2018 e il 5 Dicembre 2018. 
 
