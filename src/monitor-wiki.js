@@ -239,19 +239,78 @@ if (modality === 'export') {
             //prendo commenti e talks di tutti gli elementi in allPagesQuery
 
             /////////////////////////////////////////RETRIEVE VIEWS/////////////////////////////////////////////////
-            queueViews = [];
-            for (elPageId in finalExport.pages) {
-                //console.log(finalExport.pages[elPageId].title);
 
-                //console.log(queryArray[0],queryArray[1]);
-                queueViews.push(wrapper.wrapperViews({
-                    pageTitle: finalExport.pages[elPageId].title,
-                    pageid: finalExport.pages[elPageId].pageid,
-                    start: timespanArray2[0],
-                    end: timespanArray2[1]
-                }));
+
+            /*
+            if (allPagesQuery.length > 500) {//splitto
+                let chunkedAllPagesQuery = [];
+                while (allPagesQuery.length > 0) {
+                    resultQueue = [];
+                    chunkedAllPagesQuery = allPagesQuery.slice(0, 30);
+                    for (el of chunkedAllPagesQuery) {
+                        resultQueue.push(wrapper.wrapperFirstRevision(el));
+                    }
+                    allPagesQuery = allPagesQuery.slice(31, allPagesQuery.length);
+                    queueFirstRevisions = queueFirstRevisions.concat(await Promise.all(resultQueue));
+                    conteggio += 1;
+                    //console.log(conteggio);
+                }
             }
-            let resultViews = await Promise.all(queueViews);
+            else { //tutte assieme
+                for (el of allPagesQuery) {
+                    queueFirstRevisions.push(wrapper.wrapperFirstRevision(el));
+                }
+                queueFirstRevisions = await Promise.all(queueFirstRevisions);
+            }*/
+
+            let queueViews = [];
+            let resultViews = [];
+            let conta = 0;
+
+            //console.log(Object.keys(finalExport.pages).length);
+            if (Object.keys(finalExport.pages).length > 500) {
+                //ottengo array con tutte le pagine
+                let arrayOfPagesId = [];
+                for (elId in finalExport.pages) {
+                    arrayOfPagesId.push(elId);
+                }
+                console.log('\narrayOfPagesId',arrayOfPagesId.length);
+                while (arrayOfPagesId.length > 0) {
+                    console.log('\narrayOfPagesId',arrayOfPagesId.length);
+
+                    conta += 1;
+                    //console.log(conta);
+                    queueViews = [];
+                    chunkedArrayOfPagesId = arrayOfPagesId.slice(0, 25);
+                    //wrappo
+                    for (elIdOfChuncked of chunkedArrayOfPagesId) {
+                        queueViews.push(wrapper.wrapperViews({
+                            pageTitle: finalExport.pages[elIdOfChuncked].title,
+                            pageid: finalExport.pages[elIdOfChuncked].pageid,
+                            start: timespanArray2[0],
+                            end: timespanArray2[1]
+                        }));
+                    }
+                    arrayOfPagesId = arrayOfPagesId.slice(26, arrayOfPagesId.length);
+                    resultViews = resultViews.concat(await Promise.all(queueViews));
+                }
+
+            } else {
+                for (elPageId in finalExport.pages) {
+                    //console.log(finalExport.pages[elPageId].title);
+
+                    //console.log(queryArray[0],queryArray[1]);
+                    queueViews.push(wrapper.wrapperViews({
+                        pageTitle: finalExport.pages[elPageId].title,
+                        pageid: finalExport.pages[elPageId].pageid,
+                        start: timespanArray2[0],
+                        end: timespanArray2[1]
+                    }));
+                }
+                resultViews = await Promise.all(queueViews);
+                //console.log(resultViews);
+            }
+
             //console.log(resultViews);
 
             for (el of resultViews) {

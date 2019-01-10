@@ -204,7 +204,7 @@ var wrapperViews = (params) => {
         let urlRequest = 'https://wikimedia.org/api/rest_v1/metrics/pageviews/per-article/en.wikipedia.org/all-access/all-agents/' + params.pageTitle + '/daily/' + params.start + '/' + params.end;
 
         request(urlRequest, { json: true }, (err, res, body) => {
-            if (err) { /*return*/ console.log(params.pageTitle, err);
+            if (err) { /*return*/ /*console.log(params.pageTitle, err)*/;
                 resolve({ title: params.pageTitle, pageid: params.pageid, dailyViews: [] });
             }
             else resolve({ title: params.pageTitle, pageid: params.pageid, dailyViews: body.items });
