@@ -27,7 +27,7 @@ In questo modo si ottiene il risultato dell'esempio precedente con download dell
 
 #### Parametri:
 `[analyze]`: Parametro per indicare la modalità analisi.</br>
-`[exportFileName]`: Nome del file (output della modalità export, step 1) contenente dati di collezione di pagine da analizzare.</br>
+`[exportFileName]`: Nome del file (output della modalità export, step 1) contenente dati di una collezione di pagine da analizzare.</br>
 `[startTimespan,endTimespan]`: Timespan (restrizione del timespan dello step 1) per l'analisi dei dati.
 `[analizeFileName]`: si ottiene un file in formato JSON relativo all'analisi del file `[exportFileName]`, con nome del file ottenuto che è il valore del parametro `[analizeFileName]`. Il file si troverà nella cartella utente.
 
