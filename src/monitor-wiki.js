@@ -374,7 +374,7 @@ if (modality === 'export') {
 }
 else if (modality === 'analyze') {
 
-    //console.log(queryArgs);
+    ////console.log(queryArgs);
     let choosedFile = { selectFile: queryArgs[1] + '.json' };
     let choosedTimespan = { timespan: queryArgs[2] };
     let nameExportFile = { fileName: queryArgs[3] };
