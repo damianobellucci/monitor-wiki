@@ -372,7 +372,7 @@ if (modality === 'export') {
         }
     });
 }
-else if (modality === 'analize') {
+else if (modality === 'analyze') {
 
     //console.log(queryArgs);
     let choosedFile = { selectFile: queryArgs[1] + '.json' };
