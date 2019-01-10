@@ -27,11 +27,11 @@ In questo modo si ottiene il risultato dell'esempio precedente con download dell
 
 #### Parametri:
 `[analyze]`: Parametro per indicare la modalità analisi.</br>
-`[pathExportFileName]`: Path del file (output della modalità export, step 1) contenente dati di collezione di pagine da analizzare.
+`[exportFileName]`: Nome del file (output della modalità export, step 1) contenente dati di collezione di pagine da analizzare.
 `[startTimespan,endTimespan]`: Timespan (restrizione del timespan dello step 1) per l'analisi dei dati.
 `[analizeFileName]`: si ottiene un file in formato JSON relativo all'analisi del file `[exportFileName]`, con nome del file ottenuto che è il valore del parametro `[analizeFileName]`. Il file si troverà nella cartella utente.
 
 #### Esempio:
-`node path/monitor-wiki.js analyze pathExportedFile 20181010,20181205 analyzedFile `
+`node path/monitor-wiki.js analyze exportedFile 20181010,20181205 analyzedFile `
 In questo modo si ottiene il file analyzedFile, che è il file relativo all'analisi del file exportedFile riguardante il periodo tra il 10 Ottobre 2018 e il 5 Dicembre 2018. 
 
