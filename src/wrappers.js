@@ -14,7 +14,7 @@ var wrapperGetParametricRevisions = (params, params2, params3, timespan, filterC
         client.getAllParametricData(params, function (err, data) {
             // error handling
             if (err) {
-                console.error(err);
+                console.error('Error (timespan): ' + timespan + ' is an invalid timespan.');
                 return;
             }
             //console.log(data);
@@ -202,6 +202,7 @@ var wrapperGetPageId = (params) => {
         client.getAllParametricData(params, function (err, data) {
             if (err) { console.log(err); return; }
             else {
+                if (data[0].pages.hasOwnProperty('-1')) { console.log('Error (title): the page ' + params.titles + ' doesn\'t exist.'); return; };
                 resolve(data[0].pages[Object.keys(data[0].pages)[0]].pageid);
             }
         });
@@ -215,8 +216,8 @@ var wrapperViews = (params) => {
         let urlRequest = 'https://wikimedia.org/api/rest_v1/metrics/pageviews/per-article/' + params.server + '/all-access/all-agents/' + params.pageTitle + '/daily/' + params.start + '/' + params.end;
 
         request(urlRequest, { json: true }, (err, res, body) => {
-            if (err) { /*return*/ console.log(params.pageTitle, err);
-                resolve({ title: params.pageTitle, pageid: params.pageid, dailyViews: [] });
+            if (err || body.title === 'Not found.') { /*return*/ console.log(params.pageTitle, err);
+                resolve({ title: params.pageTitle, pageid: params.pageid, dailyViews: 'Not Available' });
             }
             else resolve({ title: params.pageTitle, pageid: params.pageid, dailyViews: body.items });
         });
@@ -232,7 +233,6 @@ var wrapperFirstRevision = (title, server) => {
             if (err || body === undefined || body.query === undefined) { if (err) console.log(title, err); resolve({ error: '' }) }
             if (body === undefined || body.query === undefined) console.log(res);
             else {
-
                 body.query.pages[Object.keys(body.query.pages)[0]].firstRevision = body.query.pages[Object.keys(body.query.pages)[0]].revisions[0].timestamp;
                 delete body.query.pages[Object.keys(body.query.pages)[0]].revisions;
                 conteggioFirstRevision += 1;
@@ -275,11 +275,12 @@ var wrapperGetPagesByCategory = (params) => {
     return new Promise((resolve, reject) => {
 
         client.getAllParametricData(params, async function (err, data) {
+
             if (err) {
                 console.error(err);
                 resolve([]);
             }
-
+            if (data[0] === undefined) { console.log('Error (title): the category ' + params.gcmtitle + ' doesn\'t exist.'); return; };
             //console.log(util.inspect(data, false, null, true /* enable colors */));
             let allPages = [];
 

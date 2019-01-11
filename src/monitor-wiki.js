@@ -9,7 +9,10 @@ let modality = queryArgs[0];
 //console.log(queryArgs);
 
 if (modality === 'export') {
-    let mediaWikiServer;
+
+    if (queryArgs.length < 6 || queryArgs.length > 7) { console.log('Error (n. parameters): invalid number of parameters for the export.'); return; };
+
+    var mediaWikiServer;
     let answers = {};
     let answers2 = {};
     let answers3 = {};
@@ -25,6 +28,10 @@ if (modality === 'export') {
     answers5.export = true;
     answers6.fileName = queryArgs[6];
 
+    if (answers3.nEditCriteria < 0) { console.log('Error (nEditCriteria): ' + answers3.nEditCriteria + ' is not a valid nEditCriteria'); return; };
+    if (answers3.frequencyEditCriteria < 0) { console.log('Error (frequencyEditCriteria): ' + answers3.frequencyEditCriteria + ' is not a valid frequencyEditCriteria'); return; };
+
+
     queryArray = answers.query.split(",");
     let info = {
         "protocol": "https",  // default to 'http'
@@ -39,7 +46,9 @@ if (modality === 'export') {
 
     let start = new Date().getTime();
 
-    client = new bot(info);
+    try {
+        client = new bot(info);
+    } catch (e) { return; };
 
     client.logIn(async error => {
 
@@ -121,6 +130,8 @@ if (modality === 'export') {
         timespanArray[1] = timespanArray[1].substr(0, 4) + '-' + timespanArray[1].substr(4, 2) + '-' + timespanArray[1].substr(6, 2) + 'T00:00:00.000Z';
 
 
+
+        if (new Date(timespanArray[0]) > new Date(timespanArray[1])) { console.log('Error (timespan): ' + answers2.timespan + ' is an invalid timespan.'); return };
 
         queueFirstRevisions = queueFirstRevisions.filter((el) => {
             return new Date(el.firstRevision).getTime() <= new Date(timespanArray[1]).getTime(); //se la pagina è stata creata dopo del timespan end della pagina, allora non la metto tra le pagine da processare
@@ -379,6 +390,9 @@ if (modality === 'export') {
 }
 else if (modality === 'analyze') {
 
+    if (queryArgs.length != 4) { console.log('Error (n. parameters): invalid number of parameters for the export.'); return; };
+
+
     ////console.log(queryArgs);
     let choosedFile = { selectFile: queryArgs[1] + '.json' };
     let choosedTimespan = { timespan: queryArgs[2] };
@@ -418,17 +432,20 @@ else if (modality === 'analyze') {
 
             //fetch delle views/////////
             try {
-                for (dailyView in obj.pages[el].views) {
-                    //console.log(obj.pages[el].views[dailyView]);
+                if (obj.pages[el].views === 'Not Available') finalObject[el].views = 'Not Available';
+                else {
+                    for (dailyView in obj.pages[el].views) {
+                        //console.log(obj.pages[el].views[dailyView]);
 
-                    obj.pages[el].views[dailyView].timestamp = obj.pages[el].views[dailyView].timestamp.substr(0, 4) + '-' + obj.pages[el].views[dailyView].timestamp.substr(4, 2) + '-' + obj.pages[el].views[dailyView].timestamp.substr(6, 2) + 'T00:00:00.000Z';
+                        obj.pages[el].views[dailyView].timestamp = obj.pages[el].views[dailyView].timestamp.substr(0, 4) + '-' + obj.pages[el].views[dailyView].timestamp.substr(4, 2) + '-' + obj.pages[el].views[dailyView].timestamp.substr(6, 2) + 'T00:00:00.000Z';
 
-                    //console.log(obj.pages[el].views[dailyView].timestamp);
+                        //console.log(obj.pages[el].views[dailyView].timestamp);
 
-                    if (new Date(obj.pages[el].views[dailyView].timestamp) >= millisecondStart && new Date(obj.pages[el].views[dailyView].timestamp) <= millisecondEnd) {
-                        finalObject[el].views.push(obj.pages[el].views[dailyView]);
-                        //console.log(dailyView);
+                        if (new Date(obj.pages[el].views[dailyView].timestamp) >= millisecondStart && new Date(obj.pages[el].views[dailyView].timestamp) <= millisecondEnd) {
+                            finalObject[el].views.push(obj.pages[el].views[dailyView]);
+                            //console.log(dailyView);
 
+                        }
                     }
                 }
             } catch (e) {
@@ -490,7 +507,9 @@ else if (modality === 'analyze') {
         });
     });
 }
-
+else {
+    console.log('Error: it was written ' + modality + ', but the available modality are only export and analyze.');
+}
 
 
 
