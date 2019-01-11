@@ -212,10 +212,10 @@ var wrapperGetPageId = (params) => {
 var wrapperViews = (params) => {
     return new Promise((resolve, reject) => {
 
-        let urlRequest = 'https://wikimedia.org/api/rest_v1/metrics/pageviews/per-article/en.wikipedia.org/all-access/all-agents/' + params.pageTitle + '/daily/' + params.start + '/' + params.end;
+        let urlRequest = 'https://wikimedia.org/api/rest_v1/metrics/pageviews/per-article/' + params.server + '/all-access/all-agents/' + params.pageTitle + '/daily/' + params.start + '/' + params.end;
 
         request(urlRequest, { json: true }, (err, res, body) => {
-            if (err) { /*return*/ /*console.log(params.pageTitle, err)*/;
+            if (err) { /*return*/ console.log(params.pageTitle, err);
                 resolve({ title: params.pageTitle, pageid: params.pageid, dailyViews: [] });
             }
             else resolve({ title: params.pageTitle, pageid: params.pageid, dailyViews: body.items });
@@ -223,10 +223,10 @@ var wrapperViews = (params) => {
     });
 };
 
-var wrapperFirstRevision = (title) => {
+var wrapperFirstRevision = (title, server) => {
     return new Promise((resolve, reject) => {
 
-        let urlRequest = 'https://en.wikipedia.org/w/api.php?action=query&prop=revisions&rvlimit=1&rvprop=timestamp&rvdir=newer&pageids=' + title + '&format=json';
+        let urlRequest = 'https://' + server + '/w/api.php?action=query&prop=revisions&rvlimit=1&rvprop=timestamp&rvdir=newer&pageids=' + title + '&format=json';
         request(urlRequest, { json: true }, (err, res, body) => {
             //console.log(title);
             if (err || body === undefined || body.query === undefined) { if (err) console.log(title, err); resolve({ error: '' }) }

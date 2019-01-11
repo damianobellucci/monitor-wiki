@@ -6,8 +6,10 @@ const jsonfile = require('jsonfile');
 
 let queryArgs = process.argv.slice(2);
 let modality = queryArgs[0];
+//console.log(queryArgs);
 
 if (modality === 'export') {
+    let mediaWikiServer;
     let answers = {};
     let answers2 = {};
     let answers3 = {};
@@ -15,17 +17,18 @@ if (modality === 'export') {
     let answers5 = {};
     let answers6 = {};
 
-    answers.query = queryArgs[1];
-    answers2.timespan = queryArgs[2];
-    answers3.nEditCriteria = queryArgs[3];
-    answers4.frequencyEditCriteria = queryArgs[4];
+    mediaWikiServer = queryArgs[1];
+    answers.query = queryArgs[2];
+    answers2.timespan = queryArgs[3];
+    answers3.nEditCriteria = queryArgs[4];
+    answers4.frequencyEditCriteria = queryArgs[5];
     answers5.export = true;
-    answers6.fileName = queryArgs[5];
+    answers6.fileName = queryArgs[6];
 
     queryArray = answers.query.split(",");
     let info = {
         "protocol": "https",  // default to 'http'
-        "server": "en.wikipedia.org",  // host name of MediaWiki-powered site
+        "server": mediaWikiServer,  // host name of MediaWiki-powered site
         "path": "/w",                  // path to api.php script
         "debug": false,                // is more verbose when set to true
         "username": "Monitorwikibotdb",             // account to be used when logIn is called (optional)
@@ -87,7 +90,7 @@ if (modality === 'export') {
                 resultQueue = [];
                 chunkedAllPagesQuery = allPagesQuery.slice(0, 30);
                 for (el of chunkedAllPagesQuery) {
-                    resultQueue.push(wrapper.wrapperFirstRevision(el));
+                    resultQueue.push(wrapper.wrapperFirstRevision(el, mediaWikiServer));
                 }
                 allPagesQuery = allPagesQuery.slice(31, allPagesQuery.length);
                 queueFirstRevisions = queueFirstRevisions.concat(await Promise.all(resultQueue));
@@ -97,7 +100,7 @@ if (modality === 'export') {
         }
         else { //tutte assieme
             for (el of allPagesQuery) {
-                queueFirstRevisions.push(wrapper.wrapperFirstRevision(el));
+                queueFirstRevisions.push(wrapper.wrapperFirstRevision(el, mediaWikiServer));
             }
             queueFirstRevisions = await Promise.all(queueFirstRevisions);
         }
@@ -288,7 +291,8 @@ if (modality === 'export') {
                             pageTitle: finalExport.pages[elIdOfChuncked].title,
                             pageid: finalExport.pages[elIdOfChuncked].pageid,
                             start: timespanArray2[0],
-                            end: timespanArray2[1]
+                            end: timespanArray2[1],
+                            server: mediaWikiServer
                         }));
                     }
                     arrayOfPagesId = arrayOfPagesId.slice(26, arrayOfPagesId.length);
@@ -304,7 +308,8 @@ if (modality === 'export') {
                         pageTitle: finalExport.pages[elPageId].title,
                         pageid: finalExport.pages[elPageId].pageid,
                         start: timespanArray2[0],
-                        end: timespanArray2[1]
+                        end: timespanArray2[1],
+                        server: mediaWikiServer
                     }));
                 }
                 resultViews = await Promise.all(queueViews);
