@@ -150,7 +150,7 @@ var wrapperExport = (params) => {
             //console.log(params);
             //parseObject = { title: data.title, pageid: data.pageid, revid: data.revid, nLinks: data.links.length, nExtLinks: data.externallinks.length, nSections: data.sections.length, displayTitle: data.displaytitle }
             if (err) {
-                console.log(err); //Error: Error returned by API: You don't have permission to view deleted revision text.
+                //console.log(err); //Error: Error returned by API: You don't have permission to view deleted revision text.
                 resolve([{
                     pageid: 'error'
                 }]);
