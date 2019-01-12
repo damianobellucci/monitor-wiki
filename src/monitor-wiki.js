@@ -59,6 +59,7 @@ if (modality === 'export') {
         let queue = [];
         var allPagesQuery = [];
 
+        console.log('Inizio retrieve pagine');
         for (el of queryArray) {
             //console.log(el);
             if (el.includes('Category:')) {
@@ -85,12 +86,16 @@ if (modality === 'export') {
 
             //console.log(allPagesQuery);
         }
+        console.log('Fine retrieve pagine');
+
 
         //console.log("Number of pages that match the query: " + allPagesQuery.length + "\nProcessing the results, please wait...");
 
         let queueFirstRevisions = [];
         let chunkedAllPagesQuery = [];
         let conteggio = 0;
+
+        console.log('Inizio retrieve first revision');
 
         if (allPagesQuery.length > 500) {//splitto
 
@@ -113,6 +118,7 @@ if (modality === 'export') {
             }
             queueFirstRevisions = await Promise.all(queueFirstRevisions);
         }
+        console.log('Fine retrieve first revision');
 
         queueFirstRevisions = queueFirstRevisions.filter((el) => {
             return !el.hasOwnProperty('error');
@@ -149,12 +155,16 @@ if (modality === 'export') {
 
         filterCriteria = { nEdit: answers3.nEditCriteria, frequencyEdit: answers4.frequencyEditCriteria };
         //console.log('vediamo'+filterCriteria.nEdit);
+        console.log('Inizio retrieve revisioni');
+
         for (el of allPagesQuery) {
             queue.push(wrapper.wrapperGetParametricRevisions(getParams({ page: el, start: timespanArray[0], end: timespanArray[1] }), getParams2(el), getParams({ page: 'Talk:' + el, start: timespanArray[0], end: timespanArray[1] }), timespanArray2, filterCriteria));
             //queue.push(wrapper.wrapperGetParametricRevisions(getParams('Talk:' + el)));
         }
 
         let result = await Promise.all(queue);
+        console.log('Fine retrieve revisioni');
+
         //console.log(result[0]);
         //console.log(result[0]);
 
@@ -179,6 +189,8 @@ if (modality === 'export') {
             exportQueue = [];
             //per ogni elemento di result
             //per ogni elemento di result[0].revisions.history.revid
+            console.log('Inizio retrieve export');
+
             for (el in result) {
                 for (rev of result[el].revisions.history) {
                     //console.log(rev);
@@ -193,6 +205,8 @@ if (modality === 'export') {
             }
             let startExport = new Date().getTime();
             let resultExport = await Promise.all(exportQueue);
+            console.log('\nFine retrieve export');
+
             let newResultExport = [];
             //console.log(resultExport);
 
@@ -254,43 +268,25 @@ if (modality === 'export') {
 
             /////////////////////////////////////////RETRIEVE VIEWS/////////////////////////////////////////////////
 
-
-            /*
-            if (allPagesQuery.length > 500) {//splitto
-                let chunkedAllPagesQuery = [];
-                while (allPagesQuery.length > 0) {
-                    resultQueue = [];
-                    chunkedAllPagesQuery = allPagesQuery.slice(0, 30);
-                    for (el of chunkedAllPagesQuery) {
-                        resultQueue.push(wrapper.wrapperFirstRevision(el));
-                    }
-                    allPagesQuery = allPagesQuery.slice(31, allPagesQuery.length);
-                    queueFirstRevisions = queueFirstRevisions.concat(await Promise.all(resultQueue));
-                    conteggio += 1;
-                    //console.log(conteggio);
-                }
-            }
-            else { //tutte assieme
-                for (el of allPagesQuery) {
-                    queueFirstRevisions.push(wrapper.wrapperFirstRevision(el));
-                }
-                queueFirstRevisions = await Promise.all(queueFirstRevisions);
-            }*/
-
             let queueViews = [];
             let resultViews = [];
             let conta = 0;
 
+            console.log('Inizio retrieve views');
+
             //console.log(Object.keys(finalExport.pages).length);
             if (Object.keys(finalExport.pages).length > 500) {
                 //ottengo array con tutte le pagine
+
+
                 let arrayOfPagesId = [];
                 for (elId in finalExport.pages) {
                     arrayOfPagesId.push(elId);
                 }
                 //console.log('\narrayOfPagesId',arrayOfPagesId.length);
+
                 while (arrayOfPagesId.length > 0) {
-                    console.log('\narrayOfPagesId', arrayOfPagesId.length);
+                    //console.log('\narrayOfPagesId', arrayOfPagesId.length);
 
                     conta += 1;
                     //console.log(conta);
@@ -308,6 +304,7 @@ if (modality === 'export') {
                     }
                     arrayOfPagesId = arrayOfPagesId.slice(26, arrayOfPagesId.length);
                     resultViews = resultViews.concat(await Promise.all(queueViews));
+
                 }
 
             } else {
@@ -326,6 +323,7 @@ if (modality === 'export') {
                 resultViews = await Promise.all(queueViews);
                 //console.log(resultViews);
             }
+            console.log('Fine retrieve views');
 
             //console.log(resultViews);
 
@@ -344,6 +342,7 @@ if (modality === 'export') {
             /////////RETRIEVE TALKS/////////////////////////
 
             queueTalks = [];
+            console.log('Inizio retrieve talks');
             for (elPageId in finalExport.pages) {
                 //console.log(finalExport.pages[elPageId].title);
                 queueTalks.push(wrapper.wrapperTalks(
@@ -362,6 +361,8 @@ if (modality === 'export') {
                 ));
             }
             let resultTalks = await Promise.all(queueTalks);
+            console.log('Fine retrieve talks');
+
             ////console.log(resultTalks[0]);
             for (el of resultTalks) {
                 finalExport.pages[el.pageid].talks = el;
@@ -510,15 +511,6 @@ else if (modality === 'analyze') {
 else {
     console.log('Error: it was written ' + modality + ', but the available modality are only export and analyze.');
 }
-
-
-
-
-
-
-
-
-
 
 
 

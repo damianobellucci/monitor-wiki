@@ -7,6 +7,65 @@ var counterExport = 0;
 const chalk = require('chalk');
 var conteggioFirstRevision = 0;
 
+var wrapperGetPagesByCategory = (params) => {
+    return new Promise((resolve, reject) => {
+
+        client.getAllParametricData(params, async function (err, data) {
+
+            if (err) {
+                console.error(err);
+                resolve([]);
+            }
+            if (data[0] === undefined) { console.log('Error (title): the category ' + params.gcmtitle + ' doesn\'t exist.'); return; };
+            //console.log(util.inspect(data, false, null, true /* enable colors */));
+            let allPages = [];
+
+            for (let index = 0; index < data.length; index++) {
+                for (el in data[index].pages) {
+                    //console.log({ title: data[index].pages[el].title, pageid: data[index].pages[el].pageid });
+                    allPages.push(data[index].pages[el].pageid);
+                }
+                //data[0].pages[Object.keys(data[0].pages)].revisions = data[0].pages[Object.keys(data[0].pages)].revisions.concat(data[index].pages[Object.keys(data[index].pages)].revisions)
+            }
+            //console.log(allPages);
+            //data = data[0].pages[Object.keys(data[0].pages)[0]];
+
+            resolve(allPages);
+        });
+    })
+};
+
+var wrapperGetPageId = (params) => {
+    return new Promise((resolve, reject) => {
+        client.getAllParametricData(params, function (err, data) {
+            if (err) { console.log(err); return; }
+            else {
+                if (data[0].pages.hasOwnProperty('-1')) { console.log('Error (title): the page ' + params.titles + ' doesn\'t exist.'); return; };
+                resolve(data[0].pages[Object.keys(data[0].pages)[0]].pageid);
+            }
+        });
+    });
+};
+
+var wrapperFirstRevision = (title, server) => { //da splittare caso erro e caso body===undefined
+    return new Promise((resolve, reject) => {
+
+        let urlRequest = 'https://' + server + '/w/api.php?action=query&prop=revisions&rvlimit=1&rvprop=timestamp&rvdir=newer&pageids=' + title + '&format=json';
+        request(urlRequest, { json: true }, (err, res, body) => {
+            //console.log(title);
+            if (err || body === undefined || body.query === undefined) { if (err) console.log(title, err); resolve({ error: '' }) }
+            if (body === undefined || body.query === undefined) console.log(res);
+            else {
+                body.query.pages[Object.keys(body.query.pages)[0]].firstRevision = body.query.pages[Object.keys(body.query.pages)[0]].revisions[0].timestamp;
+                delete body.query.pages[Object.keys(body.query.pages)[0]].revisions;
+                conteggioFirstRevision += 1;
+                //console.log(conteggioFirstRevision);
+                resolve(body.query.pages[Object.keys(body.query.pages)[0]]);
+            }
+        });
+
+    });
+};
 
 var wrapperGetParametricRevisions = (params, params2, params3, timespan, filterCriteria) => {
     return new Promise((resolve, reject) => {
@@ -46,54 +105,6 @@ var wrapperGetParametricRevisions = (params, params2, params3, timespan, filterC
 
             counter += numberOfRevisions;
             counterPages += 1;
-            //console.log('page: ' + params.titles, '|', ' revisions counter: ' + numberOfRevisions);
-
-
-            //console.log(data);
-
-            //////////////////RETRIEVE CATEGORIES///////////////////
-
-            //client.getAllParametricData(params2, function (err2, data2) {
-            //if (data2 !== undefined) newData.categories = data2[0].pages[Object.keys(data2[0].pages)].categories;
-            //console.log(data);
-
-            /////////////////////////////////////////////////////
-
-
-            //////////////////RETRIEVE TALKS///////////////////
-
-            /*client.getAllParametricData(params3, function (err3, data3) {
-                newData.talk = {};
-
-                if (data3 !== undefined) {
-                    if (data3.length == 1) {
-                        data3 = data3[0].pages[Object.keys(data3[0].pages)[0]];
-                    }
-                    else {
-                        for (let index = 1; index < data3.length; index++) {
-                            data3[0].pages[Object.keys(data3[0].pages)].revisions = data3[0].pages[Object.keys(data3[0].pages)].revisions.concat(data3[index].pages[Object.keys(data3[index].pages)].revisions)
-                        }
-                        data3 = data3[0].pages[Object.keys(data3[0].pages)[0]];
-                    }
-                    if (!data3.hasOwnProperty('revisions')) data3.revisions = [];
-                    newData.talk.history = data3.revisions;
-                    newData.talk.count = data3.revisions.length;
-                }*/
-            ///////////////////////////////////////////////////////
-
-
-            //////////////////RETRIEVE VIEWS///////////////////
-
-            //console.log(newData);
-            //let urlRequest = 'https://wikimedia.org/api/rest_v1/metrics/pageviews/per-article/en.wikipedia.org/all-access/all-agents/' + params.titles + '/daily/' + timespan[0] + '/' + timespan[1];
-
-            //request(urlRequest, { json: true }, (err, res, body) => {
-            //if (err) { /*return*/ console.log(err); }
-            //console.log(body.items);
-            /*else newData.views = {}; /*body.items*/
-
-            ///////////////////////////////////////////////////
-
 
             newData.misalignment = {};
             //taggo come disallineata
@@ -150,7 +161,7 @@ var wrapperExport = (params) => {
             //console.log(params);
             //parseObject = { title: data.title, pageid: data.pageid, revid: data.revid, nLinks: data.links.length, nExtLinks: data.externallinks.length, nSections: data.sections.length, displayTitle: data.displaytitle }
             if (err) {
-                //console.log(err); //Error: Error returned by API: You don't have permission to view deleted revision text.
+                console.log(err); //Error: Error returned by API: You don't have permission to view deleted revision text.
                 resolve([{
                     pageid: 'error'
                 }]);
@@ -176,7 +187,15 @@ var wrapperTalks = (params3, utilParams) => {
 
         client.getAllParametricData(params3, function (err3, data3) {
             talk = {};
-            if (err3) console.log(err3);
+            if (err3) {
+                console.log(err3);
+
+                resolve({
+                    history: 'error',
+                    count: 'error',
+                    pageid: utilParams
+                });
+            }
 
             if (data3 !== undefined) {
                 if (data3.length == 1) {
@@ -198,26 +217,13 @@ var wrapperTalks = (params3, utilParams) => {
     });
 };
 
-var wrapperGetPageId = (params) => {
-    return new Promise((resolve, reject) => {
-        client.getAllParametricData(params, function (err, data) {
-            if (err) { console.log(err); return; }
-            else {
-                if (data[0].pages.hasOwnProperty('-1')) { console.log('Error (title): the page ' + params.titles + ' doesn\'t exist.'); return; };
-                resolve(data[0].pages[Object.keys(data[0].pages)[0]].pageid);
-            }
-        });
-    });
-};
-
-
 var wrapperViews = (params) => {
     return new Promise((resolve, reject) => {
 
         let urlRequest = 'https://wikimedia.org/api/rest_v1/metrics/pageviews/per-article/' + params.server + '/all-access/all-agents/' + params.pageTitle + '/daily/' + params.start + '/' + params.end;
 
         request(urlRequest, { json: true }, (err, res, body) => {
-            if (err || body.title === 'Not found.') { /*return*/ /*console.log(params.pageTitle, err)*/;
+            if (err || body.title === 'Not found.') { /*return*/ console.log(params.pageTitle, err);
                 resolve({ title: params.pageTitle, pageid: params.pageid, dailyViews: 'Not Available' });
             }
             else resolve({ title: params.pageTitle, pageid: params.pageid, dailyViews: body.items });
@@ -225,42 +231,6 @@ var wrapperViews = (params) => {
     });
 };
 
-var wrapperFirstRevision = (title, server) => {
-    return new Promise((resolve, reject) => {
-
-        let urlRequest = 'https://' + server + '/w/api.php?action=query&prop=revisions&rvlimit=1&rvprop=timestamp&rvdir=newer&pageids=' + title + '&format=json';
-        request(urlRequest, { json: true }, (err, res, body) => {
-            //console.log(title);
-            if (err || body === undefined || body.query === undefined) { if (err) console.log(title, err); resolve({ error: '' }) }
-            if (body === undefined || body.query === undefined) console.log(res);
-            else {
-                body.query.pages[Object.keys(body.query.pages)[0]].firstRevision = body.query.pages[Object.keys(body.query.pages)[0]].revisions[0].timestamp;
-                delete body.query.pages[Object.keys(body.query.pages)[0]].revisions;
-                conteggioFirstRevision += 1;
-                //console.log(conteggioFirstRevision);
-                resolve(body.query.pages[Object.keys(body.query.pages)[0]]);
-            }
-        });
-
-    });
-};
-
-/*
-var wrapperGetAllRevisions = (page) => {
-    return new Promise((resolve, reject) => {
-        client.getArticleRevisions(page, (err, res) => {
-            let numberOfRevisions = res.length;
-
-            if (numberOfRevisions > 500) counterMaggioriCinquecento++;
-            counter += numberOfRevisions;
-            console.log('Page: ' + page + ' Revisions counter: ' + numberOfRevisions);
-            console.log('Global counter: ' + counter, 'Maggiori di 500 counter: ' + counterMaggioriCinquecento);
-
-            resolve(numberOfRevisions);
-        });
-    })
-};
-*////
 var lastCounterValue = () => {
     return counter;
 };
@@ -272,56 +242,11 @@ var resetCounterExport = () => {
     counterExport = 0;
 };
 
-var wrapperGetPagesByCategory = (params) => {
-    return new Promise((resolve, reject) => {
-
-        client.getAllParametricData(params, async function (err, data) {
-
-            if (err) {
-                console.error(err);
-                resolve([]);
-            }
-            if (data[0] === undefined) { console.log('Error (title): the category ' + params.gcmtitle + ' doesn\'t exist.'); return; };
-            //console.log(util.inspect(data, false, null, true /* enable colors */));
-            let allPages = [];
-
-            for (let index = 0; index < data.length; index++) {
-                for (el in data[index].pages) {
-                    //console.log({ title: data[index].pages[el].title, pageid: data[index].pages[el].pageid });
-                    allPages.push(data[index].pages[el].pageid);
-                }
-                //data[0].pages[Object.keys(data[0].pages)].revisions = data[0].pages[Object.keys(data[0].pages)].revisions.concat(data[index].pages[Object.keys(data[index].pages)].revisions)
-            }
-            //console.log(allPages);
-            //data = data[0].pages[Object.keys(data[0].pages)[0]];
-
-            resolve(allPages);
-        });
-    })
-};
 
 var wrapperGetParametricRevisionsTalks = (params3, paginaid) => {
     return new Promise((resolve, reject) => {
         client.getAllParametricData(params3, function (err3, data3) {
             resolve(data3);
-            /*talk = {};
-
-            if (data3 !== undefined) {
-                if (data3.length == 1) {
-                    data3 = data3[0].pages[Object.keys(data3[0].pages)[0]];
-                }
-                else {
-                    for (let index = 1; index < data3.length; index++) {
-                        data3[0].pages[Object.keys(data3[0].pages)].revisions = data3[0].pages[Object.keys(data3[0].pages)].revisions.concat(data3[index].pages[Object.keys(data3[index].pages)].revisions)
-                    }
-                    data3 = data3[0].pages[Object.keys(data3[0].pages)[0]];
-                }
-                if (!data3.hasOwnProperty('revisions')) data3.revisions = [];
-                talk.history = data3.revisions;
-                talk.count = data3.revisions.length;
-            }
-            console.log(talk);
-            resolve(talk);*/
         });
     })
 };
