@@ -28,8 +28,8 @@ if (modality === 'export') {
     answers5.export = true;
     answers6.fileName = queryArgs[6];
 
-    if (answers3.nEditCriteria < 0) { console.log('Error (nEditCriteria): ' + answers3.nEditCriteria + ' is not a valid nEditCriteria'); return; };
-    if (answers3.frequencyEditCriteria < 0) { console.log('Error (frequencyEditCriteria): ' + answers3.frequencyEditCriteria + ' is not a valid frequencyEditCriteria'); return; };
+    if (isNaN(answers3.nEditCriteria) || answers3.nEditCriteria < 0) { console.log('Error (nEditCriteria): ' + answers3.nEditCriteria + ' is not a valid nEditCriteria'); return; };
+    if (isNaN(answers4.frequencyEditCriteria) || answers4.frequencyEditCriteria < 0) { console.log('Error (frequencyEditCriteria): ' + answers4.frequencyEditCriteria + ' is not a valid frequencyEditCriteria'); return; };
 
 
     queryArray = answers.query.split(",");
@@ -133,7 +133,7 @@ if (modality === 'export') {
 
         timespanArray[0] = timespanArray[0].substr(0, 4) + '-' + timespanArray[0].substr(4, 2) + '-' + timespanArray[0].substr(6, 2) + 'T00:00:00.000Z';
 
-        timespanArray[1] = timespanArray[1].substr(0, 4) + '-' + timespanArray[1].substr(4, 2) + '-' + timespanArray[1].substr(6, 2) + 'T00:00:00.000Z';
+        timespanArray[1] = timespanArray[1].substr(0, 4) + '-' + timespanArray[1].substr(4, 2) + '-' + timespanArray[1].substr(6, 2) + 'T23:59:59.999Z';
 
 
 
@@ -157,6 +157,8 @@ if (modality === 'export') {
         //console.log('vediamo'+filterCriteria.nEdit);
         console.log('Inizio retrieve revisioni');
 
+
+        //console.log(timespanArray);
         for (el of allPagesQuery) {
             queue.push(wrapper.wrapperGetParametricRevisions(getParams({ page: el, start: timespanArray[0], end: timespanArray[1] }), getParams2(el), getParams({ page: 'Talk:' + el, start: timespanArray[0], end: timespanArray[1] }), timespanArray2, filterCriteria));
             //queue.push(wrapper.wrapperGetParametricRevisions(getParams('Talk:' + el)));
@@ -408,7 +410,7 @@ else if (modality === 'analyze') {
 
         filterTimespan[0] = choosedTimespan[0].substr(0, 4) + '-' + choosedTimespan[0].substr(4, 2) + '-' + choosedTimespan[0].substr(6, 2) + 'T00:00:00.000Z';
 
-        filterTimespan[1] = choosedTimespan[1].substr(0, 4) + '-' + choosedTimespan[1].substr(4, 2) + '-' + choosedTimespan[1].substr(6, 2) + 'T00:00:00.000Z';
+        filterTimespan[1] = choosedTimespan[1].substr(0, 4) + '-' + choosedTimespan[1].substr(4, 2) + '-' + choosedTimespan[1].substr(6, 2) + 'T23:59:59.999Z';
 
         millisecondStart = new Date(filterTimespan[0]).getTime();
         millisecondEnd = new Date(filterTimespan[1]).getTime();
@@ -438,11 +440,13 @@ else if (modality === 'analyze') {
                     for (dailyView in obj.pages[el].views) {
                         //console.log(obj.pages[el].views[dailyView]);
 
-                        obj.pages[el].views[dailyView].timestamp = obj.pages[el].views[dailyView].timestamp.substr(0, 4) + '-' + obj.pages[el].views[dailyView].timestamp.substr(4, 2) + '-' + obj.pages[el].views[dailyView].timestamp.substr(6, 2) + 'T00:00:00.000Z';
+                        //obj.pages[el].views[dailyView].timestamp = obj.pages[el].views[dailyView].timestamp.substr(0, 4) + '-' + obj.pages[el].views[dailyView].timestamp.substr(4, 2) + '-' + obj.pages[el].views[dailyView].timestamp.substr(6, 2) + 'T23:59:59.999Z';
 
                         //console.log(obj.pages[el].views[dailyView].timestamp);
 
-                        if (new Date(obj.pages[el].views[dailyView].timestamp) >= millisecondStart && new Date(obj.pages[el].views[dailyView].timestamp) <= millisecondEnd) {
+                        let app = obj.pages[el].views[dailyView].timestamp.substr(0, 4) + '-' + obj.pages[el].views[dailyView].timestamp.substr(4, 2) + '-' + obj.pages[el].views[dailyView].timestamp.substr(6, 2) + 'T23:59:59.999Z';
+
+                        if (new Date(app) >= millisecondStart && new Date(app) <= millisecondEnd) {
                             finalObject[el].views.push(obj.pages[el].views[dailyView]);
                             //console.log(dailyView);
 

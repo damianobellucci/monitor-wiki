@@ -116,9 +116,15 @@ var wrapperGetParametricRevisions = (params, params2, params3, timespan, filterC
 
             frequencyTimespan = [];
 
-            frequencyTimespan[0] = timespan[0].substr(0, 4) + '-' + timespan[0].substr(4, 2) + '-' + timespan[0].substr(6, 2) + 'T00:00:00+0000';
-            frequencyTimespan[1] = timespan[1].substr(0, 4) + '-' + timespan[1].substr(4, 2) + '-' + timespan[1].substr(6, 2) + 'T00:00:00+0000';
+            //console.log(timespan);
+            //frequencyTimespan[0] = timespan[0].substr(0, 4) + '-' + timespan[0].substr(4, 2) + '-' + timespan[0].substr(6, 2) + 'T00:00:00+0000';
+            //frequencyTimespan[1] = timespan[1].substr(0, 4) + '-' + timespan[1].substr(4, 2) + '-' + timespan[1].substr(6, 2) + 'T00:00:00+0000';
 
+
+            frequencyTimespan[0] = params.rvstart;
+            frequencyTimespan[1] = params.rvend;
+
+            //console.log(frequencyTimespan);
             //da cambiare con calcolo frequenza: countRevision/(timespan)
 
             var myDateStart = new Date(frequencyTimespan[0]);
