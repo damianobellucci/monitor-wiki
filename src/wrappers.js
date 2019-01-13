@@ -248,15 +248,6 @@ var resetCounterExport = () => {
     counterExport = 0;
 };
 
-
-var wrapperGetParametricRevisionsTalks = (params3, paginaid) => {
-    return new Promise((resolve, reject) => {
-        client.getAllParametricData(params3, function (err3, data3) {
-            resolve(data3);
-        });
-    })
-};
-
 //module.exports.wrapperGetAllRevisions = wrapperGetAllRevisions;
 module.exports.wrapperGetParametricRevisions = wrapperGetParametricRevisions;
 module.exports.lastCounterValue = lastCounterValue;
@@ -266,7 +257,6 @@ module.exports.resetCounterValue = resetCounterValue;
 module.exports.resetCounterExport = resetCounterExport;
 module.exports.wrapperViews = wrapperViews;
 module.exports.wrapperTalks = wrapperTalks;
-module.exports.wrapperGetParametricRevisionsTalks = wrapperGetParametricRevisionsTalks;
 module.exports.wrapperFirstRevision = wrapperFirstRevision;
 module.exports.wrapperGetPageId = wrapperGetPageId;
 
