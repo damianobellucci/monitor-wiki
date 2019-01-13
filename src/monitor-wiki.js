@@ -95,7 +95,7 @@ if (modality === 'export') {
         let chunkedAllPagesQuery = [];
         let conteggio = 0;
 
-        console.log('Inizio retrieve first revision');
+        console.log('Inizio retrieve data creazione delle pagine');
 
         if (allPagesQuery.length > 500) {//splitto
 
@@ -118,7 +118,7 @@ if (modality === 'export') {
             }
             queueFirstRevisions = await Promise.all(queueFirstRevisions);
         }
-        console.log('Fine retrieve first revision');
+        console.log('Fine retrieve data creazione delle pagine');
 
         queueFirstRevisions = queueFirstRevisions.filter((el) => {
             return !el.hasOwnProperty('error');
@@ -155,17 +155,18 @@ if (modality === 'export') {
 
         filterCriteria = { nEdit: answers3.nEditCriteria, frequencyEdit: answers4.frequencyEditCriteria };
         //console.log('vediamo'+filterCriteria.nEdit);
-        console.log('Inizio retrieve revisioni');
+        console.log('Inizio retrieve revisioni delle pagine');
 
 
         //console.log(timespanArray);
         for (el of allPagesQuery) {
+
             queue.push(wrapper.wrapperGetParametricRevisions(getParams({ page: el, start: timespanArray[0], end: timespanArray[1] }), getParams2(el), getParams({ page: 'Talk:' + el, start: timespanArray[0], end: timespanArray[1] }), timespanArray2, filterCriteria));
             //queue.push(wrapper.wrapperGetParametricRevisions(getParams('Talk:' + el)));
         }
 
         let result = await Promise.all(queue);
-        console.log('Fine retrieve revisioni');
+        console.log('Fine retrieve revisioni delle pagine');
 
         //console.log(result[0]);
         //console.log(result[0]);
@@ -191,7 +192,7 @@ if (modality === 'export') {
             exportQueue = [];
             //per ogni elemento di result
             //per ogni elemento di result[0].revisions.history.revid
-            console.log('Inizio retrieve export');
+            console.log('Inizio retrieve informazioni delle revisioni');
 
             for (el in result) {
                 for (rev of result[el].revisions.history) {
@@ -207,7 +208,7 @@ if (modality === 'export') {
             }
             let startExport = new Date().getTime();
             let resultExport = await Promise.all(exportQueue);
-            console.log('\nFine retrieve export');
+            console.log('\nFine retrieve informazioni delle revisioni');
 
             let newResultExport = [];
             //console.log(resultExport);
@@ -274,7 +275,7 @@ if (modality === 'export') {
             let resultViews = [];
             let conta = 0;
 
-            console.log('Inizio retrieve views');
+            console.log('Inizio retrieve views relative alle pagine');
 
             //console.log(Object.keys(finalExport.pages).length);
             if (Object.keys(finalExport.pages).length > 500) {
@@ -325,7 +326,7 @@ if (modality === 'export') {
                 resultViews = await Promise.all(queueViews);
                 //console.log(resultViews);
             }
-            console.log('Fine retrieve views');
+            console.log('Fine retrieve views relative alle pagine');
 
             //console.log(resultViews);
 
@@ -344,7 +345,7 @@ if (modality === 'export') {
             /////////RETRIEVE TALKS/////////////////////////
 
             queueTalks = [];
-            console.log('Inizio retrieve talks');
+            console.log('Inizio retrieve talks delle pagine');
             for (elPageId in finalExport.pages) {
                 //console.log(finalExport.pages[elPageId].title);
                 queueTalks.push(wrapper.wrapperTalks(
@@ -363,7 +364,9 @@ if (modality === 'export') {
                 ));
             }
             let resultTalks = await Promise.all(queueTalks);
-            console.log('Fine retrieve talks');
+            console.log('Fine retrieve talks delle pagine');
+
+            console.log('Inizio preparazione file di export');
 
             ////console.log(resultTalks[0]);
             for (el of resultTalks) {

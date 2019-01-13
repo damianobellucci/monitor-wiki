@@ -13,7 +13,8 @@ var wrapperGetPagesByCategory = (params) => {
         client.getAllParametricData(params, async function (err, data) {
 
             if (err) {
-                console.error(err);
+                //console.error(err);
+                return;
                 resolve([]);
             }
             if (data[0] === undefined) { console.log('Error (title): the category ' + params.gcmtitle + ' doesn\'t exist.'); return; };
@@ -53,8 +54,8 @@ var wrapperFirstRevision = (title, server) => { //da splittare caso erro e caso 
         let urlRequest = 'https://' + server + '/w/api.php?action=query&prop=revisions&rvlimit=1&rvprop=timestamp&rvdir=newer&pageids=' + title + '&format=json';
         request(urlRequest, { json: true }, (err, res, body) => {
             //console.log(title);
-            if (err || body === undefined || body.query === undefined) { if (err) console.log(title, err); resolve({ error: '' }) }
-            if (body === undefined || body.query === undefined) console.log(res);
+            if (err) { console.log(title, err); return; }
+            else if (body === undefined || body.query === undefined) { resolve({ error: '' }); }
             else {
                 body.query.pages[Object.keys(body.query.pages)[0]].firstRevision = body.query.pages[Object.keys(body.query.pages)[0]].revisions[0].timestamp;
                 delete body.query.pages[Object.keys(body.query.pages)[0]].revisions;
@@ -67,15 +68,24 @@ var wrapperFirstRevision = (title, server) => { //da splittare caso erro e caso 
     });
 };
 
+var conteggiamoError=0;
+var conteggiamoBuonFine=0;
+
 var wrapperGetParametricRevisions = (params, params2, params3, timespan, filterCriteria) => {
     return new Promise((resolve, reject) => {
 
         client.getAllParametricData(params, function (err, data) {
             // error handling
             if (err) {
-                console.error('Error (timespan): ' + timespan + ' is an invalid timespan.');
+                conteggiamoError+=1;
+                //console.log('error',conteggiamoError,'|','BuonFine',conteggiamoBuonFine);
+                //reject('ciao');
+                //console.error('Error (timespan): ' + timespan + ' is an invalid timespan.');
                 return;
             }
+            conteggiamoBuonFine+=1;
+            //console.log('error',conteggiamoError,'|','BuonFine',conteggiamoBuonFine);
+
             //console.log(data);
             //console.log(util.inspect(data, false, null, true /* enable colors */));
             if (data.length == 1) {
@@ -167,7 +177,7 @@ var wrapperExport = (params) => {
             //console.log(params);
             //parseObject = { title: data.title, pageid: data.pageid, revid: data.revid, nLinks: data.links.length, nExtLinks: data.externallinks.length, nSections: data.sections.length, displayTitle: data.displaytitle }
             if (err) {
-                console.log(err); //Error: Error returned by API: You don't have permission to view deleted revision text.
+                //console.log(err); //Error: Error returned by API: You don't have permission to view deleted revision text.
                 resolve([{
                     pageid: 'error'
                 }]);
@@ -229,7 +239,7 @@ var wrapperViews = (params) => {
         let urlRequest = 'https://wikimedia.org/api/rest_v1/metrics/pageviews/per-article/' + params.server + '/all-access/all-agents/' + params.pageTitle + '/daily/' + params.start + '/' + params.end;
 
         request(urlRequest, { json: true }, (err, res, body) => {
-            if (err || body.title === 'Not found.') { /*return*/ console.log(params.pageTitle, err);
+            if (err || body.title === 'Not found.') { /*return*/ /*console.log(params.pageTitle, err)*/;
                 resolve({ title: params.pageTitle, pageid: params.pageid, dailyViews: 'Not Available' });
             }
             else resolve({ title: params.pageTitle, pageid: params.pageid, dailyViews: body.items });
