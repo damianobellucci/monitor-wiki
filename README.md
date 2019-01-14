@@ -1,5 +1,8 @@
 # monitor-wiki
 
+## Requisiti:
+Node.js v11.6.0
+
 ## Lanciare lo script da terminale:
 
 ### sintassi per l'export (step1):
