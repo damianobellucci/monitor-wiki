@@ -1,7 +1,7 @@
 # monitor-wiki
 
 ## Requisiti:
-<ul><li>Node.js v11.6.0<li></ul>
+<ul><li>Node.js v11.6.0</li></ul>
 
 ## Lanciare lo script da terminale:
 
