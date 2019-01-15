@@ -65,8 +65,8 @@ if (modality === 'export') {
         let inferencedQuery = [];
 
 
-        console.log(queryArray);
-        
+        //console.log(queryArray);
+
         for (el of queryArray) {
             let result = await wrapper.wrapperNameInference(encodeURI(el), mediaWikiServer);
             //console.log(result);
@@ -99,7 +99,7 @@ if (modality === 'export') {
         inferencedQuery = inferencedQuery.concat(secondInferencedQuery);
         queryArray = inferencedQuery;
 
-        console.log(queryArray);
+        //console.log(queryArray);
 
         //return;
         for (el of queryArray) {
