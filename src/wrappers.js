@@ -6,6 +6,7 @@ const request = require('request');
 var counterExport = 0;
 const chalk = require('chalk');
 var conteggioFirstRevision = 0;
+monitorWiki = require('./monitor-wiki.js');
 
 var wrapperNameInference = (title, server) => { //da splittare caso erro e caso body===undefined
     return new Promise((resolve, reject) => {
@@ -216,7 +217,7 @@ var wrapperExport = (params) => {
                 counterExport++;
                 //console.log(counterExport);
 
-                process.stdout.write("Downloading " + counterExport + "/" + counter + ": " + Math.round(counterExport * 100 / counter) + "%" + "\r");
+                process.stdout.write("Downloading " + counterExport + "/" + monitorWiki.conteggioRevisioni() + ": " + Math.round(counterExport * 100 / monitorWiki.conteggioRevisioni()) + "%" + "\r");
                 //console.log(data);
                 resolve(data);
             }
