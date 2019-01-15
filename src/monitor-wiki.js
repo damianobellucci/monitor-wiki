@@ -60,9 +60,51 @@ if (modality === 'export') {
         var allPagesQuery = [];
 
         console.log('Inizio retrieve pagine');
+
+
+        let inferencedQuery = [];
+
+
+        console.log(queryArray);
+        
+        for (el of queryArray) {
+            let result = await wrapper.wrapperNameInference(encodeURI(el), mediaWikiServer);
+            //console.log(result);
+
+            inferencedQuery = inferencedQuery.concat(result);
+
+        }
+        //console.log(inferencedQuery);
+
+
+        suggestionQueue = [];
+
+        for (el of inferencedQuery) {
+            if (el.includes('suggestion:')) suggestionQueue.push(el.replace('suggestion:', ''));
+        }
+
+        inferencedQuery = inferencedQuery.filter((el) => {
+            return !el.includes('suggestion:');
+        });
+
+
+        let secondInferencedQuery = [];
+
+        for (el of suggestionQueue) {
+            let result = await wrapper.wrapperNameInference(encodeURI(el), mediaWikiServer);
+            //console.log(result);
+            secondInferencedQuery = secondInferencedQuery.concat(result.replace('suggestion:', ''));
+        }
+
+        inferencedQuery = inferencedQuery.concat(secondInferencedQuery);
+        queryArray = inferencedQuery;
+
+        console.log(queryArray);
+
+        //return;
         for (el of queryArray) {
             //console.log(el);
-            if (el.includes('Category:')) {
+            if (el.includes('Category:') || el.includes('category:')) {
                 let categoryParams = {
                     action: 'query',
                     generator: 'categorymembers',

@@ -7,6 +7,32 @@ var counterExport = 0;
 const chalk = require('chalk');
 var conteggioFirstRevision = 0;
 
+var wrapperNameInference = (title, server) => { //da splittare caso erro e caso body===undefined
+    return new Promise((resolve, reject) => {
+        //console.log(title, server);
+        let urlRequest = 'https://' + server + '/w/api.php?action=query&list=search&srsearch=' + title.replace('_', '%20') + '&srlimit=1&format=json';
+        request(urlRequest, { json: true }, (err, res, body) => {
+            if (err) { console.log(title, err); return; }
+            else {
+                //suggestion || neanche suggestione
+                if (body.query.searchinfo.totalhits === 0) {
+
+                    if (body.query.searchinfo.hasOwnProperty('suggestion')) {
+                        //console.log(body.query);
+                        resolve('suggestion:' + body.query.searchinfo.suggestion);
+                    }
+                    else resolve(title);
+
+                }
+                //console.log(body.query.search[0].title);
+                //hit pieno
+                else resolve(body.query.search[0].title);
+            }
+        });
+
+    });
+};
+
 var wrapperGetPagesByCategory = (params) => {
     return new Promise((resolve, reject) => {
 
@@ -68,8 +94,8 @@ var wrapperFirstRevision = (title, server) => { //da splittare caso erro e caso 
     });
 };
 
-var conteggiamoError=0;
-var conteggiamoBuonFine=0;
+var conteggiamoError = 0;
+var conteggiamoBuonFine = 0;
 
 var wrapperGetParametricRevisions = (params, params2, params3, timespan, filterCriteria) => {
     return new Promise((resolve, reject) => {
@@ -77,13 +103,13 @@ var wrapperGetParametricRevisions = (params, params2, params3, timespan, filterC
         client.getAllParametricData(params, function (err, data) {
             // error handling
             if (err) {
-                conteggiamoError+=1;
+                conteggiamoError += 1;
                 //console.log('error',conteggiamoError,'|','BuonFine',conteggiamoBuonFine);
                 //reject('ciao');
                 //console.error('Error (timespan): ' + timespan + ' is an invalid timespan.');
                 return;
             }
-            conteggiamoBuonFine+=1;
+            conteggiamoBuonFine += 1;
             //console.log('error',conteggiamoError,'|','BuonFine',conteggiamoBuonFine);
 
             //console.log(data);
@@ -236,10 +262,10 @@ var wrapperTalks = (params3, utilParams) => {
 var wrapperViews = (params) => {
     return new Promise((resolve, reject) => {
 
-        let urlRequest = 'https://wikimedia.org/api/rest_v1/metrics/pageviews/per-article/' + params.server + '/all-access/all-agents/' + params.pageTitle + '/daily/' + params.start + '/' + params.end;
+        let urlRequest = 'https://wikimedia.org/api/rest_v1/metrics/pageviews/per-article/' + params.server + '/all-access/all-agents/' + encodeURI(params.pageTitle) + '/daily/' + params.start + '/' + params.end;
 
         request(urlRequest, { json: true }, (err, res, body) => {
-            if (err || body.title === 'Not found.') { /*return*/ /*console.log(params.pageTitle, err)*/;
+            if (err || body.title === 'Not found.') { /*return*/ console.log(params.pageTitle, err);
                 resolve({ title: params.pageTitle, pageid: params.pageid, dailyViews: 'Not Available' });
             }
             else resolve({ title: params.pageTitle, pageid: params.pageid, dailyViews: body.items });
@@ -269,4 +295,4 @@ module.exports.wrapperViews = wrapperViews;
 module.exports.wrapperTalks = wrapperTalks;
 module.exports.wrapperFirstRevision = wrapperFirstRevision;
 module.exports.wrapperGetPageId = wrapperGetPageId;
-
+module.exports.wrapperNameInference = wrapperNameInference;
