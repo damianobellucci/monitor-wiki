@@ -144,7 +144,7 @@ var wrapperGetParametricRevisions = (params, params2, params3, timespan, filterC
 
             newData.misalignment = {};
             //taggo come disallineata
-            if (newData.revisions.count < filterCriteria.nEdit) {
+            if (newData.revisions.count >= filterCriteria.nEdit) {
                 newData.misalignment.nEdit = true;
             }
             else newData.misalignment.nEdit = false;
@@ -169,7 +169,7 @@ var wrapperGetParametricRevisions = (params, params2, params3, timespan, filterC
 
             let frequencyEdit = newData.revisions.count / ((myDateEnd.getTime() - myDateStart.getTime()) / (1000 * 60 * 60 * 24 * 365));
 
-            if (frequencyEdit < filterCriteria.frequencyEdit) {
+            if (frequencyEdit >= filterCriteria.frequencyEdit) {
                 newData.misalignment.frequencyEdit = true;
             }
             else newData.misalignment.frequencyEdit = false;
