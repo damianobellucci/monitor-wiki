@@ -4,13 +4,16 @@ var _ = require('underscore');
 var fs = require('fs');
 const jsonfile = require('jsonfile');
 
-let queryArgs = process.argv.slice(2);
-let modality = queryArgs[0];
+//let queryArgs = process.argv.slice(2);
+//let modality = queryArgs[0];
 //console.log(queryArgs);
 
-if (modality === 'export') {
+let parsedRequest = parseRequest(process.argv);
 
-    if (queryArgs.length < 6 || queryArgs.length > 7) { console.log('Error (n. parameters): invalid number of parameters for the export.'); return; };
+console.log(parsedRequest);
+
+if (parsedRequest.m === 'export') {
+    //if (queryArgs.length < 6 || queryArgs.length > 7) { console.log('Error (n. parameters): invalid number of parameters for the export.'); return; };
 
     var mediaWikiServer;
     let answers = {};
@@ -20,16 +23,19 @@ if (modality === 'export') {
     let answers5 = {};
     let answers6 = {};
 
-    mediaWikiServer = queryArgs[1];
-    answers.query = queryArgs[2];
-    answers2.timespan = queryArgs[3];
-    answers3.nEditCriteria = queryArgs[4];
-    answers4.frequencyEditCriteria = queryArgs[5];
-    answers5.export = true;
-    answers6.fileName = queryArgs[6];
+    mediaWikiServer = parsedRequest.h;
+    answers.query = parsedRequest.q;
+    answers2.timespan = parsedRequest.t;
+    answers3.nEditCriteria = parsedRequest.n;
+    answers4.frequencyEditCriteria = parsedRequest.f;
 
-    if (isNaN(answers3.nEditCriteria) || answers3.nEditCriteria < 0) { console.log('Error (nEditCriteria): ' + answers3.nEditCriteria + ' is not a valid nEditCriteria'); return; };
-    if (isNaN(answers4.frequencyEditCriteria) || answers4.frequencyEditCriteria < 0) { console.log('Error (frequencyEditCriteria): ' + answers4.frequencyEditCriteria + ' is not a valid frequencyEditCriteria'); return; };
+    if (parsedRequest.hasOwnProperty('e')) {
+        answers5.export = true;
+        answers6.fileName = parsedRequest.e;
+    }
+
+    //if (isNaN(answers3.nEditCriteria) || answers3.nEditCriteria < 0) { console.log('Error (nEditCriteria): ' + answers3.nEditCriteria + ' is not a valid nEditCriteria'); return; };
+    //if (isNaN(answers4.frequencyEditCriteria) || answers4.frequencyEditCriteria < 0) { console.log('Error (frequencyEditCriteria): ' + answers4.frequencyEditCriteria + ' is not a valid frequencyEditCriteria'); return; };
 
 
     queryArray = answers.query.split(",");
@@ -425,7 +431,7 @@ if (modality === 'export') {
             //console.log(finalExport.pages);
 
             //console.log(finalExport);
-            fs.writeFile(fileName + '.json', JSON.stringify(finalExport), function (err) {
+            fs.writeFile(fileName, JSON.stringify(finalExport), function (err) {
 
                 if (err) throw err;
                 console.log('\nThe export has been saved');
@@ -436,15 +442,14 @@ if (modality === 'export') {
         }
     });
 }
-else if (modality === 'analyze') {
-
-    if (queryArgs.length != 4) { console.log('Error (n. parameters): invalid number of parameters for the export.'); return; };
+else if (parsedRequest.m === 'analyze') {
+    //if (queryArgs.length != 4) { console.log('Error (n. parameters): invalid number of parameters for the export.'); return; };
 
 
     ////console.log(queryArgs);
-    let choosedFile = { selectFile: queryArgs[1] + '.json' };
-    let choosedTimespan = { timespan: queryArgs[2] };
-    let nameExportFile = { fileName: queryArgs[3] };
+    let choosedFile = { selectFile: parsedRequest.f };
+    let choosedTimespan = { timespan: parsedRequest.t };
+    let nameExportFile = { fileName: parsedRequest.d };
 
     jsonfile.readFile(choosedFile.selectFile, function (err, obj) {
         if (err) console.error(err);
@@ -550,7 +555,7 @@ else if (modality === 'analyze') {
         }
         else analizeFileName = nameExportFile.fileName;
 
-        fs.writeFile(analizeFileName + '.json', JSON.stringify(finalObject), function (err) {
+        fs.writeFile(analizeFileName, JSON.stringify(finalObject), function (err) {
 
             if (err) throw err;
             console.log('The export has been saved with name: ' + analizeFileName);
@@ -599,4 +604,28 @@ var getParams = (info) => {
         rvend: info.end
     }
     return params;
+}
+
+function parseRequest(processArgv) {
+    let arguments = processArgv.slice(2);
+    let stringArguments = [];
+    let requestObject = {};
+
+    for (let el of arguments) {
+        stringArguments += el + ' ';
+    }
+    arguments = stringArguments.split('-');
+
+    for (let el in arguments) {
+        arguments[el] = arguments[el].slice(0, arguments[el].length - 1);
+    }
+
+    for (let el in arguments) {
+        if (arguments[el] === '');
+        else if (arguments[el] === 'a') requestObject[arguments[el]] = '';
+        else {
+            requestObject[arguments[el].slice(0, 1)] = arguments[el].slice(2);
+        }
+    }
+    return requestObject;
 }
