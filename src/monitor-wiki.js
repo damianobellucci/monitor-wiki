@@ -31,6 +31,7 @@ if (parsedRequest.m === 'export') {
     answers3.nEditCriteria = parsedRequest.n;
     answers4.frequencyEditCriteria = parsedRequest.f;
 
+
     if (parsedRequest.hasOwnProperty('e')) {
         answers5.export = true;
         answers6.fileName = parsedRequest.e;
@@ -48,6 +49,11 @@ if (parsedRequest.m === 'export') {
             if (parsedRequest.i.includes('comments')) indexPreferences.talks = true;
         }
     }
+
+    let filtraDisallineate;
+
+    if (parsedRequest.hasOwnProperty('a')) filtraDisallineate = false;
+    else filtraDisallineate = true;
 
     //if (isNaN(answers3.nEditCriteria) || answers3.nEditCriteria < 0) { console.log('Error (nEditCriteria): ' + answers3.nEditCriteria + ' is not a valid nEditCriteria'); return; };
     //if (isNaN(answers4.frequencyEditCriteria) || answers4.frequencyEditCriteria < 0) { console.log('Error (frequencyEditCriteria): ' + answers4.frequencyEditCriteria + ' is not a valid frequencyEditCriteria'); return; };
@@ -224,7 +230,7 @@ if (parsedRequest.m === 'export') {
         //console.log(timespanArray);
         for (el of allPagesQuery) {
 
-            queue.push(wrapper.wrapperGetParametricRevisions(getParams({ page: el, start: timespanArray[0], end: timespanArray[1] }), getParams2(el), getParams({ page: 'Talk:' + el, start: timespanArray[0], end: timespanArray[1] }), timespanArray2, filterCriteria));
+            queue.push(wrapper.wrapperGetParametricRevisions(getParams({ page: el, start: timespanArray[0], end: timespanArray[1] }), getParams2(el), getParams({ page: 'Talk:' + el, start: timespanArray[0], end: timespanArray[1] }), timespanArray2, filterCriteria, filtraDisallineate));
             //queue.push(wrapper.wrapperGetParametricRevisions(getParams('Talk:' + el)));
         }
 
@@ -463,6 +469,9 @@ if (parsedRequest.m === 'export') {
             //console.log(finalExport.pages);
 
             //console.log(finalExport);
+
+            finalExport.query.parsedRequest = parsedRequest;
+
             fs.writeFile(fileName, JSON.stringify(finalExport), function (err) {
 
                 if (err) throw err;
@@ -479,6 +488,7 @@ else if (parsedRequest.m === 'analyze') {
     //if (queryArgs.length != 4) { console.log('Error (n. parameters): invalid number of parameters for the export.'); return; };
 
 
+
     ////console.log(queryArgs);
     let choosedFile = { selectFile: parsedRequest.f };
     let choosedTimespan = { timespan: parsedRequest.t };
@@ -486,6 +496,19 @@ else if (parsedRequest.m === 'analyze') {
 
     jsonfile.readFile(choosedFile.selectFile, function (err, obj) {
         if (err) console.error(err);
+
+        let indexPreferences = {};
+
+        if (obj.query.parsedRequest.hasOwnProperty('i')) {
+            if (obj.query.parsedRequest.i.includes('all')) {
+                indexPreferences = { edit: true, views: true, talks: true };
+            }
+            else {
+                if (obj.query.parsedRequest.i.includes('edit')) indexPreferences.edit = true;
+                if (obj.query.parsedRequest.i.includes('views')) indexPreferences.views = true;
+                if (obj.query.parsedRequest.i.includes('comments')) indexPreferences.talks = true;
+            }
+        }
 
         choosedTimespan = choosedTimespan.timespan.split(",");
 
@@ -504,16 +527,25 @@ else if (parsedRequest.m === 'analyze') {
 
         //console.log(obj.pages['59506224'].views);
         for (el in obj.pages) {
+
             finalObject[el] = { pageid: obj.pages[el].pageid, title: obj.pages[el].title, edit: { history: [] }, views: [], talks: { history: [] } };
 
-            //fetch delle edit//////////
-            for (rev of obj.pages[el].revisions.history) {
-                if (new Date(rev.timestamp) >= millisecondStart && new Date(rev.timestamp) <= millisecondEnd) {
-                    finalObject[el].edit.history.push(rev);
-                }
-            }
 
-            finalObject[el].edit.count = finalObject[el].edit.history.length;
+            if (!indexPreferences.edit) delete (finalObject[el].edit);
+            if (!indexPreferences.views) delete (finalObject[el].views);
+            if (!indexPreferences.talks) delete (finalObject[el].talks);
+
+
+            if (indexPreferences.edit) {
+
+                //fetch delle edit//////////
+                for (rev of obj.pages[el].revisions.history) {
+                    if (new Date(rev.timestamp) >= millisecondStart && new Date(rev.timestamp) <= millisecondEnd) {
+                        finalObject[el].edit.history.push(rev);
+                    }
+                }
+                finalObject[el].edit.count = finalObject[el].edit.history.length;
+            }
             ////////////////////////////
 
             //fetch delle views/////////
@@ -543,28 +575,33 @@ else if (parsedRequest.m === 'analyze') {
             /////////////////////////////
 
             ///fetch dei talks///////////////////
-            for (talk in obj.pages[el].talks.history) {
+            if (indexPreferences.talks) {
+                for (talk in obj.pages[el].talks.history) {
 
-                if (new Date(obj.pages[el].talks.history[talk].timestamp) >= millisecondStart && new Date(obj.pages[el].talks.history[talk].timestamp) <= millisecondEnd) {
-                    //console.log(obj.pages[el].talks.history[talk]);
-                    finalObject[el].talks.history.push(obj.pages[el].talks.history[talk]);
+                    if (new Date(obj.pages[el].talks.history[talk].timestamp) >= millisecondStart && new Date(obj.pages[el].talks.history[talk].timestamp) <= millisecondEnd) {
+                        //console.log(obj.pages[el].talks.history[talk]);
+                        finalObject[el].talks.history.push(obj.pages[el].talks.history[talk]);
+                    }
+
                 }
-
+                finalObject[el].talks.count = finalObject[el].talks.history.length;
             }
-            finalObject[el].talks.count = finalObject[el].talks.history.length;
             ///fetch dei talks///////////////////
 
             let max = { timestamp: -1 };
             //if (obj.pages[el].revisions.count > 0) max.timestamp = -1 /*obj.pages[el].revisions.history[0]*/;
 
-            for (rev of obj.pages[el].revisions.history) {
-                if (new Date(rev.timestamp) > new Date(max.timestamp) && new Date(rev.timestamp) <= millisecondEnd) {
-                    max = rev;
+            if (indexPreferences.edit) {
+                for (rev of obj.pages[el].revisions.history) {
+                    if (new Date(rev.timestamp) > new Date(max.timestamp) && new Date(rev.timestamp) <= millisecondEnd) {
+                        max = rev;
+                    }
                 }
+
+                //console.log(max);
+                if (max.timestamp == -1) max = {};
+                finalObject[el].puntualStatistics = max;
             }
-            //console.log(max);
-            if (max.timestamp == -1) max = {};
-            finalObject[el].puntualStatistics = max;
 
             //console.log(obj.pages[el].creationTimestamp.firstRevision);
             finalObject[el].puntualDaysOfAge = Math.round((millisecondEnd - new Date(obj.pages[el].creationTimestamp.firstRevision)) / (1000 * 60 * 60 * 24));

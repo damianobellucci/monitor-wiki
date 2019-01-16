@@ -98,7 +98,7 @@ var wrapperFirstRevision = (title, server) => { //da splittare caso erro e caso 
 var conteggiamoError = 0;
 var conteggiamoBuonFine = 0;
 
-var wrapperGetParametricRevisions = (params, params2, params3, timespan, filterCriteria) => {
+var wrapperGetParametricRevisions = (params, params2, params3, timespan, filterCriteria, filtraDisallieate) => {
     return new Promise((resolve, reject) => {
 
         client.getAllParametricData(params, function (err, data) {
@@ -182,9 +182,10 @@ var wrapperGetParametricRevisions = (params, params2, params3, timespan, filterC
             if (newData.misalignment.frequencyEdit) misalignmentFrequencyLog = chalk.red(newData.misalignment.frequencyEdit);
 
 
-            console.log('Page title: ' + chalk.green(newData.title) + ' | ' + 'misalignement n.Edit: ' + misalignmentNeditLog + ' (' + newData.revisions.count + ')' + ' | ' + 'misalignement n.Edit: ' + misalignmentFrequencyLog, '(~ ' + Math.round(frequencyEdit) + ' edit/year)');
+            //console.log(filtraDisallieate);
+            if (!filtraDisallieate || (filtraDisallieate && (misalignmentNeditLog || misalignmentFrequencyLog))) console.log('Page title: ' + chalk.green(newData.title) + ' | ' + 'misalignement n.Edit: ' + misalignmentNeditLog + ' (' + newData.revisions.count + ')' + ' | ' + 'misalignement n.Edit: ' + misalignmentFrequencyLog, '(~ ' + Math.round(frequencyEdit) + ' edit/year)');
 
-            //console.log(newData);
+            //console.log(newData);*/
             resolve(newData);
             //});
 
@@ -266,7 +267,7 @@ var wrapperViews = (params) => {
         let urlRequest = 'https://wikimedia.org/api/rest_v1/metrics/pageviews/per-article/' + params.server + '/all-access/all-agents/' + encodeURI(params.pageTitle) + '/daily/' + params.start + '/' + params.end;
 
         request(urlRequest, { json: true }, (err, res, body) => {
-            if (err || body.title === 'Not found.') { /*return*/ console.log(params.pageTitle, err);
+            if (err || body.title === 'Not found.') { /*return*/ /*console.log(params.pageTitle, err)*/;
                 resolve({ title: params.pageTitle, pageid: params.pageid, dailyViews: 'Not Available' });
             }
             else resolve({ title: params.pageTitle, pageid: params.pageid, dailyViews: body.items });
