@@ -14,8 +14,11 @@ let parsedRequest = parseRequest(process.argv);
 
 //console.log(parsedRequest);
 
-if (parsedRequest.m === 'export') {
+
+if (parsedRequest.m === 'preview' || parsedRequest.m === 'list') {
     //if (queryArgs.length < 6 || queryArgs.length > 7) { console.log('Error (n. parameters): invalid number of parameters for the export.'); return; };
+
+    ////////////////////////////////////////////////////INIZIO PARTE PREVIEW , INIZIO PARTE LIST////////////////////////////////////////////
 
     var mediaWikiServer;
     let answers = {};
@@ -258,229 +261,268 @@ if (parsedRequest.m === 'export') {
 
         //console.log(result);
 
+        ////////////////////////////////////////////////////FINE PARTE PREVIEW////////////////////////////////////////////
 
-        if (answers6.fileName && result.length > 0) { //se ho messo in fondo la stringa query del nome del file export, faccio il download del file di export
+        ////////////////////////////////////////////////////INZIO PARTE LIST////////////////////////////////////////////
+        //console.log(result);
+        if (parsedRequest.m === 'list') {
+            if (!answers6.fileName) { console.log('Error (input): -e fileName (list of pages) is required for "info" modality.'); return; }
+            if (result.length == 0) { console.log('Error: input file doesn\'t contain any page.'); return; }
 
-            let fileName;
+            let finalObject = { pages: [], query: parsedRequest };
 
-            if (answers6.fileName.length == 0 || !answers6.fileName.replace(/\s/g, '').length) {
-                fileName = new Date().getTime().toString();
+            let listResult = [];
+
+            for (el of result) {
+                listResult.push({ pageid: el.pageid, title: el.title, misalignment: el.misalignment });
             }
-            else fileName = answers6.fileName;
 
-            exportQueue = [];
-            //per ogni elemento di result
-            //per ogni elemento di result[0].revisions.history.revid
-            console.log('Inizio retrieve informazioni delle revisioni');
-            let startExport = new Date().getTime();
+            finalObject.pages = listResult;
+            console.log(finalObject);
 
-            if (indexPreferences.edit) {
-                for (el in result) {
-                    for (rev of result[el].revisions.history) {
-                        //console.log(rev);
+            fs.writeFile(parsedRequest.e, JSON.stringify(finalObject), function (err) {
+                if (err) throw err;
+                console.log('Page list has been saved with name: ' + parsedRequest.e);
+            });
+        }
 
-                        exportQueue.push(wrapper.wrapperExport({
-                            action: "parse",
-                            format: "json",
-                            oldid: rev.revid,
-                            prop: "links|externallinks|sections|revid|displaytitle"
-                        })/*METTERE QUI el.pageid per bindare l'export della revisione con il pageid, magari metto anche le altre info utili che ci sono nello storico revisioni e che non sono nell'export, ad esempio il timestamp...  */);
-                    }
+
+
+        ////////////////////////////////////////////////////FINE PARTE LIST////////////////////////////////////////////
+
+
+
+
+        ////////////////////////////////////////////////////INIZIO PARTE INFO////////////////////////////////////////////
+
+        if (parsedRequest.m === 'info') {
+            if (!answers6.fileName) { console.log('Error (input): -e fileName (list of pages) is required for "info" modality.'); return; }
+            if (result.length == 0) { console.log('Error: input file doesn\'t contain any page.'); return; }
+
+            if (answers6.fileName && result.length > 0) { //DA TOGLIERE se ho messo in fondo la stringa query del nome del file export, faccio il download del file di export
+
+                console.log(result);
+                let fileName;
+
+                if (answers6.fileName.length == 0 || !answers6.fileName.replace(/\s/g, '').length) {
+                    fileName = new Date().getTime().toString();
                 }
-                let resultExport = await Promise.all(exportQueue);
-                console.log('\nFine retrieve informazioni delle revisioni');
+                else fileName = answers6.fileName;
 
-                let newResultExport = [];
-                //console.log(resultExport);
+                exportQueue = [];
+                //per ogni elemento di result
+                //per ogni elemento di result[0].revisions.history.revid
+                console.log('Inizio retrieve informazioni delle revisioni');
+                let startExport = new Date().getTime();
 
-                for (el of resultExport) {
-                    try {
-                        newResultExport.push(el[0]);
-                    } catch (e) {
-                        //console.log(e, el);
+                if (indexPreferences.edit) {
+                    for (el in result) {
+                        for (rev of result[el].revisions.history) {
+                            //console.log(rev);
+
+                            exportQueue.push(wrapper.wrapperExport({
+                                action: "parse",
+                                format: "json",
+                                oldid: rev.revid,
+                                prop: "links|externallinks|sections|revid|displaytitle"
+                            })/*METTERE QUI el.pageid per bindare l'export della revisione con il pageid, magari metto anche le altre info utili che ci sono nello storico revisioni e che non sono nell'export, ad esempio il timestamp...  */);
+                        }
                     }
-                }
-                //console.log(newResultExport);
-                var grouped = _.groupBy(newResultExport, function (revision) {
-                    return revision.pageid;
-                });
+                    let resultExport = await Promise.all(exportQueue);
+                    console.log('\nFine retrieve informazioni delle revisioni');
+
+                    let newResultExport = [];
+                    //console.log(resultExport);
+
+                    for (el of resultExport) {
+                        try {
+                            newResultExport.push(el[0]);
+                        } catch (e) {
+                            //console.log(e, el);
+                        }
+                    }
+                    //console.log(newResultExport);
+                    var grouped = _.groupBy(newResultExport, function (revision) {
+                        return revision.pageid;
+                    });
 
 
-                delete grouped.error;
-                //console.log(grouped);
+                    delete grouped.error;
+                    //console.log(grouped);
 
 
-                for (el in grouped) {
-                    for (page in result) {
-                        if (el == result[page].pageid) {
-                            for (elemento in result[page].revisions.history) {
-                                //console.log(grouped[el].revid, result[page].revisions.history[elemento].revid);
-                                for (revisione in grouped[el])
-                                    if (grouped[el][revisione].revid == result[page].revisions.history[elemento].revid) {
-                                        //console.log(grouped[el][revisione].revid, result[page].revisions.history[elemento].revid);
-                                        result[page].revisions.history[elemento].export = grouped[el][revisione];
-                                    }
+                    for (el in grouped) {
+                        for (page in result) {
+                            if (el == result[page].pageid) {
+                                for (elemento in result[page].revisions.history) {
+                                    //console.log(grouped[el].revid, result[page].revisions.history[elemento].revid);
+                                    for (revisione in grouped[el])
+                                        if (grouped[el][revisione].revid == result[page].revisions.history[elemento].revid) {
+                                            //console.log(grouped[el][revisione].revid, result[page].revisions.history[elemento].revid);
+                                            result[page].revisions.history[elemento].export = grouped[el][revisione];
+                                        }
+                                }
+
+                                //result[page].export = grouped[el];
+
                             }
 
-                            //result[page].export = grouped[el];
+                        }
+                    }
+                } else {
+                    for (el in result) {
+                        delete result[el].revisions;
+                    }
+                }
+                /////
+                //console.log(result[2].revisions.history[0]);
+                //console.log(result);
+                //////////
+                exportPagesObject = {};
+                finalExport = {};
+
+                finalExport.query = answers;
+                finalExport.query.timespan = { start: timespanArray[0], end: timespanArray[1] };
+                finalExport.query.misalignmentParameters = { 'nEdit': answers3, 'frequencyEdit': answers4 };
+
+                for (el in result) {
+                    exportPagesObject[result[el].pageid] = result[el];
+                }
+
+                finalExport.pages = exportPagesObject;
+
+                //console.log(finalExport.pages['491694'].revisions.history[0].export);
+
+                //prendo commenti e talks di tutti gli elementi in allPagesQuery
+
+                /////////////////////////////////////////RETRIEVE VIEWS/////////////////////////////////////////////////
+
+                if (indexPreferences.views) {
+                    let queueViews = [];
+                    let resultViews = [];
+                    let conta = 0;
+
+                    console.log('Inizio retrieve views relative alle pagine');
+
+                    //console.log(Object.keys(finalExport.pages).length);
+                    if (Object.keys(finalExport.pages).length > 500) {
+                        //ottengo array con tutte le pagine
+
+
+                        let arrayOfPagesId = [];
+                        for (elId in finalExport.pages) {
+                            arrayOfPagesId.push(elId);
+                        }
+                        //console.log('\narrayOfPagesId',arrayOfPagesId.length);
+
+                        while (arrayOfPagesId.length > 0) {
+                            //console.log('\narrayOfPagesId', arrayOfPagesId.length);
+
+                            conta += 1;
+                            //console.log(conta);
+                            queueViews = [];
+                            chunkedArrayOfPagesId = arrayOfPagesId.slice(0, 25);
+                            //wrappo
+                            for (elIdOfChuncked of chunkedArrayOfPagesId) {
+                                queueViews.push(wrapper.wrapperViews({
+                                    pageTitle: finalExport.pages[elIdOfChuncked].title,
+                                    pageid: finalExport.pages[elIdOfChuncked].pageid,
+                                    start: timespanArray2[0],
+                                    end: timespanArray2[1],
+                                    server: mediaWikiServer
+                                }));
+                            }
+                            arrayOfPagesId = arrayOfPagesId.slice(26, arrayOfPagesId.length);
+                            resultViews = resultViews.concat(await Promise.all(queueViews));
 
                         }
 
-                    }
-                }
-            } else {
-                for (el in result) {
-                    delete result[el].revisions;
-                }
-            }
-            /////
-            //console.log(result[2].revisions.history[0]);
-            //console.log(result);
-            //////////
-            exportPagesObject = {};
-            finalExport = {};
+                    } else {
+                        for (elPageId in finalExport.pages) {
+                            //console.log(finalExport.pages[elPageId].title);
 
-            finalExport.query = answers;
-            finalExport.query.timespan = { start: timespanArray[0], end: timespanArray[1] };
-            finalExport.query.misalignmentParameters = { 'nEdit': answers3, 'frequencyEdit': answers4 };
-
-            for (el in result) {
-                exportPagesObject[result[el].pageid] = result[el];
-            }
-
-            finalExport.pages = exportPagesObject;
-
-            //console.log(finalExport.pages['491694'].revisions.history[0].export);
-
-            //prendo commenti e talks di tutti gli elementi in allPagesQuery
-
-            /////////////////////////////////////////RETRIEVE VIEWS/////////////////////////////////////////////////
-
-            if (indexPreferences.views) {
-                let queueViews = [];
-                let resultViews = [];
-                let conta = 0;
-
-                console.log('Inizio retrieve views relative alle pagine');
-
-                //console.log(Object.keys(finalExport.pages).length);
-                if (Object.keys(finalExport.pages).length > 500) {
-                    //ottengo array con tutte le pagine
-
-
-                    let arrayOfPagesId = [];
-                    for (elId in finalExport.pages) {
-                        arrayOfPagesId.push(elId);
-                    }
-                    //console.log('\narrayOfPagesId',arrayOfPagesId.length);
-
-                    while (arrayOfPagesId.length > 0) {
-                        //console.log('\narrayOfPagesId', arrayOfPagesId.length);
-
-                        conta += 1;
-                        //console.log(conta);
-                        queueViews = [];
-                        chunkedArrayOfPagesId = arrayOfPagesId.slice(0, 25);
-                        //wrappo
-                        for (elIdOfChuncked of chunkedArrayOfPagesId) {
+                            //console.log(queryArray[0],queryArray[1]);
                             queueViews.push(wrapper.wrapperViews({
-                                pageTitle: finalExport.pages[elIdOfChuncked].title,
-                                pageid: finalExport.pages[elIdOfChuncked].pageid,
+                                pageTitle: finalExport.pages[elPageId].title,
+                                pageid: finalExport.pages[elPageId].pageid,
                                 start: timespanArray2[0],
                                 end: timespanArray2[1],
                                 server: mediaWikiServer
                             }));
                         }
-                        arrayOfPagesId = arrayOfPagesId.slice(26, arrayOfPagesId.length);
-                        resultViews = resultViews.concat(await Promise.all(queueViews));
-
+                        resultViews = await Promise.all(queueViews);
+                        //console.log(resultViews);
                     }
+                    console.log('Fine retrieve views relative alle pagine');
 
-                } else {
+                    //console.log(resultViews);
+
+                    for (el of resultViews) {
+                        finalExport.pages[el.pageid].views = el.dailyViews;
+                    }
+                    for (el in finalExport.pages) {
+                        //console.log(finalExport.pages[el].views);
+                    }
+                    ///////////////////////////////////////////////////////////////
+
+                    //console.log(finalExport.pages['1164'].revisions);
+                }
+                /////////RETRIEVE TALKS/////////////////////////
+
+                if (indexPreferences.talks) {
+                    queueTalks = [];
+                    console.log('Inizio retrieve talks delle pagine');
                     for (elPageId in finalExport.pages) {
                         //console.log(finalExport.pages[elPageId].title);
-
-                        //console.log(queryArray[0],queryArray[1]);
-                        queueViews.push(wrapper.wrapperViews({
-                            pageTitle: finalExport.pages[elPageId].title,
-                            pageid: finalExport.pages[elPageId].pageid,
-                            start: timespanArray2[0],
-                            end: timespanArray2[1],
-                            server: mediaWikiServer
-                        }));
+                        queueTalks.push(wrapper.wrapperTalks(
+                            {
+                                action: 'query',
+                                prop: 'revisions',
+                                rvprop: ['ids', 'timestamp', 'size', 'flags', 'comment', 'user'].join('|'),
+                                rvdir: 'newer', // order by timestamp ascz
+                                rvlimit: 'max',
+                                titles: 'Talk:' + finalExport.pages[elPageId].title,
+                                rvstart: timespanArray[0],
+                                rvend: timespanArray[1]
+                            }
+                            ,
+                            finalExport.pages[elPageId].pageid
+                        ));
                     }
-                    resultViews = await Promise.all(queueViews);
-                    //console.log(resultViews);
-                }
-                console.log('Fine retrieve views relative alle pagine');
+                    let resultTalks = await Promise.all(queueTalks);
+                    console.log('Fine retrieve talks delle pagine');
 
-                //console.log(resultViews);
+                    console.log('Inizio preparazione file di export');
 
-                for (el of resultViews) {
-                    finalExport.pages[el.pageid].views = el.dailyViews;
+                    ////console.log(resultTalks[0]);
+                    for (el of resultTalks) {
+                        finalExport.pages[el.pageid].talks = el;
+                    }
+                    /*for (el in finalExport.pages) {
+                        console.log(finalExport.pages[el].talks);
+                    }*/
                 }
-                for (el in finalExport.pages) {
-                    //console.log(finalExport.pages[el].views);
-                }
-                ///////////////////////////////////////////////////////////////
 
-                //console.log(finalExport.pages['1164'].revisions);
+                for (el of queueFirstRevisions) {
+                    if (finalExport.pages[el.pageid] !== undefined) finalExport.pages[el.pageid].creationTimestamp = el;
+                }
+
+                //console.log(finalExport.pages);
+
+                //console.log(finalExport);
+
+                finalExport.query.parsedRequest = parsedRequest;
+
+                fs.writeFile(fileName, JSON.stringify(finalExport), function (err) {
+
+                    if (err) throw err;
+                    console.log('\nThe export has been saved');
+                    console.log('Time elapsed for export: ' + (new Date().getTime() - startExport) / 1000 + 's');
+                    wrapper.resetCounterExport();
+                    wrapper.resetCounterValue();
+                });
+
             }
-            /////////RETRIEVE TALKS/////////////////////////
-
-            if (indexPreferences.talks) {
-                queueTalks = [];
-                console.log('Inizio retrieve talks delle pagine');
-                for (elPageId in finalExport.pages) {
-                    //console.log(finalExport.pages[elPageId].title);
-                    queueTalks.push(wrapper.wrapperTalks(
-                        {
-                            action: 'query',
-                            prop: 'revisions',
-                            rvprop: ['ids', 'timestamp', 'size', 'flags', 'comment', 'user'].join('|'),
-                            rvdir: 'newer', // order by timestamp ascz
-                            rvlimit: 'max',
-                            titles: 'Talk:' + finalExport.pages[elPageId].title,
-                            rvstart: timespanArray[0],
-                            rvend: timespanArray[1]
-                        }
-                        ,
-                        finalExport.pages[elPageId].pageid
-                    ));
-                }
-                let resultTalks = await Promise.all(queueTalks);
-                console.log('Fine retrieve talks delle pagine');
-
-                console.log('Inizio preparazione file di export');
-
-                ////console.log(resultTalks[0]);
-                for (el of resultTalks) {
-                    finalExport.pages[el.pageid].talks = el;
-                }
-                /*for (el in finalExport.pages) {
-                    console.log(finalExport.pages[el].talks);
-                }*/
-            }
-
-            for (el of queueFirstRevisions) {
-                if (finalExport.pages[el.pageid] !== undefined) finalExport.pages[el.pageid].creationTimestamp = el;
-            }
-
-            //console.log(finalExport.pages);
-
-            //console.log(finalExport);
-
-            finalExport.query.parsedRequest = parsedRequest;
-
-            fs.writeFile(fileName, JSON.stringify(finalExport), function (err) {
-
-                if (err) throw err;
-                console.log('\nThe export has been saved');
-                console.log('Time elapsed for export: ' + (new Date().getTime() - startExport) / 1000 + 's');
-                wrapper.resetCounterExport();
-                wrapper.resetCounterValue();
-            });
-
         }
     });
 }

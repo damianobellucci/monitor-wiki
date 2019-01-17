@@ -211,12 +211,15 @@ var wrapperExport = (params) => {
                 }]);
             }
             else {
+                //console.log(data[0].links);
+
                 data[0].links = data[0].links.length;
                 data[0].externallinks = data[0].externallinks.length;
                 data[0].sections = data[0].sections.length;
 
                 counterExport++;
                 //console.log(counterExport);
+
 
                 process.stdout.write("Downloading " + counterExport + "/" + monitorWiki.conteggioRevisioni() + ": " + Math.round(counterExport * 100 / monitorWiki.conteggioRevisioni()) + "%" + "\r");
                 //console.log(data);
