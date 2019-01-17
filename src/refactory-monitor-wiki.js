@@ -14,13 +14,17 @@ var counterRevisions = 0;
 
         if (parsedRequest.m === 'preview') {
             let resultPreview = await wrapperPreview(parsedRequest);
-            console.log('Time elapsed ' + (resultPreview.timer) / 1000 + 's', '|', resultPreview.resultofPreview + ' Pages', '|', resultPreview.revCounter + " revisions");
+            //console.log('ciao', resultPreview);
+            //console.log('Time elapsed ' + (resultPreview.timer) / 1000 + 's', '|', resultPreview.numberOfPages.misaligned, 'misaligned pages of', resultPreview.numberOfPages.all, 'total pages', '|', resultPreview.revCounter + " revisions");
+            console.log('Time elapsed ' + (resultPreview.timer) / 1000 + 's', '|', resultPreview.numberOfPages.misaligned,'misaligned pages', '/', resultPreview.numberOfPages.all, 'total pages', '|', resultPreview.revCounter + " revisions");
+
         }
         else if (parsedRequest.m === 'list') {
-            let resultPreview = await wrapperPreview(parsedRequest);
-            console.log('Time elapsed ' + (resultPreview.timer) / 1000 + 's', '|', resultPreview.resultofPreview + ' Pages', '|', resultPreview.revCounter + " revisions");
+            if (!parsedRequest.e) { console.log('Error (input): -e flag is required for "info" modality.'); return; }
 
-            if (!parsedRequest.e) { console.log('Error (input): -e fileName (list of pages) is required for "info" modality.'); return; }
+            let resultPreview = await wrapperPreview(parsedRequest);
+            console.log('Time elapsed ' + (resultPreview.timer) / 1000 + 's', '|', resultPreview.numberOfPages.misaligned,'misaligned pages', '/', resultPreview.numberOfPages.all, 'total pages', '|', resultPreview.revCounter + " revisions");
+
             if (resultPreview.resultofPreview.length == 0) { console.log('Error: input file doesn\'t contain any page.'); return; }
 
             let finalObject = { pages: [], query: parsedRequest };
@@ -32,7 +36,7 @@ var counterRevisions = 0;
             }
 
             finalObject.pages = listResult;
-            console.log(finalObject);
+            //console.log(finalObject);
 
             fs.writeFile(parsedRequest.e, JSON.stringify(finalObject), function (err) {
                 if (err) throw err;
@@ -56,7 +60,7 @@ var counterRevisions = 0;
 
 async function wrapperInfo(parsedRequest) { //da splittare caso erro e caso body===undefined
     return new Promise((resolve, reject) => {
-        console.log(parsedRequest);
+        //console.log(parsedRequest);
         var mediaWikiServer;
         let answers = {};
         let answers2 = {};
@@ -141,7 +145,7 @@ async function wrapperInfo(parsedRequest) { //da splittare caso erro e caso body
                 }
 
                 allPagesQuery = arrayOfPageId;
-                console.log(allPagesQuery);
+                //console.log(allPagesQuery);
 
                 let queueFirstRevisions = [];
                 let chunkedAllPagesQuery = [];
@@ -448,7 +452,7 @@ async function wrapperInfo(parsedRequest) { //da splittare caso erro e caso body
 
                     finalExport.query = parsedRequest;
 
-                    console.log(finalExport);
+                    //console.log(finalExport);
 
 
                     fs.writeFile(fileName, JSON.stringify(finalExport), function (err) {
@@ -693,10 +697,14 @@ function wrapperPreview(parsedRequest) { //da splittare caso erro e caso body===
             //console.log(result[0]);
 
 
+            let misalignedPages = [];
+
+            misalignedPages = result.filter((el) => {
+                return el.misalignment.nEdit || el.misalignment.frequencyEdit;
+            });
+
             if (!parsedRequest.hasOwnProperty('a')) {
-                result = result.filter((el) => {
-                    return el.misalignment.nEdit || el.misalignment.frequencyEdit;
-                });
+                result = misalignedPages;
             }
 
             for (el of result) {//conto pagine e revisioni totali
@@ -709,7 +717,7 @@ function wrapperPreview(parsedRequest) { //da splittare caso erro e caso body===
 
 
             //console.log(result);
-            resolve({ resultofPreview: result, revCounter: counterRevisions, timer: new Date().getTime() - start });
+            resolve({ numberOfPages: { all: allPagesQuery.length, misaligned: misalignedPages.length }, resultofPreview: result, revCounter: counterRevisions, timer: new Date().getTime() - start });
         });
     });
 };
