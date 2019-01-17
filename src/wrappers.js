@@ -6,7 +6,7 @@ const request = require('request');
 var counterExport = 0;
 const chalk = require('chalk');
 var conteggioFirstRevision = 0;
-monitorWiki = require('./monitor-wiki.js');
+monitorWiki = require('./refactory-monitor-wiki.js');
 
 var wrapperNameInference = (title, server) => { //da splittare caso erro e caso body===undefined
     return new Promise((resolve, reject) => {
@@ -198,6 +198,87 @@ var wrapperGetParametricRevisions = (params, params2, params3, timespan, filterC
     })
 };
 
+var wrapperInfoGetParametricRevisions = (params, params2, params3, timespan, filterCriteria, filtraDisallieate) => {
+    return new Promise((resolve, reject) => {
+
+        client.getAllParametricData(params, function (err, data) {
+            // error handling
+            if (err) {
+                conteggiamoError += 1;
+                //console.log('error',conteggiamoError,'|','BuonFine',conteggiamoBuonFine);
+                //reject('ciao');
+                //console.error('Error (timespan): ' + timespan + ' is an invalid timespan.');
+                return;
+            }
+            conteggiamoBuonFine += 1;
+            //console.log('error',conteggiamoError,'|','BuonFine',conteggiamoBuonFine);
+
+            //console.log(data);
+            //console.log(util.inspect(data, false, null, true /* enable colors */));
+            if (data.length == 1) {
+                data = data[0].pages[Object.keys(data[0].pages)[0]];
+            }
+            else {
+                for (let index = 1; index < data.length; index++) {
+                    data[0].pages[Object.keys(data[0].pages)].revisions = data[0].pages[Object.keys(data[0].pages)].revisions.concat(data[index].pages[Object.keys(data[index].pages)].revisions)
+                }
+                data = data[0].pages[Object.keys(data[0].pages)[0]];
+            }
+            if (!data.hasOwnProperty('revisions')) data.revisions = [];
+            let numberOfRevisions = data.revisions.length;
+
+            var newData = {};
+
+            newData.pageid = data.pageid;
+            newData.title = data.title;
+            newData.revisions = {};
+
+            newData.revisions.history = data.revisions;
+            newData.revisions.count = data.revisions.length;
+            //console.log(newData.revisions);
+
+
+            if (numberOfRevisions > 500) counterMaggioriCinquecento++;
+
+            counter += numberOfRevisions;
+            counterPages += 1;
+
+            //taggo come disallineata
+
+
+
+            frequencyTimespan = [];
+
+            frequencyTimespan[0] = params.rvstart;
+            frequencyTimespan[1] = params.rvend;
+
+            //console.log(frequencyTimespan);
+            //da cambiare con calcolo frequenza: countRevision/(timespan)
+
+            var myDateStart = new Date(frequencyTimespan[0]);
+            var myDateEnd = new Date(frequencyTimespan[1]);
+
+
+            let frequencyEdit = newData.revisions.count / ((myDateEnd.getTime() - myDateStart.getTime()) / (1000 * 60 * 60 * 24 * 365));
+
+
+
+            //console.log(filtraDisallieate);
+            console.log('Page title: ' + chalk.green(newData.title) + ' | ' + 'n.Edit: ' + ' (' + newData.revisions.count + ')' + ' | ' + ' frequencyEdit: ' + '(~ ' + Math.round(frequencyEdit) + ' edit/year)');
+
+            //console.log(newData);*/
+            resolve(newData);
+            //});
+
+            //});
+
+
+            //});
+
+        });
+    })
+};
+
 var wrapperExport = (params) => {
     return new Promise((resolve, reject) => {
 
@@ -301,3 +382,4 @@ module.exports.wrapperTalks = wrapperTalks;
 module.exports.wrapperFirstRevision = wrapperFirstRevision;
 module.exports.wrapperGetPageId = wrapperGetPageId;
 module.exports.wrapperNameInference = wrapperNameInference;
+module.exports.wrapperInfoGetParametricRevisions = wrapperInfoGetParametricRevisions;
