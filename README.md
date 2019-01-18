@@ -3,14 +3,14 @@
 # Definizione dell'API:
 
 ## Preview
-input: soglia di disallineamento (n. Edit oppure frequency Edit), timespan
+input: soglia di disallineamento (n. Edit oppure frequency Edit), timespan</br>
 output: elenco pagine classificate
 
 ## List
 Come Preview, ma con salvataggio file
 
 ## Info
-input: output della modalità List (lista pagine classificate), timespan
+input: output della modalità List (lista pagine classificate), timespan</br>
 output: oggetto con informazioni sugli indici di ogni pagina 
 
 
