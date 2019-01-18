@@ -337,26 +337,29 @@ async function wrapperInfo(parsedRequest) { //da splittare caso erro e caso body
 
                     finalExport.pages = exportPagesObject;
 
-                    /////INIZIO GESTIONE REVID ELIMINATE///////
-                    vediamoStart = new Date().getTime();
-                    for (page in finalExport.pages) {
-                        for (revision in finalExport.pages[page].revisions.history) {
-                            if (!finalExport.pages[page].revisions.history[revision].hasOwnProperty('export')) {
-                                finalExport.pages[page].revisions.history[revision].export = {
-                                    title: finalExport.pages[page].title,
-                                    pageid: finalExport.pages[page].pageid,
-                                    revid: finalExport.pages[page].revisions.history[revision].revid,
-                                    links: 'deleted revision',
-                                    externallinks: 'deleted revision',
-                                    sections: 'deleted revision',
-                                    displaytitle: finalExport.pages[page].title
+                    if (indexPreferences.edit) {
+                        /////INIZIO GESTIONE REVID ELIMINATE///////
+                        vediamoStart = new Date().getTime();
+                        for (page in finalExport.pages) {
+                            if (finalExport.pages[page].revisions === undefined) { console.log(finalExport.pages[page]); return; }
+                            for (revision in finalExport.pages[page].revisions.history) {
+                                if (!finalExport.pages[page].revisions.history[revision].hasOwnProperty('export')) {
+                                    finalExport.pages[page].revisions.history[revision].export = {
+                                        title: finalExport.pages[page].title,
+                                        pageid: finalExport.pages[page].pageid,
+                                        revid: finalExport.pages[page].revisions.history[revision].revid,
+                                        links: 'deleted revision',
+                                        externallinks: 'deleted revision',
+                                        sections: 'deleted revision',
+                                        displaytitle: finalExport.pages[page].title
+                                    }
+                                    //console.log(finalExport.pages[page].revisions.history[revision].export);
                                 }
-                                //console.log(finalExport.pages[page].revisions.history[revision].export);
                             }
                         }
+                        console.log('tempo revid eliminate', ((new Date().getTime() - vediamoStart) / 1000));
+                        /////FINE GESTIONE REVID ELIMINATE///////
                     }
-                    console.log('tempo revid eliminate', ((new Date().getTime() - vediamoStart) / 1000));
-                    /////FINE GESTIONE REVID ELIMINATE///////
 
                     //console.log(finalExport.pages['491694'].revisions.history[0].export);
 

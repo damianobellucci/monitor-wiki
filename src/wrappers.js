@@ -6,7 +6,7 @@ const request = require('request');
 var counterExport = 0;
 const chalk = require('chalk');
 var conteggioFirstRevision = 0;
-monitorWiki = require('./refactory-monitor-wiki.js');
+monitorWiki = require('./monitor-wiki.js');
 
 var wrapperNameInference = (title, server) => { //da splittare caso erro e caso body===undefined
     return new Promise((resolve, reject) => {
