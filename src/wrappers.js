@@ -247,9 +247,9 @@ var wrapperInfoGetParametricRevisions = (params, params2, params3, timespan, fil
                 frequencyEdit = newData.revisions.count / ((myDateEnd.getTime() - myDateStart.getTime()) / (1000 * 60 * 60 * 24 * 365));
             }
 
-            if (parsedRequest.n) console.log('Page title: ' + chalk.green(newData.title) /* + ' | ' + 'n.Edit:' + ' (' + newData.revisions.count + ')'*/);
-            if (parsedRequest.f) console.log('Page title: ' + chalk.green(newData.title) /* +' | ' + 'frequencyEdit: ' + '~ ' + Math.round(frequencyEdit) + ' edit/year'*/);
-
+            //if (parsedRequest.n) console.log('Page title: ' + chalk.green(newData.title) /* + ' | ' + 'n.Edit:' + ' (' + newData.revisions.count + ')'*/);
+            //if (parsedRequest.f) console.log('Page title: ' + chalk.green(newData.title) /* +' | ' + 'frequencyEdit: ' + '~ ' + Math.round(frequencyEdit) + ' edit/year'*/);
+            console.log('Page title: ' + chalk.green(newData.title));
 
             //console.log(newData);*/
             resolve(newData);
