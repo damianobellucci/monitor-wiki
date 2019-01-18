@@ -257,7 +257,7 @@ var wrapperInfoGetParametricRevisions = (params, params2, params3, timespan, fil
     })
 };
 
-var wrapperExport = (params) => {
+var wrapperExport = (params, indexPreferences) => {
     return new Promise((resolve, reject) => {
 
         client.getAllParametricData(params, function (err, data) {
@@ -276,11 +276,25 @@ var wrapperExport = (params) => {
                 }
             }
             else {
-                //console.log(data[0].links);
 
-                data[0].links = data[0].links.length;
-                data[0].externallinks = data[0].externallinks.length;
+
+                if (indexPreferences.nlinks && indexPreferences.listlinks) {
+
+                    data[0].links = { count: data[0].links.length, list: data[0].links };
+                    data[0].externallinks = { count: data[0].externallinks.length, list: data[0].externallinks }
+                } else if (indexPreferences.nlinks) {
+
+                    data[0].links = { count: data[0].links.length };
+                    data[0].externallinks = { count: data[0].externallinks.length }
+                } else if (indexPreferences.listlinks) {
+
+                    data[0].links = { list: data[0].links };
+                    data[0].externallinks = { list: data[0].externallinks }
+                }
+                
                 data[0].sections = data[0].sections.length;
+
+                //console.log(data);
 
                 counterExport++;
                 //console.log(counterExport);
@@ -338,7 +352,17 @@ var wrapperViews = (params) => {
             if (err || body.title === 'Not found.') { /*return*/ /*console.log(params.pageTitle, err)*/;
                 resolve({ title: params.pageTitle, pageid: params.pageid, dailyViews: 'Not Available' });
             }
-            else resolve({ title: params.pageTitle, pageid: params.pageid, dailyViews: body.items });
+            else {//formatto oggetto view
+                for (el in body.items) {
+                    delete (body.items[el].project);
+                    delete (body.items[el].article);
+                    delete (body.items[el].granularity);
+                    delete (body.items[el].access);
+                    delete (body.items[el].agent);
+                    body.items[el].timestamp = body.items[el].timestamp.slice(0, body.items[el].timestamp.length - 2);
+                }
+
+            } resolve({ title: params.pageTitle, pageid: params.pageid, dailyViews: body.items });
         });
     });
 };

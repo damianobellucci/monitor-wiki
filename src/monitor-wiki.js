@@ -21,7 +21,7 @@ var counterRevisions = 0;
 
         }
         else if (parsedRequest.m === 'list') {
-            if (!parsedRequest.n && !parsedRequest.f){ console.log('Error (input): n.Edit or frequencyEdit is required.'); return; }
+            if (!parsedRequest.n && !parsedRequest.f) { console.log('Error (input): n.Edit or frequencyEdit is required.'); return; }
             if (parsedRequest.n && parsedRequest.f) { console.log('Error (input): only one of n.Edit or frequencyEdit is required.'); return; }
             if (!parsedRequest.e) { console.log('Error (input): -e flag is required for "info" modality.'); return; }
 
@@ -65,7 +65,6 @@ async function wrapperInfo(parsedRequest) { //da splittare caso erro e caso body
     return new Promise((resolve, reject) => {
         //console.log(parsedRequest);
         if (!parsedRequest.f) { console.log('Error (input): missing input file.'); return; }
-        var mediaWikiServer;
         let answers = {};
         let answers2 = {};
         let answers3 = {};
@@ -73,7 +72,6 @@ async function wrapperInfo(parsedRequest) { //da splittare caso erro e caso body
         let answers5 = {};
         let answers6 = {};
 
-        mediaWikiServer = parsedRequest.h;
         answers.query = parsedRequest.q;
         answers2.timespan = parsedRequest.t;
         answers3.nEditCriteria = parsedRequest.n;
@@ -89,12 +87,14 @@ async function wrapperInfo(parsedRequest) { //da splittare caso erro e caso body
 
         if (parsedRequest.hasOwnProperty('i')) {
             if (parsedRequest.i.includes('all')) {
-                indexPreferences = { edit: true, views: true, talks: true };
+                indexPreferences = { edit: true, views: true, talks: true, nlinks: true, listlinks: true };
             }
             else {
                 if (parsedRequest.i.includes('edit')) indexPreferences.edit = true;
                 if (parsedRequest.i.includes('views')) indexPreferences.views = true;
-                if (parsedRequest.i.includes('comments')) indexPreferences.talks = true;
+                if (parsedRequest.i.includes('nlinks')) indexPreferences.nlinks = true;
+                if (parsedRequest.i.includes('listlinks')) indexPreferences.listlinks = true;
+
             }
         }
 
@@ -106,41 +106,44 @@ async function wrapperInfo(parsedRequest) { //da splittare caso erro e caso body
         //if (isNaN(answers3.nEditCriteria) || answers3.nEditCriteria < 0) { console.log('Error (nEditCriteria): ' + answers3.nEditCriteria + ' is not a valid nEditCriteria'); return; };
         //if (isNaN(answers4.frequencyEditCriteria) || answers4.frequencyEditCriteria < 0) { console.log('Error (frequencyEditCriteria): ' + answers4.frequencyEditCriteria + ' is not a valid frequencyEditCriteria'); return; };
 
+        console.log('Lettura file di input');
+        jsonfile.readFile(parsedRequest.f, async function (err, resultPreview) {
+            if (err) { console.log('Error (file input): invalid file.'); return; }
+            if (resultPreview.pages.length == 0) { console.log('Error: input file doesn\'t contain any page.'); return; }
+            console.log('Lettura file di input completata');
 
-        let info = {
-            "protocol": "https",  // default to 'http'
-            "server": mediaWikiServer,  // host name of MediaWiki-powered site
-            "path": "/w",                  // path to api.php script
-            "debug": false,                // is more verbose when set to true
-            "username": "Monitorwikibotdb",             // account to be used when logIn is called (optional)
-            "password": "Slart1bartfastW",             // password to be used when logIn is called (optional)
-            "userAgent": "belluccidamiano@gmail.com",      // define custom bot's user agent
-            "concurrency": 100               // how many API requests can be run in parallel (defaults to 3)
-        }
+            let mediaWikiServer;
 
-        let start = new Date().getTime();
+            mediaWikiServer = resultPreview.query.h;
 
-        try {
-            client = new bot(info);
-        } catch (e) { return; };
-
-        client.logIn(async error => {
-
-            if (error) {
-                console.log(error);
-                return;
+            let info = {
+                "protocol": "https",  // default to 'http'
+                "server": mediaWikiServer,  // host name of MediaWiki-powered site
+                "path": "/w",                  // path to api.php script
+                "debug": false,                // is more verbose when set to true
+                "username": "Monitorwikibotdb",             // account to be used when logIn is called (optional)
+                "password": "Slart1bartfastW",             // password to be used when logIn is called (optional)
+                "userAgent": "belluccidamiano@gmail.com",      // define custom bot's user agent
+                "concurrency": 100               // how many API requests can be run in parallel (defaults to 3)
             }
-            let queue = [];
-            var allPagesQuery = [];
 
-            console.log('Inizio retrieve pagine');
+            let start = new Date().getTime();
 
+            try {
+                client = new bot(info);
+            } catch (e) { return; };
 
-            jsonfile.readFile(parsedRequest.f, async function (err, resultPreview) {
-                if (err) { console.log('Error (file input): invalid file.'); return; }
-                if (resultPreview.pages.length == 0) { console.log('Error: input file doesn\'t contain any page.'); return; }
+            client.logIn(async error => {
 
-                if (err) console.error(err);
+                if (error) {
+                    console.log(error);
+                    return;
+                }
+                let queue = [];
+                var allPagesQuery = [];
+
+                console.log('Inizio retrieve pagine');
+
 
                 let arrayOfPageId = [];
 
@@ -272,8 +275,8 @@ async function wrapperInfo(parsedRequest) { //da splittare caso erro e caso body
                                     action: "parse",
                                     format: "json",
                                     oldid: rev.revid,
-                                    prop: "links|externallinks|sections|revid|displaytitle"
-                                })/*METTERE QUI el.pageid per bindare l'export della revisione con il pageid, magari metto anche le altre info utili che ci sono nello storico revisioni e che non sono nell'export, ad esempio il timestamp...  */);
+                                    prop: ((indexPreferences.nlinks || indexPreferences.listlinks) ? "links|externallinks" : "") + "|sections|revid|displaytitle"
+                                }, indexPreferences)/*METTERE QUI el.pageid per bindare l'export della revisione con il pageid, magari metto anche le altre info utili che ci sono nello storico revisioni e che non sono nell'export, ad esempio il timestamp...  */);
                             }
                         }
                         let resultExport = await Promise.all(exportQueue);
@@ -350,12 +353,14 @@ async function wrapperInfo(parsedRequest) { //da splittare caso erro e caso body
                                         title: finalExport.pages[page].title,
                                         pageid: finalExport.pages[page].pageid,
                                         revid: finalExport.pages[page].revisions.history[revision].revid,
-                                        links: 'deleted revision',
-                                        externallinks: 'deleted revision',
                                         sections: 'deleted revision',
                                         displaytitle: finalExport.pages[page].title
                                     }
-                                    //console.log(finalExport.pages[page].revisions.history[revision].export);
+                                    if (indexPreferences.nlinks || indexPreferences.listlinks) {
+                                        finalExport.pages[page].revisions.history[revision].export['links'] = 'deleted revision';
+                                        finalExport.pages[page].revisions.history[revision].export['externallinks'] = 'deleted revision';
+                                    }
+                                    console.log(finalExport.pages[page].revisions.history[revision].export);
                                 }
                             }
                         }
