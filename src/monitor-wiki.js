@@ -136,6 +136,7 @@ async function wrapperInfo(parsedRequest) { //da splittare caso erro e caso body
 
 
             jsonfile.readFile(parsedRequest.f, async function (err, resultPreview) {
+                if (err) { console.log('Error (file input): invalid file.'); return; }
                 if (resultPreview.pages.length == 0) { console.log('Error: input file doesn\'t contain any page.'); return; }
 
                 if (err) console.error(err);
@@ -250,7 +251,7 @@ async function wrapperInfo(parsedRequest) { //da splittare caso erro e caso body
                     let fileName;
 
                     if (!parsedRequest.d || !parsedRequest.d.replace(/\s/g, '').length) {
-                        fileName = new Date().getTime().toString() + 'json';
+                        fileName = new Date().getTime().toString() + '.json';
                     }
                     else fileName = parsedRequest.d;
 
