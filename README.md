@@ -19,8 +19,6 @@ output: oggetto con informazioni sugli indici di ogni pagina
 ## Requisiti:
 <ul><li>Node.js v11.6.0</li></ul>
 
-## Lanciare lo script da terminale:
-
 ### Preview
 flags: -m (modalità) , -h (host), -q (query), -t (timespan), -n (n. Edit), -f (frequency Edit). E' possibile settare un solo flag tra -n ed -f.</br>
 
