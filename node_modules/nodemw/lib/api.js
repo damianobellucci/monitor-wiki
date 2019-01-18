@@ -158,7 +158,7 @@ module.exports = ( function () {
 					self.logger.error( 'Error returned by API: %s', data.error.info );
 					self.logger.data( data.error );
 
-					callback( new Error( `Error returned by API: ${data.error.info}` ) );
+					callback( /*new Error( */`Error returned by API: ${data.error.info}` /*)*/ );
 				}
 				done();
 			} );
