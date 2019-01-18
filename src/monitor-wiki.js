@@ -21,13 +21,14 @@ var counterRevisions = 0;
 
         }
         else if (parsedRequest.m === 'list') {
+            if (!parsedRequest.n && !parsedRequest.f){ console.log('Error (input): n.Edit or frequencyEdit is required.'); return; }
             if (parsedRequest.n && parsedRequest.f) { console.log('Error (input): only one of n.Edit or frequencyEdit is required.'); return; }
             if (!parsedRequest.e) { console.log('Error (input): -e flag is required for "info" modality.'); return; }
 
             let resultPreview = await wrapperPreview(parsedRequest);
             console.log('Time elapsed ' + (resultPreview.timer) / 1000 + 's', '|', resultPreview.numberOfPages.misaligned, 'misaligned pages', '/', resultPreview.numberOfPages.all, 'total pages', '|', resultPreview.revCounter + " revisions");
 
-            if (resultPreview.resultofPreview.length == 0) { console.log('Error: input file doesn\'t contain any page.'); return; }
+            if (resultPreview.resultofPreview.length == 0) { console.log('No pages for the query.'); return; }
 
             let finalObject = { pages: [], query: parsedRequest };
 
