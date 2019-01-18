@@ -13,17 +13,19 @@ var counterRevisions = 0;
         let parsedRequest = parseRequest(process.argv);
 
         if (parsedRequest.m === 'preview') {
+            if (parsedRequest.n && parsedRequest.f) { console.log('Error (input): only one of n.Edit or frequencyEdit is required.'); return; }
             let resultPreview = await wrapperPreview(parsedRequest);
             //console.log('ciao', resultPreview);
             //console.log('Time elapsed ' + (resultPreview.timer) / 1000 + 's', '|', resultPreview.numberOfPages.misaligned, 'misaligned pages of', resultPreview.numberOfPages.all, 'total pages', '|', resultPreview.revCounter + " revisions");
-            console.log('Time elapsed ' + (resultPreview.timer) / 1000 + 's', '|', resultPreview.numberOfPages.misaligned,'misaligned pages', '/', resultPreview.numberOfPages.all, 'total pages', '|', resultPreview.revCounter + " revisions");
+            console.log('Time elapsed ' + (resultPreview.timer) / 1000 + 's', '|', resultPreview.numberOfPages.misaligned, 'misaligned pages', '/', resultPreview.numberOfPages.all, 'total pages', '|', resultPreview.revCounter + " revisions");
 
         }
         else if (parsedRequest.m === 'list') {
+            if (parsedRequest.n && parsedRequest.f) { console.log('Error (input): only one of n.Edit or frequencyEdit is required.'); return; }
             if (!parsedRequest.e) { console.log('Error (input): -e flag is required for "info" modality.'); return; }
 
             let resultPreview = await wrapperPreview(parsedRequest);
-            console.log('Time elapsed ' + (resultPreview.timer) / 1000 + 's', '|', resultPreview.numberOfPages.misaligned,'misaligned pages', '/', resultPreview.numberOfPages.all, 'total pages', '|', resultPreview.revCounter + " revisions");
+            console.log('Time elapsed ' + (resultPreview.timer) / 1000 + 's', '|', resultPreview.numberOfPages.misaligned, 'misaligned pages', '/', resultPreview.numberOfPages.all, 'total pages', '|', resultPreview.revCounter + " revisions");
 
             if (resultPreview.resultofPreview.length == 0) { console.log('Error: input file doesn\'t contain any page.'); return; }
 
@@ -61,6 +63,7 @@ var counterRevisions = 0;
 async function wrapperInfo(parsedRequest) { //da splittare caso erro e caso body===undefined
     return new Promise((resolve, reject) => {
         //console.log(parsedRequest);
+        if (!parsedRequest.f) { console.log('Error (input): missing input file.'); return; }
         var mediaWikiServer;
         let answers = {};
         let answers2 = {};
@@ -215,14 +218,17 @@ async function wrapperInfo(parsedRequest) { //da splittare caso erro e caso body
 
 
                 //console.log(timespanArray);
+                let start = new Date().getTime();
+
                 for (el of allPagesQuery) {
 
-                    queue.push(wrapper.wrapperInfoGetParametricRevisions(getParams({ page: el, start: timespanArray[0], end: timespanArray[1] }), getParams2(el), getParams({ page: 'Talk:' + el, start: timespanArray[0], end: timespanArray[1] }), timespanArray2, filterCriteria, filtraDisallineate));
+                    queue.push(wrapper.wrapperInfoGetParametricRevisions(getParams({ page: el, start: timespanArray[0], end: timespanArray[1] }), getParams2(el), getParams({ page: 'Talk:' + el, start: timespanArray[0], end: timespanArray[1] }), timespanArray2, filterCriteria, filtraDisallineate, parsedRequest));
                     //queue.push(wrapper.wrapperGetParametricRevisions(getParams('Talk:' + el)));
                 }
 
                 let result = await Promise.all(queue);
                 console.log('Fine retrieve revisioni delle pagine');
+                console.log('Time elapsed ' + (new Date().getTime() - start) / 1000 + 's', '|', wrapper.getCounterPages(), 'total pages', '|', wrapper.lastCounterValue() + " revisions");
 
                 //console.log(result[0]);
 
@@ -244,7 +250,7 @@ async function wrapperInfo(parsedRequest) { //da splittare caso erro e caso body
                     let fileName;
 
                     if (!parsedRequest.d || !parsedRequest.d.replace(/\s/g, '').length) {
-                        fileName = new Date().getTime().toString();
+                        fileName = new Date().getTime().toString() + 'json';
                     }
                     else fileName = parsedRequest.d;
 
@@ -254,7 +260,7 @@ async function wrapperInfo(parsedRequest) { //da splittare caso erro e caso body
                     console.log('Inizio retrieve informazioni delle revisioni');
                     let startExport = new Date().getTime();
 
-                    console.log(indexPreferences);
+                    //console.log(indexPreferences);
                     if (indexPreferences.edit) {
                         for (el in result) {
                             for (rev of result[el].revisions.history) {
@@ -330,6 +336,27 @@ async function wrapperInfo(parsedRequest) { //da splittare caso erro e caso body
                     }
 
                     finalExport.pages = exportPagesObject;
+
+                    /////INIZIO GESTIONE REVID ELIMINATE///////
+                    vediamoStart = new Date().getTime();
+                    for (page in finalExport.pages) {
+                        for (revision in finalExport.pages[page].revisions.history) {
+                            if (!finalExport.pages[page].revisions.history[revision].hasOwnProperty('export')) {
+                                finalExport.pages[page].revisions.history[revision].export = {
+                                    title: finalExport.pages[page].title,
+                                    pageid: finalExport.pages[page].pageid,
+                                    revid: finalExport.pages[page].revisions.history[revision].revid,
+                                    links: 'deleted revision',
+                                    externallinks: 'deleted revision',
+                                    sections: 'deleted revision',
+                                    displaytitle: finalExport.pages[page].title
+                                }
+                                //console.log(finalExport.pages[page].revisions.history[revision].export);
+                            }
+                        }
+                    }
+                    console.log('tempo revid eliminate', ((new Date().getTime() - vediamoStart) / 1000));
+                    /////FINE GESTIONE REVID ELIMINATE///////
 
                     //console.log(finalExport.pages['491694'].revisions.history[0].export);
 
@@ -443,9 +470,15 @@ async function wrapperInfo(parsedRequest) { //da splittare caso erro e caso body
                         }*/
                     }
 
+                    ///////////////////////////////////// INIZIO CALCOLO DAYS OF AGE ////////////////////////////////////////////////////
                     for (el of queueFirstRevisions) {
-                        if (finalExport.pages[el.pageid] !== undefined) finalExport.pages[el.pageid].creationTimestamp = el;
+                        //if (finalExport.pages[el.pageid] !== undefined) finalExport.pages[el.pageid].creationTimestamp = el;
+                        pageDaysOfAge = Math.round((new Date(timespanArray[1]).getTime() - new Date(el.firstRevision).getTime()) / 1000 / 60 / 60 / 24);
+                        if (finalExport.pages[el.pageid] !== undefined) finalExport.pages[el.pageid].daysOfAge = pageDaysOfAge;
+                        //console.log(finalExport.pages[el.pageid].daysOfAge);
                     }
+                    ///////////////////////////////////// FINE CALCOLO DAYS OF AGE ////////////////////////////////////////////////////
+
 
                     ///console.log(finalExport.pages);
 
@@ -469,8 +502,6 @@ async function wrapperInfo(parsedRequest) { //da splittare caso erro e caso body
         });
     });
 };
-
-
 
 function wrapperPreview(parsedRequest) { //da splittare caso erro e caso body===undefined
     return new Promise((resolve, reject) => {
@@ -687,7 +718,7 @@ function wrapperPreview(parsedRequest) { //da splittare caso erro e caso body===
             //console.log(timespanArray);
             for (el of allPagesQuery) {
 
-                queue.push(wrapper.wrapperGetParametricRevisions(getParams({ page: el, start: timespanArray[0], end: timespanArray[1] }), getParams2(el), getParams({ page: 'Talk:' + el, start: timespanArray[0], end: timespanArray[1] }), timespanArray2, filterCriteria, filtraDisallineate));
+                queue.push(wrapper.wrapperGetParametricRevisions(getParams({ page: el, start: timespanArray[0], end: timespanArray[1] }), getParams2(el), getParams({ page: 'Talk:' + el, start: timespanArray[0], end: timespanArray[1] }), timespanArray2, filterCriteria, filtraDisallineate, parsedRequest));
                 //queue.push(wrapper.wrapperGetParametricRevisions(getParams('Talk:' + el)));
             }
 

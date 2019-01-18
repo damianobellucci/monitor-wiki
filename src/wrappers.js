@@ -98,7 +98,7 @@ var wrapperFirstRevision = (title, server) => { //da splittare caso erro e caso 
 var conteggiamoError = 0;
 var conteggiamoBuonFine = 0;
 
-var wrapperGetParametricRevisions = (params, params2, params3, timespan, filterCriteria, filtraDisallieate) => {
+var wrapperGetParametricRevisions = (params, params2, params3, timespan, filterCriteria, filtraDisallieate, parsedRequest) => {
     return new Promise((resolve, reject) => {
 
         client.getAllParametricData(params, function (err, data) {
@@ -145,76 +145,68 @@ var wrapperGetParametricRevisions = (params, params2, params3, timespan, filterC
 
             newData.misalignment = {};
             //taggo come disallineata
-            if (newData.revisions.count >= filterCriteria.nEdit) {
-                newData.misalignment.nEdit = true;
+
+            let misalignmentNeditLog = [];
+            let misalignmentFrequencyLog = [];
+
+            if (parsedRequest.n) {
+                if (newData.revisions.count >= filterCriteria.nEdit) {
+                    newData.misalignment.nEdit = true;
+                }
+                else newData.misalignment.nEdit = false;
+
+                misalignmentNeditLog = newData.misalignment.nEdit;
+                if (newData.misalignment.nEdit) misalignmentNeditLog = chalk.red(newData.misalignment.nEdit);
             }
-            else newData.misalignment.nEdit = false;
+
+            let frequencyEdit = [];
+            if (parsedRequest.f) {
+
+                frequencyTimespan = [];
+
+                frequencyTimespan[0] = params.rvstart;
+                frequencyTimespan[1] = params.rvend;
+
+                //console.log(frequencyTimespan);
+                //da cambiare con calcolo frequenza: countRevision/(timespan)
+
+                var myDateStart = new Date(frequencyTimespan[0]);
+                var myDateEnd = new Date(frequencyTimespan[1]);
 
 
-            frequencyTimespan = [];
+                frequencyEdit = newData.revisions.count / ((myDateEnd.getTime() - myDateStart.getTime()) / (1000 * 60 * 60 * 24 * 365));
 
-            //console.log(timespan);
-            //frequencyTimespan[0] = timespan[0].substr(0, 4) + '-' + timespan[0].substr(4, 2) + '-' + timespan[0].substr(6, 2) + 'T00:00:00+0000';
-            //frequencyTimespan[1] = timespan[1].substr(0, 4) + '-' + timespan[1].substr(4, 2) + '-' + timespan[1].substr(6, 2) + 'T00:00:00+0000';
+                if (frequencyEdit >= filterCriteria.frequencyEdit) {
+                    newData.misalignment.frequencyEdit = true;
+                }
+                else newData.misalignment.frequencyEdit = false;
 
+                misalignmentFrequencyLog = newData.misalignment.frequencyEdit;
 
-            frequencyTimespan[0] = params.rvstart;
-            frequencyTimespan[1] = params.rvend;
-
-            //console.log(frequencyTimespan);
-            //da cambiare con calcolo frequenza: countRevision/(timespan)
-
-            var myDateStart = new Date(frequencyTimespan[0]);
-            var myDateEnd = new Date(frequencyTimespan[1]);
-
-
-            let frequencyEdit = newData.revisions.count / ((myDateEnd.getTime() - myDateStart.getTime()) / (1000 * 60 * 60 * 24 * 365));
-
-            if (frequencyEdit >= filterCriteria.frequencyEdit) {
-                newData.misalignment.frequencyEdit = true;
+                if (newData.misalignment.frequencyEdit) misalignmentFrequencyLog = chalk.red(newData.misalignment.frequencyEdit);
             }
-            else newData.misalignment.frequencyEdit = false;
-
-            let misalignmentNeditLog = newData.misalignment.nEdit;
-            let misalignmentFrequencyLog = newData.misalignment.frequencyEdit;
-
-            if (newData.misalignment.nEdit) misalignmentNeditLog = chalk.red(newData.misalignment.nEdit);
-            if (newData.misalignment.frequencyEdit) misalignmentFrequencyLog = chalk.red(newData.misalignment.frequencyEdit);
-
 
             //console.log(filtraDisallieate);
-            if (!filtraDisallieate || (filtraDisallieate && (misalignmentNeditLog || misalignmentFrequencyLog))) console.log('Page title: ' + chalk.green(newData.title) + ' | ' + 'misalignement n.Edit: ' + misalignmentNeditLog + ' (' + newData.revisions.count + ')' + ' | ' + 'misalignement n.Edit: ' + misalignmentFrequencyLog, '(~ ' + Math.round(frequencyEdit) + ' edit/year)');
+            //if (!filtraDisallieate || (filtraDisallieate && (misalignmentNeditLog || misalignmentFrequencyLog))) console.log('Page title: ' + chalk.green(newData.title) + ' | ' + 'misalignement n.Edit: ' + misalignmentNeditLog + ' (' + newData.revisions.count + ')' + ' | ' + 'misalignement n.Edit: ' + misalignmentFrequencyLog, '(~ ' + Math.round(frequencyEdit) + ' edit/year)');
 
-            //console.log(newData);*/
+            if (parsedRequest.n) { if (!filtraDisallieate || (filtraDisallieate && (misalignmentNeditLog))) console.log('Page title: ' + chalk.green(newData.title) + ' | ' + 'misalignement n.Edit: ' + misalignmentNeditLog + ' (' + newData.revisions.count + ')'); }
+            if (parsedRequest.f) { if (!filtraDisallieate || (filtraDisallieate && (misalignmentFrequencyLog))) console.log('Page title: ' + chalk.green(newData.title) + ' | ' + 'misalignement frequency Edit: ' + misalignmentFrequencyLog, '(~ ' + Math.round(frequencyEdit) + ' edit/year)'); }
+
             resolve(newData);
-            //});
-
-            //});
-
-
-            //});
-
         });
     })
 };
 
-var wrapperInfoGetParametricRevisions = (params, params2, params3, timespan, filterCriteria, filtraDisallieate) => {
+var wrapperInfoGetParametricRevisions = (params, params2, params3, timespan, filterCriteria, filtraDisallieate, parsedRequest) => {
     return new Promise((resolve, reject) => {
 
         client.getAllParametricData(params, function (err, data) {
-            // error handling
             if (err) {
                 conteggiamoError += 1;
-                //console.log('error',conteggiamoError,'|','BuonFine',conteggiamoBuonFine);
-                //reject('ciao');
-                //console.error('Error (timespan): ' + timespan + ' is an invalid timespan.');
                 return;
             }
             conteggiamoBuonFine += 1;
-            //console.log('error',conteggiamoError,'|','BuonFine',conteggiamoBuonFine);
 
-            //console.log(data);
-            //console.log(util.inspect(data, false, null, true /* enable colors */));
             if (data.length == 1) {
                 data = data[0].pages[Object.keys(data[0].pages)[0]];
             }
@@ -237,44 +229,30 @@ var wrapperInfoGetParametricRevisions = (params, params2, params3, timespan, fil
             newData.revisions.count = data.revisions.length;
             //console.log(newData.revisions);
 
-
-            if (numberOfRevisions > 500) counterMaggioriCinquecento++;
-
             counter += numberOfRevisions;
             counterPages += 1;
 
             //taggo come disallineata
+            let frequencyEdit;
 
+            if (parsedRequest.f) {
+                frequencyTimespan = [];
 
+                frequencyTimespan[0] = params.rvstart;
+                frequencyTimespan[1] = params.rvend;
 
-            frequencyTimespan = [];
+                var myDateStart = new Date(frequencyTimespan[0]);
+                var myDateEnd = new Date(frequencyTimespan[1]);
 
-            frequencyTimespan[0] = params.rvstart;
-            frequencyTimespan[1] = params.rvend;
+                frequencyEdit = newData.revisions.count / ((myDateEnd.getTime() - myDateStart.getTime()) / (1000 * 60 * 60 * 24 * 365));
+            }
 
-            //console.log(frequencyTimespan);
-            //da cambiare con calcolo frequenza: countRevision/(timespan)
+            if (parsedRequest.n) console.log('Page title: ' + chalk.green(newData.title) + ' | ' + 'n.Edit:' + ' (' + newData.revisions.count + ')');
+            if (parsedRequest.f) console.log('Page title: ' + chalk.green(newData.title) + ' | ' + 'frequencyEdit: ' + '~ ' + Math.round(frequencyEdit) + ' edit/year');
 
-            var myDateStart = new Date(frequencyTimespan[0]);
-            var myDateEnd = new Date(frequencyTimespan[1]);
-
-
-            let frequencyEdit = newData.revisions.count / ((myDateEnd.getTime() - myDateStart.getTime()) / (1000 * 60 * 60 * 24 * 365));
-
-
-
-            //console.log(filtraDisallieate);
-            console.log('Page title: ' + chalk.green(newData.title) + ' | ' + 'n.Edit: ' + ' (' + newData.revisions.count + ')' + ' | ' + ' frequencyEdit: ' + '(~ ' + Math.round(frequencyEdit) + ' edit/year)');
 
             //console.log(newData);*/
             resolve(newData);
-            //});
-
-            //});
-
-
-            //});
-
         });
     })
 };
@@ -286,10 +264,16 @@ var wrapperExport = (params) => {
             //console.log(params);
             //parseObject = { title: data.title, pageid: data.pageid, revid: data.revid, nLinks: data.links.length, nExtLinks: data.externallinks.length, nSections: data.sections.length, displayTitle: data.displaytitle }
             if (err) {
-                //console.log(err); //Error: Error returned by API: You don't have permission to view deleted revision text.
-                resolve([{
-                    pageid: 'error'
-                }]);
+                if (err === 'Error returned by API: You don\'t have permission to view deleted revision text.') {
+                    counterExport++;
+                    //console.log(err);
+                    resolve([{
+                        pageid: 'error'
+                    }]);
+                }
+                else {
+                    console.log(err);
+                }
             }
             else {
                 //console.log(data[0].links);
@@ -370,6 +354,10 @@ var resetCounterExport = () => {
     counterExport = 0;
 };
 
+var getCounterPages = () => {
+    return counterPages;
+};
+
 //module.exports.wrapperGetAllRevisions = wrapperGetAllRevisions;
 module.exports.wrapperGetParametricRevisions = wrapperGetParametricRevisions;
 module.exports.lastCounterValue = lastCounterValue;
@@ -383,3 +371,4 @@ module.exports.wrapperFirstRevision = wrapperFirstRevision;
 module.exports.wrapperGetPageId = wrapperGetPageId;
 module.exports.wrapperNameInference = wrapperNameInference;
 module.exports.wrapperInfoGetParametricRevisions = wrapperInfoGetParametricRevisions;
+module.exports.getCounterPages = getCounterPages;
