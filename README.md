@@ -31,6 +31,6 @@ flags: -m (modalità) , -h (host), -q (query), -t (timespan), -n (n. Edit), -f (
 esempio: `node --max-old-space-size=8192 path/monitor-wiki.js -m list -h en.wikipedia.org -t 20180101,20180130 -q category:emerging technologies -f 40 -e file.json`</br>
 
 ## Info
-flags: -m (modalità) , -f (file di input) , -t (timespan) , -d (file di download) , -i (indici delle pagine da comprendere nel downlaoad, i valori possibili sono: edit, views, comments, links, listlinks, 'all' (per comprenderli tutti).</br>
+flags: -m (modalità) , -f (file di input) , -t (timespan) , -d (file di download) , -i (indici delle pagine da comprendere nel downlaoad, i valori possibili sono: edit, views, comments, nlinks, listlinks, 'all' (per comprenderli tutti).</br>
 
 esempio: `node --max-old-space-size=8192 path/monitor-wiki.js -m info -f file.json -t 20180101,20180130 -d infoFile.json -i all`
