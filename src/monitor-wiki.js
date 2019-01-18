@@ -360,11 +360,11 @@ async function wrapperInfo(parsedRequest) { //da splittare caso erro e caso body
                                         finalExport.pages[page].revisions.history[revision].export['links'] = 'deleted revision';
                                         finalExport.pages[page].revisions.history[revision].export['externallinks'] = 'deleted revision';
                                     }
-                                    console.log(finalExport.pages[page].revisions.history[revision].export);
+                                    //console.log(finalExport.pages[page].revisions.history[revision].export);
                                 }
                             }
                         }
-                        console.log('tempo revid eliminate', ((new Date().getTime() - vediamoStart) / 1000));
+                        //console.log('tempo revid eliminate', ((new Date().getTime() - vediamoStart) / 1000));
                         /////FINE GESTIONE REVID ELIMINATE///////
                     }
 
