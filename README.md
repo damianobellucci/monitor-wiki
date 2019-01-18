@@ -1,5 +1,21 @@
 # monitor-wiki
 
+# Definizione dell'API:
+
+## Preview
+input: soglia di disallineamento (n. Edit oppure frequency Edit), timespan
+output: elenco pagine classificate
+
+## List
+Come Preview, ma con salvataggio file
+
+## Info
+input: output della modalità List (lista pagine classificate), timespan
+output: oggetto con informazioni sugli indici di ogni pagina 
+
+
+#Uso dell'API:
+
 ## Requisiti:
 <ul><li>Node.js v11.6.0</li></ul>
 
