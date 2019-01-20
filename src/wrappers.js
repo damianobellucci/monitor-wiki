@@ -40,25 +40,35 @@ var wrapperGetPagesByCategory = (params) => {
         client.getAllParametricData(params, async function (err, data) {
 
             if (err) {
-                //console.error(err);
-                return;
-                resolve([]);
-            }
-            if (data[0] === undefined) { console.log('Error (title): the category ' + params.gcmtitle + ' doesn\'t exist.'); return; };
-            //console.log(util.inspect(data, false, null, true /* enable colors */));
-            let allPages = [];
 
-            for (let index = 0; index < data.length; index++) {
-                for (el in data[index].pages) {
-                    //console.log({ title: data[index].pages[el].title, pageid: data[index].pages[el].pageid });
-                    allPages.push(data[index].pages[el].pageid);
+                if (err === 'Error returned by API: The category name you entered is not valid.' || err === 'Error returned by API: Bad title ":".') {
+                    //console.log('Error (input):', decodeURI(params.gcmtitle), 'is not a category.');
+                    resolve(params.gcmtitle);
                 }
-                //data[0].pages[Object.keys(data[0].pages)].revisions = data[0].pages[Object.keys(data[0].pages)].revisions.concat(data[index].pages[Object.keys(data[index].pages)].revisions)
+                else if (!err === 'Error returned by API: The category name you entered is not valid.') {
+                    console.log(err);
+                    return;
+                }
             }
-            //console.log(allPages);
-            //data = data[0].pages[Object.keys(data[0].pages)[0]];
+            else {
 
-            resolve(allPages);
+                if (data === undefined || data[0] === undefined) { console.log('Error (title): the category ' + decodeURI(params.gcmtitle) + ' doesn\'t exist.'); return; }
+
+                //console.log(util.inspect(data, false, null, true /* enable colors */));
+                let allPages = [];
+
+                for (let index = 0; index < data.length; index++) {
+                    for (el in data[index].pages) {
+                        //console.log({ title: data[index].pages[el].title, pageid: data[index].pages[el].pageid });
+                        allPages.push(data[index].pages[el].pageid);
+                    }
+                    //data[0].pages[Object.keys(data[0].pages)].revisions = data[0].pages[Object.keys(data[0].pages)].revisions.concat(data[index].pages[Object.keys(data[index].pages)].revisions)
+                }
+                //console.log(allPages);
+                //data = data[0].pages[Object.keys(data[0].pages)[0]];
+
+                resolve(allPages);
+            }
         });
     })
 };
@@ -68,7 +78,7 @@ var wrapperGetPageId = (params) => {
         client.getAllParametricData(params, function (err, data) {
             if (err) { console.log(err); return; }
             else {
-                if (data[0].pages.hasOwnProperty('-1')) { console.log('Error (title): the page ' + params.titles + ' doesn\'t exist.'); return; };
+                if (data[0].pages.hasOwnProperty('-1')) { console.log('Error (title): the page \'' + params.titles + '\' doesn\'t exist.'); return; };
                 resolve(data[0].pages[Object.keys(data[0].pages)[0]].pageid);
             }
         });
@@ -291,7 +301,7 @@ var wrapperExport = (params, indexPreferences) => {
                     data[0].links = { list: data[0].links };
                     data[0].externallinks = { list: data[0].externallinks }
                 }
-                
+
                 data[0].sections = data[0].sections.length;
 
                 //console.log(data);

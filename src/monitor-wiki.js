@@ -627,32 +627,66 @@ function wrapperPreview(parsedRequest) { //da splittare caso erro e caso body===
             //console.log(queryArray);
 
             //return;
-            for (el of queryArray) {
-                //console.log(el);
-                if (el.includes('Category:') || el.includes('category:')) {
-                    let categoryParams = {
-                        action: 'query',
-                        generator: 'categorymembers',
-                        gcmtitle: el,
-                        prop: 'info',
-                        cllimit: 'max',
-                        gcmlimit: 'max',
-                        format: 'json',
-                        gcmtype: 'page', /*|subcat*/
-                        gcmprop: 'ids|Ctitle|Csortkey|Ctype|Ctimestamp',
-                        /*gcmsort: 'timestamp',
-                        gcmstart: '2002-02-02T00:00:00.000Z',
-                        gcmend:'2005-02-02T00:00:00.000Z'*/
-                    };
-                    let allPagesOfCategory = await wrapper.wrapperGetPagesByCategory(categoryParams);
-                    allPagesQuery = allPagesQuery.concat(allPagesOfCategory);
-                }
-                else {
-                    allPagesQuery.push(await wrapper.wrapperGetPageId({ action: 'query', titles: el }));
-                }
 
-                //console.log(allPagesQuery);
+            //divido le pagine e le categorie. per sapere se una pagina è una categoria devo vedere se chiedendo la lista delle pagine mi da error. in quel caso è una pagina
+
+            allPagesOfCategory = [];
+
+            for (el of queryArray) {
+                let categoryParams = {
+                    action: 'query',
+                    generator: 'categorymembers',
+                    gcmtitle: el,
+                    prop: 'info',
+                    cllimit: 'max',
+                    gcmlimit: 'max',
+                    format: 'json',
+                    gcmtype: 'page', /*|subcat*/
+                    gcmprop: 'ids|Ctitle|Csortkey|Ctype|Ctimestamp',
+                    /*gcmsort: 'timestamp',
+                    gcmstart: '2002-02-02T00:00:00.000Z',
+                    gcmend:'2005-02-02T00:00:00.000Z'*/
+                };
+                allPagesOfCategory.push(wrapper.wrapperGetPagesByCategory(categoryParams));
+
             }
+            allPagesQuery = [];
+
+            allPagesQuery = await Promise.all(allPagesOfCategory);
+
+            let appArray = [];
+
+            for (el of allPagesQuery) {
+                appArray = appArray.concat(el);
+            }
+
+            allPagesQuery = appArray;
+
+
+
+            stringPages = allPagesQuery.filter((el) => {
+                return typeof el === 'string'
+            });
+
+            allPagesQuery = allPagesQuery.filter((el) => {
+                return typeof el !== 'string'
+            });
+
+
+            let promisesStringToId = [];
+            let resultStringToId = [];
+
+
+            for (el of stringPages) {
+                promisesStringToId.push(wrapper.wrapperGetPageId({ action: 'query', titles: el }));
+            }
+
+            resultStringToId = await Promise.all(promisesStringToId);
+
+            allPagesQuery = allPagesQuery.concat(resultStringToId);
+
+
+
             console.log('Fine retrieve pagine');
 
 
