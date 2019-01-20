@@ -736,8 +736,6 @@ function wrapperPreview(parsedRequest) { //da splittare caso erro e caso body===
 
             timespanArray[1] = timespanArray[1].substr(0, 4) + '-' + timespanArray[1].substr(4, 2) + '-' + timespanArray[1].substr(6, 2) + 'T23:59:59.999Z';
 
-
-
             if (new Date(timespanArray[0]) > new Date(timespanArray[1])) { console.log('Error (timespan): ' + answers2.timespan + ' is an invalid timespan.'); return };
 
             queueFirstRevisions = queueFirstRevisions.filter((el) => {

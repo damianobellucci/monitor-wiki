@@ -363,11 +363,31 @@ var wrapperTalks = (params3, utilParams) => {
 
 var wrapperViews = (params) => {
     return new Promise((resolve, reject) => {
+        //console.log(params.start, params.end);
+
+        //riscalo il timespan di un giorno
+        params.start = params.start.substr(0, 4) + '-' + params.start.substr(4, 2) + '-' + params.start.substr(6, 2) + 'T00:00:00.000Z';
+        params.start = new Date(params.start).getTime() + 1000 * 60 * 60 * 24;
+        params.start = new Date(params.start);
+        params.start = params.start.toISOString().substring(0, 10);
+        //console.log(params.start);
+        params.start = params.start.substr(0, 4) + params.start.substr(5, 2) + params.start.substr(8, 2);
+
+        params.end = params.end.substr(0, 4) + '-' + params.end.substr(4, 2) + '-' + params.end.substr(6, 2) + 'T00:00:00.000Z';
+        params.end = new Date(params.end).getTime() + 1000 * 60 * 60 * 24;
+        params.end = new Date(params.end);
+        params.end = params.end.toISOString().substring(0, 10);
+        //console.log(params.end);
+        params.end = params.end.substr(0, 4) + params.end.substr(5, 2) + params.end.substr(8, 2);
+
+
+        //console.log(params.start, params.end);
 
         let urlRequest = 'https://wikimedia.org/api/rest_v1/metrics/pageviews/per-article/' + params.server + '/all-access/all-agents/' + encodeURI(params.pageTitle) + '/daily/' + params.start + '/' + params.end;
 
         request(urlRequest, { json: true }, (err, res, body) => {
-            //if (err) console.log(params.pageTitle, err);
+            //console.log(body);
+            if (err) console.log(params.pageTitle, err);
             if (err || body.title === 'Not found.') { /*return*/ /*console.log(params.pageTitle, err)*/;
                 resolve({ title: params.pageTitle, pageid: params.pageid, dailyViews: 'Not Available' });
             }
@@ -378,8 +398,17 @@ var wrapperViews = (params) => {
                     delete (body.items[el].granularity);
                     delete (body.items[el].access);
                     delete (body.items[el].agent);
-                    body.items[el].timestamp = body.items[el].timestamp.slice(0, body.items[el].timestamp.length - 2);
+
+                    body.items[el].timestamp = body.items[el].timestamp.substr(0, 4) + '-' + body.items[el].timestamp.substr(4, 2) + '-' + body.items[el].timestamp.substr(6, 2) + 'T00:00:00.000Z';
+                    body.items[el].timestamp = new Date(body.items[el].timestamp).getTime() - 1000 * 60 * 60 * 24;
+                    body.items[el].timestamp = new Date(body.items[el].timestamp);
+                    body.items[el].timestamp = body.items[el].timestamp.toISOString().substring(0, 10);
+                    body.items[el].timestamp = body.items[el].timestamp.substr(0, 4) + body.items[el].timestamp.substr(5, 2) + body.items[el].timestamp.substr(8, 2);
+
                 }
+                console.log(body);
+
+
 
             } resolve({ title: params.pageTitle, pageid: params.pageid, dailyViews: body.items });
         });
