@@ -52,7 +52,7 @@ var wrapperGetPagesByCategory = (params) => {
             }
             else {
 
-                if (data === undefined || data[0] === undefined) { console.log('Error (title): the category ' + decodeURI(params.gcmtitle) + ' doesn\'t exist.'); return; }
+                if (data === undefined || data[0] === undefined) { console.log('Error (title): the category \'' + decodeURI(params.gcmtitle) + '\' doesn\'t exist.'); return; }
 
                 //console.log(util.inspect(data, false, null, true /* enable colors */));
                 let allPages = [];
