@@ -38,7 +38,6 @@ var wrapperGetPagesByCategory = (params) => {
     return new Promise((resolve, reject) => {
 
         client.getAllParametricData(params, async function (err, data) {
-
             if (err) {
                 if (err === 'Error returned by API: The category name you entered is not valid.' || err.includes('Bad title')) {
                     //console.log('Error (input):', decodeURI(params.gcmtitle), 'is not a category.');
@@ -59,8 +58,7 @@ var wrapperGetPagesByCategory = (params) => {
 
             }
             else {
-
-                if (data === undefined || data[0] === undefined) { console.log('Error (title): the category \'' + decodeURI(params.gcmtitle) + '\' doesn\'t exist.'); return; }
+                if (data === undefined || data[0] === undefined) { console.log('Error (title): the category \'' + decodeURI(params.gcmtitle) + '\' doesn\'t exist or doesn\'t contain any page.'); return; }                
 
                 //console.log(util.inspect(data, false, null, true /* enable colors */));
                 let allPages = [];
@@ -406,7 +404,7 @@ var wrapperViews = (params) => {
                     body.items[el].timestamp = body.items[el].timestamp.substr(0, 4) + body.items[el].timestamp.substr(5, 2) + body.items[el].timestamp.substr(8, 2);
 
                 }
-                console.log(body);
+                //console.log(body);
 
 
 

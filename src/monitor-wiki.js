@@ -586,11 +586,7 @@ function wrapperPreview(parsedRequest) { //da splittare caso erro e caso body===
 
             console.log('Inizio retrieve pagine');
 
-
             let inferencedQuery = [];
-
-
-            //console.log(queryArray);
 
             for (el of queryArray) {
                 let result = await wrapper.wrapperNameInference(encodeURI(el), mediaWikiServer);
@@ -599,8 +595,6 @@ function wrapperPreview(parsedRequest) { //da splittare caso erro e caso body===
                 inferencedQuery = inferencedQuery.concat(result);
 
             }
-            //console.log(inferencedQuery);
-
 
             suggestionQueue = [];
 
@@ -641,7 +635,7 @@ function wrapperPreview(parsedRequest) { //da splittare caso erro e caso body===
                     cllimit: 'max',
                     gcmlimit: 'max',
                     format: 'json',
-                    gcmtype: 'page', /*|subcat*/
+                    gcmtype: 'page',/*|subcat*/
                     gcmprop: 'ids|Ctitle|Csortkey|Ctype|Ctimestamp',
                     /*gcmsort: 'timestamp',
                     gcmstart: '2002-02-02T00:00:00.000Z',
