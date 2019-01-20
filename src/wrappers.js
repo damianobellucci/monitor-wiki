@@ -40,8 +40,7 @@ var wrapperGetPagesByCategory = (params) => {
         client.getAllParametricData(params, async function (err, data) {
 
             if (err) {
-
-                if (err === 'Error returned by API: The category name you entered is not valid.' || err === 'Error returned by API: Bad title ":".') {
+                if (err === 'Error returned by API: The category name you entered is not valid.' || err.includes('Bad title')) {
                     //console.log('Error (input):', decodeURI(params.gcmtitle), 'is not a category.');
                     resolve(params.gcmtitle);
                 }
@@ -49,6 +48,15 @@ var wrapperGetPagesByCategory = (params) => {
                     console.log(err);
                     return;
                 }
+                else if (err === 'Error returned by API: Namespace doesn\'t allow actual pages.') {
+                    console.log('Error (input)', 'get infos for the page \'' + decodeURI(params.gcmtitle) + '\' is not allowed.')
+                    return;
+                }
+                else {
+                    console.log(err);
+                    return;
+                }
+
             }
             else {
 
@@ -78,7 +86,7 @@ var wrapperGetPageId = (params) => {
         client.getAllParametricData(params, function (err, data) {
             if (err) { console.log(err); return; }
             else {
-                if (data[0].pages.hasOwnProperty('-1')) { console.log('Error (title): the page \'' + params.titles + '\' doesn\'t exist.'); return; };
+                if (data[0].pages.hasOwnProperty('-1')) { console.log('Error (title): the page \'' + decodeURI(params.titles) + '\' doesn\'t exist.'); return; };
                 resolve(data[0].pages[Object.keys(data[0].pages)[0]].pageid);
             }
         });
