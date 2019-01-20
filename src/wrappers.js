@@ -367,6 +367,7 @@ var wrapperViews = (params) => {
         let urlRequest = 'https://wikimedia.org/api/rest_v1/metrics/pageviews/per-article/' + params.server + '/all-access/all-agents/' + encodeURI(params.pageTitle) + '/daily/' + params.start + '/' + params.end;
 
         request(urlRequest, { json: true }, (err, res, body) => {
+            //if (err) console.log(params.pageTitle, err);
             if (err || body.title === 'Not found.') { /*return*/ /*console.log(params.pageTitle, err)*/;
                 resolve({ title: params.pageTitle, pageid: params.pageid, dailyViews: 'Not Available' });
             }
