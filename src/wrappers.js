@@ -1,12 +1,7 @@
-var counter = 0;
-var counterMaggioriCinquecento = 0;
-var counterPages = 0;
-const util = require('util');
 const request = require('request');
-var counterExport = 0;
 const chalk = require('chalk');
-var conteggioFirstRevision = 0;
 monitorWiki = require('./monitor-wiki.js');
+var counterExport = 0;
 
 var wrapperNameInference = (params) => { //da splittare caso erro e caso body===undefined
     return new Promise((resolve, reject) => {
@@ -23,7 +18,7 @@ var wrapperNameInference = (params) => { //da splittare caso erro e caso body===
                         //console.log(body.query);
                         resolve('suggestion:' + body.query.searchinfo.suggestion);
                     }
-                    else resolve(title);
+                    else resolve(params.string);
 
                 }
                 //console.log(body.query.search[0].title);
@@ -105,7 +100,6 @@ var wrapperFirstRevision = (title, server) => { //da splittare caso erro e caso 
             else {
                 body.query.pages[Object.keys(body.query.pages)[0]].firstRevision = body.query.pages[Object.keys(body.query.pages)[0]].revisions[0].timestamp;
                 delete body.query.pages[Object.keys(body.query.pages)[0]].revisions;
-                conteggioFirstRevision += 1;
                 //console.log(conteggioFirstRevision);
                 resolve(body.query.pages[Object.keys(body.query.pages)[0]]);
             }
@@ -187,47 +181,6 @@ var wrapperGetParametricRevisions = (params) => {
         });
     })
 };
-
-var wrapperInfoGetParametricRevisions = (params) => {
-    return new Promise((resolve, reject) => {
-
-        client.getAllParametricData(params.query, function (err, data) {
-            if (err) {
-                conteggiamoError += 1;
-                return;
-            }
-
-            if (data.length == 1) {
-                data = data[0].pages[Object.keys(data[0].pages)[0]];
-            }
-            else {
-                for (let index = 1; index < data.length; index++) {
-                    data[0].pages[Object.keys(data[0].pages)].revisions = data[0].pages[Object.keys(data[0].pages)].revisions.concat(data[index].pages[Object.keys(data[index].pages)].revisions)
-                }
-                data = data[0].pages[Object.keys(data[0].pages)[0]];
-            }
-            if (!data.hasOwnProperty('revisions')) data.revisions = [];
-            let numberOfRevisions = data.revisions.length;
-
-            var newData = {};
-
-            newData.pageid = data.pageid;
-            newData.title = data.title;
-            newData.revisions = {};
-
-            newData.revisions.history = data.revisions;
-            newData.revisions.count = data.revisions.length;
-
-            counter += numberOfRevisions;
-            counterPages += 1;
-
-            console.log('Page title: ' + chalk.green(newData.title));
-
-            resolve(newData);
-        });
-    })
-};
-
 
 var wrapperExport = (params) => {
     return new Promise((resolve, reject) => {
@@ -369,32 +322,12 @@ var wrapperViews = (params) => {
     });
 };
 
-var lastCounterValue = () => {
-    return counter;
-};
-var resetCounterValue = () => {
-    counter = 0;
-};
-
-var resetCounterExport = () => {
-    counterExport = 0;
-};
-
-var getCounterPages = () => {
-    return counterPages;
-};
-
 //module.exports.wrapperGetAllRevisions = wrapperGetAllRevisions;
 module.exports.wrapperGetParametricRevisions = wrapperGetParametricRevisions;
-module.exports.lastCounterValue = lastCounterValue;
 module.exports.wrapperGetPagesByCategory = wrapperGetPagesByCategory;
 module.exports.wrapperExport = wrapperExport;
-module.exports.resetCounterValue = resetCounterValue;
-module.exports.resetCounterExport = resetCounterExport;
 module.exports.wrapperViews = wrapperViews;
 module.exports.wrapperTalks = wrapperTalks;
 module.exports.wrapperFirstRevision = wrapperFirstRevision;
 module.exports.wrapperGetPageId = wrapperGetPageId;
 module.exports.wrapperNameInference = wrapperNameInference;
-module.exports.wrapperInfoGetParametricRevisions = wrapperInfoGetParametricRevisions;
-module.exports.getCounterPages = getCounterPages;

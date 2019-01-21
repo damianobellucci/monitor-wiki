@@ -1,11 +1,5 @@
-var bot = require('nodemw');
 var wrapper = require('./wrappers.js');
 var _ = require('underscore');
-var fs = require('fs');
-const jsonfile = require('jsonfile');
-var counterPages = 0;
-var counterRevisions = 0;
-
 
 function parseRequest(processArgv) {
     let arguments = processArgv.slice(2);
@@ -272,6 +266,7 @@ function getIndexFlagPreferences(parsedRequest) {
         else {
             if (parsedRequest.i.includes('edit')) indexPreferences.edit = true;
             if (parsedRequest.i.includes('views')) indexPreferences.views = true;
+            if (parsedRequest.i.includes('comments')) indexPreferences.talks = true;
             if (parsedRequest.i.includes('nlinks')) indexPreferences.nlinks = true;
             if (parsedRequest.i.includes('listlinks')) indexPreferences.listlinks = true;
 
@@ -280,10 +275,101 @@ function getIndexFlagPreferences(parsedRequest) {
     return indexPreferences;
 }
 
+async function getPageViews(finalExport, timespanArray2, resultPreview) {
+    return new Promise(async (resolve, reject) => {
+        let queueViews = [];
+        let resultViews = [];
+
+        console.log('Inizio retrieve views relative alle pagine');
+
+        //console.log(Object.keys(finalExport.pages).length);
+        if (Object.keys(finalExport.pages).length > 500) {
+            //ottengo array con tutte le pagine
+
+
+            let arrayOfPagesId = [];
+            for (elId in finalExport.pages) {
+                arrayOfPagesId.push(elId);
+            }
+            //console.log('\narrayOfPagesId',arrayOfPagesId.length);
+
+            while (arrayOfPagesId.length > 0) {
+                //console.log('\narrayOfPagesId', arrayOfPagesId.length);
+
+                conta += 1;
+                //console.log(conta);
+                queueViews = [];
+                chunkedArrayOfPagesId = arrayOfPagesId.slice(0, 25);
+                //wrappo
+                for (elIdOfChuncked of chunkedArrayOfPagesId) {
+                    queueViews.push(wrapper.wrapperViews({
+                        pageTitle: finalExport.pages[elIdOfChuncked].title,
+                        pageid: finalExport.pages[elIdOfChuncked].pageid,
+                        start: timespanArray2[0],
+                        end: timespanArray2[1],
+                        server: resultPreview.query.h
+                    }));
+                }
+                arrayOfPagesId = arrayOfPagesId.slice(26, arrayOfPagesId.length);
+                resultViews = resultViews.concat(await Promise.all(queueViews));
+
+            }
+
+        } else {
+            for (elPageId in finalExport.pages) {
+                //console.log(finalExport.pages[elPageId].title);
+
+                //console.log(queryArray[0],queryArray[1]);
+                queueViews.push(wrapper.wrapperViews({
+                    pageTitle: finalExport.pages[elPageId].title,
+                    pageid: finalExport.pages[elPageId].pageid,
+                    start: timespanArray2[0],
+                    end: timespanArray2[1],
+                    server: resultPreview.query.h
+                }));
+            }
+            resultViews = await Promise.all(queueViews);
+        }
+        console.log('Fine retrieve views relative alle pagine');
+        resolve(resultViews);
+    });
+}
+
+async function getPageTalks(finalExport, timespanArray) {
+    return new Promise(async (resolve, reject) => {
+        queueTalks = [];
+        console.log('Inizio retrieve talks delle pagine');
+        for (elPageId in finalExport.pages) {
+            queueTalks.push(wrapper.wrapperTalks(
+                {
+                    action: 'query',
+                    prop: 'revisions',
+                    rvprop: ['ids', 'timestamp', 'size', 'flags', 'comment', 'user'].join('|'),
+                    rvdir: 'newer', // order by timestamp ascz
+                    rvlimit: 'max',
+                    titles: 'Talk:' + finalExport.pages[elPageId].title,
+                    rvstart: timespanArray[0],
+                    rvend: timespanArray[1]
+                }
+                ,
+                finalExport.pages[elPageId].pageid
+            ));
+        }
+        let resultTalks = await Promise.all(queueTalks);
+        console.log('Fine retrieve talks delle pagine');
+
+        resolve(resultTalks);
+    });
+}
+
+
 module.exports.parseRequest = parseRequest;
 module.exports.searchPages = searchPages;
 module.exports.searchFirstRevision = searchFirstRevision;
 module.exports.searchRevisions = searchRevisions;
 module.exports.getIndexFlagPreferences = getIndexFlagPreferences;
 module.exports.getPageExport = getPageExport;
+module.exports.getPageViews = getPageViews;
+module.exports.getPageTalks = getPageTalks;
+
 
