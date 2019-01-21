@@ -94,7 +94,6 @@ var wrapperGetPageId = (params) => {
 
 var wrapperFirstRevision = (title, server) => { //da splittare caso erro e caso body===undefined
     return new Promise((resolve, reject) => {
-
         let urlRequest = 'https://' + server + '/w/api.php?action=query&prop=revisions&rvlimit=1&rvprop=timestamp&rvdir=newer&pageids=' + title + '&format=json';
         request(urlRequest, { json: true }, (err, res, body) => {
             //console.log(title);
@@ -135,7 +134,6 @@ var wrapperGetParametricRevisions = (params) => {
             }
 
             if (!data.hasOwnProperty('revisions')) data.revisions = [];
-            let numberOfRevisions = data.revisions.length;
 
             var newData = {};
             newData.pageid = data.pageid;
@@ -144,58 +142,56 @@ var wrapperGetParametricRevisions = (params) => {
             newData.revisions.history = data.revisions;
             newData.revisions.count = data.revisions.length;
 
-            counter += numberOfRevisions;
-            counterPages += 1;
-
             //taggo come disallineata
-            newData.misalignment = {};
-            let misalignmentNeditLog = [];
-            let misalignmentFrequencyLog = [];
+            if (params.parsedRequest.m === 'preview' || params.parsedRequest.m === 'list') {
+                newData.misalignment = {};
+                let misalignmentNeditLog = [];
+                let misalignmentFrequencyLog = [];
 
-            if (params.parsedRequest.n) {
-                if (newData.revisions.count >= params.parsedRequest.n) {
-                    newData.misalignment.nEdit = true;
+                if (params.parsedRequest.n) {
+                    if (newData.revisions.count >= params.parsedRequest.n) {
+                        newData.misalignment.nEdit = true;
+                    }
+                    else newData.misalignment.nEdit = false;
+
+                    misalignmentNeditLog = newData.misalignment.nEdit;
+                    if (newData.misalignment.nEdit) misalignmentNeditLog = chalk.red(newData.misalignment.nEdit);
                 }
-                else newData.misalignment.nEdit = false;
 
-                misalignmentNeditLog = newData.misalignment.nEdit;
-                if (newData.misalignment.nEdit) misalignmentNeditLog = chalk.red(newData.misalignment.nEdit);
-            }
+                let frequencyEdit = [];
+                if (params.parsedRequest.f) {
 
-            let frequencyEdit = [];
-            if (params.parsedRequest.f) {
+                    frequencyTimespan = [];
+                    frequencyTimespan[0] = params.query.rvstart;
+                    frequencyTimespan[1] = params.query.rvend;
+                    var myDateStart = new Date(frequencyTimespan[0]);
+                    var myDateEnd = new Date(frequencyTimespan[1]);
 
-                frequencyTimespan = [];
-                frequencyTimespan[0] = params.query.rvstart;
-                frequencyTimespan[1] = params.query.rvend;
-                var myDateStart = new Date(frequencyTimespan[0]);
-                var myDateEnd = new Date(frequencyTimespan[1]);
+                    frequencyEdit = newData.revisions.count / ((myDateEnd.getTime() - myDateStart.getTime()) / (1000 * 60 * 60 * 24 * 365));
 
-                frequencyEdit = newData.revisions.count / ((myDateEnd.getTime() - myDateStart.getTime()) / (1000 * 60 * 60 * 24 * 365));
+                    if (frequencyEdit >= params.parsedRequest.f) {
+                        newData.misalignment.frequencyEdit = true;
+                    }
+                    else newData.misalignment.frequencyEdit = false;
 
-                if (frequencyEdit >= params.parsedRequest.f) {
-                    newData.misalignment.frequencyEdit = true;
+                    misalignmentFrequencyLog = newData.misalignment.frequencyEdit;
+
+                    if (newData.misalignment.frequencyEdit) misalignmentFrequencyLog = chalk.red(newData.misalignment.frequencyEdit);
                 }
-                else newData.misalignment.frequencyEdit = false;
-
-                misalignmentFrequencyLog = newData.misalignment.frequencyEdit;
-
-                if (newData.misalignment.frequencyEdit) misalignmentFrequencyLog = chalk.red(newData.misalignment.frequencyEdit);
+                if (params.parsedRequest.n) { if (params.parsedRequest.hasOwnProperty('a') || (misalignmentNeditLog)) console.log('Page title: ' + chalk.green(newData.title) + ' | ' + 'misalignement n.Edit: ' + misalignmentNeditLog + ' (' + newData.revisions.count + ')'); }
+                if (params.parsedRequest.f) { if (params.parsedRequest.hasOwnProperty('a') || (misalignmentFrequencyLog)) console.log('Page title: ' + chalk.green(newData.title) + ' | ' + 'misalignement frequency Edit: ' + misalignmentFrequencyLog, '(~ ' + Math.round(frequencyEdit) + ' edit/year)'); }
+            } else {
+                console.log('Page title: ' + chalk.green(newData.title));
             }
-
-
-            if (params.parsedRequest.n) { if (params.parsedRequest.hasOwnProperty('a') || (misalignmentNeditLog)) console.log('Page title: ' + chalk.green(newData.title) + ' | ' + 'misalignement n.Edit: ' + misalignmentNeditLog + ' (' + newData.revisions.count + ')'); }
-            if (params.parsedRequest.f) { if (params.parsedRequest.hasOwnProperty('a') || (misalignmentFrequencyLog)) console.log('Page title: ' + chalk.green(newData.title) + ' | ' + 'misalignement frequency Edit: ' + misalignmentFrequencyLog, '(~ ' + Math.round(frequencyEdit) + ' edit/year)'); }
-
             resolve(newData);
         });
     })
 };
 
-var wrapperInfoGetParametricRevisions = (params, params2, params3, timespan, filterCriteria, filtraDisallieate, parsedRequest) => {
+var wrapperInfoGetParametricRevisions = (params) => {
     return new Promise((resolve, reject) => {
 
-        client.getAllParametricData(params, function (err, data) {
+        client.getAllParametricData(params.query, function (err, data) {
             if (err) {
                 conteggiamoError += 1;
                 return;
@@ -221,40 +217,22 @@ var wrapperInfoGetParametricRevisions = (params, params2, params3, timespan, fil
 
             newData.revisions.history = data.revisions;
             newData.revisions.count = data.revisions.length;
-            //console.log(newData.revisions);
 
             counter += numberOfRevisions;
             counterPages += 1;
 
-            //taggo come disallineata
-            let frequencyEdit;
-
-            if (parsedRequest.f) {
-                frequencyTimespan = [];
-
-                frequencyTimespan[0] = params.rvstart;
-                frequencyTimespan[1] = params.rvend;
-
-                var myDateStart = new Date(frequencyTimespan[0]);
-                var myDateEnd = new Date(frequencyTimespan[1]);
-
-                frequencyEdit = newData.revisions.count / ((myDateEnd.getTime() - myDateStart.getTime()) / (1000 * 60 * 60 * 24 * 365));
-            }
-
-            //if (parsedRequest.n) console.log('Page title: ' + chalk.green(newData.title) /* + ' | ' + 'n.Edit:' + ' (' + newData.revisions.count + ')'*/);
-            //if (parsedRequest.f) console.log('Page title: ' + chalk.green(newData.title) /* +' | ' + 'frequencyEdit: ' + '~ ' + Math.round(frequencyEdit) + ' edit/year'*/);
             console.log('Page title: ' + chalk.green(newData.title));
 
-            //console.log(newData);*/
             resolve(newData);
         });
     })
 };
 
-var wrapperExport = (params, indexPreferences) => {
+
+var wrapperExport = (params) => {
     return new Promise((resolve, reject) => {
 
-        client.getAllParametricData(params, function (err, data) {
+        client.getAllParametricData(params.query, function (err, data) {
             //console.log(params);
             //parseObject = { title: data.title, pageid: data.pageid, revid: data.revid, nLinks: data.links.length, nExtLinks: data.externallinks.length, nSections: data.sections.length, displayTitle: data.displaytitle }
             if (err) {
@@ -272,15 +250,15 @@ var wrapperExport = (params, indexPreferences) => {
             else {
 
 
-                if (indexPreferences.nlinks && indexPreferences.listlinks) {
+                if (params.indexPreferences.nlinks && params.indexPreferences.listlinks) {
 
                     data[0].links = { count: data[0].links.length, list: data[0].links };
                     data[0].externallinks = { count: data[0].externallinks.length, list: data[0].externallinks }
-                } else if (indexPreferences.nlinks) {
+                } else if (params.indexPreferences.nlinks) {
 
                     data[0].links = { count: data[0].links.length };
                     data[0].externallinks = { count: data[0].externallinks.length }
-                } else if (indexPreferences.listlinks) {
+                } else if (params.indexPreferences.listlinks) {
 
                     data[0].links = { list: data[0].links };
                     data[0].externallinks = { list: data[0].externallinks }
@@ -294,7 +272,7 @@ var wrapperExport = (params, indexPreferences) => {
                 //console.log(counterExport);
 
 
-                process.stdout.write("Downloading " + counterExport + "/" + monitorWiki.conteggioRevisioni() + ": " + Math.round(counterExport * 100 / monitorWiki.conteggioRevisioni()) + "%" + "\r");
+                process.stdout.write("Downloading " + counterExport + "/" + params.counterRevisions + ": " + Math.round(counterExport * 100 / params.counterRevisions) + "%" + "\r");
                 //console.log(data);
                 resolve(data);
             }

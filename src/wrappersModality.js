@@ -47,7 +47,11 @@ function Preview(parsedRequest) { //da splittare caso erro e caso body===undefin
             ///////////////////////////////////////// RICERCA DATA CREAZIONE PAGINE /////////////////////////////////////////
             //Per determinare se una pagina è stata creata all'interno del timespan (flag -t) e quindi includerlo
             //nella ricerca, ho bisogno della data di creazione della pagina
-            allPagesQuery = await Promise.resolve(functions.searchFirstRevision(parsedRequest, timespanArray, allPagesQuery));
+            let queueFirstRevisions = await Promise.resolve(functions.searchFirstRevision(parsedRequest, timespanArray, allPagesQuery));
+            allPagesQuery = []
+            for (el of queueFirstRevisions) {
+                allPagesQuery.push(el.title);
+            }
             ///////////////////////////////////////// FINE DATA CREAZIONE PAGINE /////////////////////////////////////////
 
             ///////////////////////////////////////// RICERCA REVISIONI PAGINE /////////////////////////////////////////

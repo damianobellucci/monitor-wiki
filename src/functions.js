@@ -167,13 +167,7 @@ async function searchFirstRevision(parsedRequest, timespanArray, allPagesQuery) 
             return new Date(el.firstRevision).getTime() <= new Date(timespanArray[1]).getTime();
         });
 
-        allPagesQuery = []
-
-        for (el of queueFirstRevisions) {
-            allPagesQuery.push(el.title);
-        }
-
-        resolve(allPagesQuery);
+        resolve(queueFirstRevisions);
     });
 }
 
@@ -206,7 +200,88 @@ async function searchRevisions(parsedRequest, timespanArray, allPagesQuery) {
     });
 }
 
+async function getPageExport(result, indexPreferences, counterRevisions) {
+    return new Promise(async (resolve, reject) => {
+
+        let exportQueue = [];
+
+        for (el in result) {
+            for (rev of result[el].revisions.history) {
+                let params = {
+                    query: {
+                        action: "parse",
+                        format: "json",
+                        oldid: rev.revid,
+                        prop: ((indexPreferences.nlinks || indexPreferences.listlinks) ? "links|externallinks" : "") + "|sections|revid|displaytitle"
+                    },
+                    indexPreferences: indexPreferences,
+                    counterRevisions: counterRevisions
+                }
+                exportQueue.push(wrapper.wrapperExport(params));
+            }
+        }
+        let resultExport = await Promise.all(exportQueue);
+        console.log('\nFine retrieve informazioni delle revisioni');
+
+        let newResultExport = [];
+        //console.log(resultExport);
+
+        for (el of resultExport) {
+            try {
+                newResultExport.push(el[0]);
+            } catch (e) {
+                //console.log(e, el);
+            }
+        }
+        //console.log(newResultExport);
+        var grouped = _.groupBy(newResultExport, function (revision) {
+            return revision.pageid;
+        });
+
+        delete grouped.error;
+        //console.log(grouped);
+
+        for (el in grouped) {
+            for (page in result) {
+                if (el == result[page].pageid) {
+                    for (elemento in result[page].revisions.history) {
+                        //console.log(grouped[el].revid, result[page].revisions.history[elemento].revid);
+                        for (revisione in grouped[el])
+                            if (grouped[el][revisione].revid == result[page].revisions.history[elemento].revid) {
+                                //console.log(grouped[el][revisione].revid, result[page].revisions.history[elemento].revid);
+                                result[page].revisions.history[elemento].export = grouped[el][revisione];
+                            }
+                    }
+                    //result[page].export = grouped[el];
+                }
+            }
+        }
+        resolve(result);
+    });
+}
+
+function getIndexFlagPreferences(parsedRequest) {
+    let indexPreferences = {};
+
+    if (parsedRequest.hasOwnProperty('i')) {
+        if (parsedRequest.i.includes('all')) {
+            indexPreferences = { edit: true, views: true, talks: true, nlinks: true, listlinks: true };
+        }
+        else {
+            if (parsedRequest.i.includes('edit')) indexPreferences.edit = true;
+            if (parsedRequest.i.includes('views')) indexPreferences.views = true;
+            if (parsedRequest.i.includes('nlinks')) indexPreferences.nlinks = true;
+            if (parsedRequest.i.includes('listlinks')) indexPreferences.listlinks = true;
+
+        }
+    }
+    return indexPreferences;
+}
+
 module.exports.parseRequest = parseRequest;
 module.exports.searchPages = searchPages;
 module.exports.searchFirstRevision = searchFirstRevision;
 module.exports.searchRevisions = searchRevisions;
+module.exports.getIndexFlagPreferences = getIndexFlagPreferences;
+module.exports.getPageExport = getPageExport;
+
