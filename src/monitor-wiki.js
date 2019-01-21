@@ -18,10 +18,7 @@ var wrappersModality = require('./wrappersModality.js');
         if (parsedRequest.m === 'preview') {
             if (parsedRequest.n && parsedRequest.f) { console.log('Error (input): only one of n.Edit or frequencyEdit is required.'); return; }
             let resultPreview = await wrappersModality.Preview(parsedRequest);
-            //console.log('ciao', resultPreview);
-            //console.log('Time elapsed ' + (resultPreview.timer) / 1000 + 's', '|', resultPreview.numberOfPages.misaligned, 'misaligned pages of', resultPreview.numberOfPages.all, 'total pages', '|', resultPreview.revCounter + " revisions");
             console.log('Time elapsed ' + (resultPreview.timer) / 1000 + 's', '|', resultPreview.numberOfPages.misaligned, 'misaligned pages', '/', resultPreview.numberOfPages.all, 'total pages', '|', resultPreview.revCounter + " revisions");
-
         }
         else if (parsedRequest.m === 'list') {
             if (!parsedRequest.n && !parsedRequest.f) { console.log('Error (input): n.Edit or frequencyEdit is required.'); return; }
@@ -52,9 +49,6 @@ var wrappersModality = require('./wrappersModality.js');
         else if (parsedRequest.m === 'info') {
             let resultInfo = await wrapperInfo(parsedRequest);
             console.log('Time elapsed for export: ' + resultInfo.timer / 1000 + 's');
-
-
-
         }
     }
     catch (e) {

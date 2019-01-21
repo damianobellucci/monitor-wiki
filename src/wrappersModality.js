@@ -7,7 +7,7 @@ var counterPages = 0;
 var counterRevisions = 0;
 var functions = require('./functions.js');
 
-async function Preview(parsedRequest) { //da splittare caso erro e caso body===undefined
+function Preview(parsedRequest) { //da splittare caso erro e caso body===undefined
     return new Promise((resolve, reject) => {
 
         let info = {
@@ -33,7 +33,7 @@ async function Preview(parsedRequest) { //da splittare caso erro e caso body===u
                 console.log(error);
                 return;
             }
-            
+
 
             ///////////////////////////////////////// RICERCA PAGINE /////////////////////////////////////////
             //Estrapolo i corrispondenti id delle pagine che soddisfano la query di ricerca (flag -q)
