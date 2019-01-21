@@ -8,10 +8,11 @@ const chalk = require('chalk');
 var conteggioFirstRevision = 0;
 monitorWiki = require('./monitor-wiki.js');
 
-var wrapperNameInference = (title, server) => { //da splittare caso erro e caso body===undefined
+var wrapperNameInference = (params) => { //da splittare caso erro e caso body===undefined
     return new Promise((resolve, reject) => {
-        //console.log(title, server);
-        let urlRequest = 'https://' + server + '/w/api.php?action=query&list=search&srsearch=' + title.replace('_', '%20') + '&srlimit=1&format=json';
+
+        let urlRequest = 'https://' + params.host + '/w/api.php?action=query&list=search&srsearch=' + params.string.replace('_', '%20') + '&srlimit=1&format=json';
+
         request(urlRequest, { json: true }, (err, res, body) => {
             if (err) { console.log(title, err); return; }
             else {
@@ -58,7 +59,7 @@ var wrapperGetPagesByCategory = (params) => {
 
             }
             else {
-                if (data === undefined || data[0] === undefined) { console.log('Error (title): the category \'' + decodeURI(params.gcmtitle) + '\' doesn\'t exist or doesn\'t contain any page.'); return; }                
+                if (data === undefined || data[0] === undefined) { console.log('Error (title): the category \'' + decodeURI(params.gcmtitle) + '\' doesn\'t exist or doesn\'t contain any page.'); return; }
 
                 //console.log(util.inspect(data, false, null, true /* enable colors */));
                 let allPages = [];
@@ -98,7 +99,10 @@ var wrapperFirstRevision = (title, server) => { //da splittare caso erro e caso 
         request(urlRequest, { json: true }, (err, res, body) => {
             //console.log(title);
             if (err) { console.log(title, err); return; }
-            else if (body === undefined || body.query === undefined) { resolve({ error: '' }); }
+
+            //raramente succede che la richiesta venga soddisfatta ma il body sia undefined, filtro quindi questi casi e eslcudo le pagine corrispondenti
+            else if (body === undefined || body.query === undefined) resolve({ error: '' });
+
             else {
                 body.query.pages[Object.keys(body.query.pages)[0]].firstRevision = body.query.pages[Object.keys(body.query.pages)[0]].revisions[0].timestamp;
                 delete body.query.pages[Object.keys(body.query.pages)[0]].revisions;
@@ -111,26 +115,15 @@ var wrapperFirstRevision = (title, server) => { //da splittare caso erro e caso 
     });
 };
 
-var conteggiamoError = 0;
-var conteggiamoBuonFine = 0;
-
-var wrapperGetParametricRevisions = (params, params2, params3, timespan, filterCriteria, filtraDisallieate, parsedRequest) => {
+var wrapperGetParametricRevisions = (params) => {
     return new Promise((resolve, reject) => {
 
-        client.getAllParametricData(params, function (err, data) {
-            // error handling
+        client.getAllParametricData(params.query, function (err, data) {
             if (err) {
-                conteggiamoError += 1;
-                //console.log('error',conteggiamoError,'|','BuonFine',conteggiamoBuonFine);
-                //reject('ciao');
-                //console.error('Error (timespan): ' + timespan + ' is an invalid timespan.');
+                console.log(err);
                 return;
             }
-            conteggiamoBuonFine += 1;
-            //console.log('error',conteggiamoError,'|','BuonFine',conteggiamoBuonFine);
 
-            //console.log(data);
-            //console.log(util.inspect(data, false, null, true /* enable colors */));
             if (data.length == 1) {
                 data = data[0].pages[Object.keys(data[0].pages)[0]];
             }
@@ -140,33 +133,27 @@ var wrapperGetParametricRevisions = (params, params2, params3, timespan, filterC
                 }
                 data = data[0].pages[Object.keys(data[0].pages)[0]];
             }
+
             if (!data.hasOwnProperty('revisions')) data.revisions = [];
             let numberOfRevisions = data.revisions.length;
 
             var newData = {};
-
             newData.pageid = data.pageid;
             newData.title = data.title;
             newData.revisions = {};
-
             newData.revisions.history = data.revisions;
             newData.revisions.count = data.revisions.length;
-            //console.log(newData.revisions);
-
-
-            if (numberOfRevisions > 500) counterMaggioriCinquecento++;
 
             counter += numberOfRevisions;
             counterPages += 1;
 
-            newData.misalignment = {};
             //taggo come disallineata
-
+            newData.misalignment = {};
             let misalignmentNeditLog = [];
             let misalignmentFrequencyLog = [];
 
-            if (parsedRequest.n) {
-                if (newData.revisions.count >= filterCriteria.nEdit) {
+            if (params.parsedRequest.n) {
+                if (newData.revisions.count >= params.parsedRequest.n) {
                     newData.misalignment.nEdit = true;
                 }
                 else newData.misalignment.nEdit = false;
@@ -176,23 +163,17 @@ var wrapperGetParametricRevisions = (params, params2, params3, timespan, filterC
             }
 
             let frequencyEdit = [];
-            if (parsedRequest.f) {
+            if (params.parsedRequest.f) {
 
                 frequencyTimespan = [];
-
-                frequencyTimespan[0] = params.rvstart;
-                frequencyTimespan[1] = params.rvend;
-
-                //console.log(frequencyTimespan);
-                //da cambiare con calcolo frequenza: countRevision/(timespan)
-
+                frequencyTimespan[0] = params.query.rvstart;
+                frequencyTimespan[1] = params.query.rvend;
                 var myDateStart = new Date(frequencyTimespan[0]);
                 var myDateEnd = new Date(frequencyTimespan[1]);
 
-
                 frequencyEdit = newData.revisions.count / ((myDateEnd.getTime() - myDateStart.getTime()) / (1000 * 60 * 60 * 24 * 365));
 
-                if (frequencyEdit >= filterCriteria.frequencyEdit) {
+                if (frequencyEdit >= params.parsedRequest.f) {
                     newData.misalignment.frequencyEdit = true;
                 }
                 else newData.misalignment.frequencyEdit = false;
@@ -202,11 +183,9 @@ var wrapperGetParametricRevisions = (params, params2, params3, timespan, filterC
                 if (newData.misalignment.frequencyEdit) misalignmentFrequencyLog = chalk.red(newData.misalignment.frequencyEdit);
             }
 
-            //console.log(filtraDisallieate);
-            //if (!filtraDisallieate || (filtraDisallieate && (misalignmentNeditLog || misalignmentFrequencyLog))) console.log('Page title: ' + chalk.green(newData.title) + ' | ' + 'misalignement n.Edit: ' + misalignmentNeditLog + ' (' + newData.revisions.count + ')' + ' | ' + 'misalignement n.Edit: ' + misalignmentFrequencyLog, '(~ ' + Math.round(frequencyEdit) + ' edit/year)');
 
-            if (parsedRequest.n) { if (!filtraDisallieate || (filtraDisallieate && (misalignmentNeditLog))) console.log('Page title: ' + chalk.green(newData.title) + ' | ' + 'misalignement n.Edit: ' + misalignmentNeditLog + ' (' + newData.revisions.count + ')'); }
-            if (parsedRequest.f) { if (!filtraDisallieate || (filtraDisallieate && (misalignmentFrequencyLog))) console.log('Page title: ' + chalk.green(newData.title) + ' | ' + 'misalignement frequency Edit: ' + misalignmentFrequencyLog, '(~ ' + Math.round(frequencyEdit) + ' edit/year)'); }
+            if (params.parsedRequest.n) { if (params.parsedRequest.hasOwnProperty('a') || (misalignmentNeditLog)) console.log('Page title: ' + chalk.green(newData.title) + ' | ' + 'misalignement n.Edit: ' + misalignmentNeditLog + ' (' + newData.revisions.count + ')'); }
+            if (params.parsedRequest.f) { if (params.parsedRequest.hasOwnProperty('a') || (misalignmentFrequencyLog)) console.log('Page title: ' + chalk.green(newData.title) + ' | ' + 'misalignement frequency Edit: ' + misalignmentFrequencyLog, '(~ ' + Math.round(frequencyEdit) + ' edit/year)'); }
 
             resolve(newData);
         });
