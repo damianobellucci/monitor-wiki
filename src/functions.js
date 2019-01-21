@@ -202,9 +202,9 @@ async function searchRevisions(parsedRequest, timespanArray, allPagesQuery) {
 
 async function getPageExport(result, indexPreferences, counterRevisions) {
     return new Promise(async (resolve, reject) => {
-
         let exportQueue = [];
 
+        //input:result
         for (el in result) {
             for (rev of result[el].revisions.history) {
                 let params = {
@@ -254,10 +254,12 @@ async function getPageExport(result, indexPreferences, counterRevisions) {
                     }
                     //result[page].export = grouped[el];
                 }
+
             }
         }
         resolve(result);
     });
+
 }
 
 function getIndexFlagPreferences(parsedRequest) {

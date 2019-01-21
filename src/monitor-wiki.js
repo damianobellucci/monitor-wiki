@@ -142,26 +142,25 @@ async function wrapperInfo(parsedRequest) { //da splittare caso erro e caso body
                 if (result.length == 0) { console.log('Error: there aren\'t pages for the timespan ' + parsedRequest.t + '.'); return; }
                 else {
 
-                    let indexPreferences = functions.getIndexFlagPreferences(parsedRequest);
-
                     console.log('Inizio retrieve informazioni delle revisioni');
-
                     let startExport = new Date().getTime();
 
-
-                    let finalExport = {};
-
+                    let indexPreferences = functions.getIndexFlagPreferences(parsedRequest);
 
                     if (indexPreferences.edit) {
-                        result = await functions.getPageExport(result, indexPreferences, counterRevisions);
-                        let exportPagesObject = {};
-                        for (el in result) {
-                            exportPagesObject[result[el].pageid] = result[el];
-                        }
-                        finalExport.pages = exportPagesObject;
+                        result = await functions.getPageExport(result, indexPreferences, counterRevisions)
+                    }
+            
+                    let exportPagesObject = {};
+                    let finalExport = {};
+                    for (el in result) {
+                        exportPagesObject[result[el].pageid] = result[el];
+                    }
+                    finalExport.pages = exportPagesObject;
 
+                    if (indexPreferences.edit) { //da mettere nell'if sopra
                         /////INIZIO GESTIONE REVID ELIMINATE///////
-                        //vediamoStart = new Date().getTime();
+                        vediamoStart = new Date().getTime();
                         for (page in finalExport.pages) {
                             if (finalExport.pages[page].revisions === undefined) { console.log(finalExport.pages[page]); return; }
                             for (revision in finalExport.pages[page].revisions.history) {
@@ -177,16 +176,12 @@ async function wrapperInfo(parsedRequest) { //da splittare caso erro e caso body
                                         finalExport.pages[page].revisions.history[revision].export['links'] = 'deleted revision';
                                         finalExport.pages[page].revisions.history[revision].export['externallinks'] = 'deleted revision';
                                     }
-                                    console.log(finalExport.pages[page].revisions.history[revision].export);
+                                    //console.log(finalExport.pages[page].revisions.history[revision].export);
                                 }
                             }
                         }
                         //console.log('tempo revid eliminate', ((new Date().getTime() - vediamoStart) / 1000));
                         /////FINE GESTIONE REVID ELIMINATE///////
-                    } else {
-                        for (el in result) {
-                            delete result[el].revisions;
-                        }
                     }
 
                     /////////////////////////////////////////RETRIEVE VIEWS/////////////////////////////////////////////////
