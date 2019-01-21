@@ -5,16 +5,19 @@ var fs = require('fs');
 const jsonfile = require('jsonfile');
 var counterPages = 0;
 var counterRevisions = 0;
+var functions = require('./functions.js');
+var wrappersModality = require('./wrappersModality.js');
+
 
 
 //MAIN
 (async () => {
     try {
-        let parsedRequest = parseRequest(process.argv);
+        let parsedRequest = functions.parseRequest(process.argv);
 
         if (parsedRequest.m === 'preview') {
             if (parsedRequest.n && parsedRequest.f) { console.log('Error (input): only one of n.Edit or frequencyEdit is required.'); return; }
-            let resultPreview = await wrapperPreview(parsedRequest);
+            let resultPreview = await wrappersModality.Preview(parsedRequest);
             //console.log('ciao', resultPreview);
             //console.log('Time elapsed ' + (resultPreview.timer) / 1000 + 's', '|', resultPreview.numberOfPages.misaligned, 'misaligned pages of', resultPreview.numberOfPages.all, 'total pages', '|', resultPreview.revCounter + " revisions");
             console.log('Time elapsed ' + (resultPreview.timer) / 1000 + 's', '|', resultPreview.numberOfPages.misaligned, 'misaligned pages', '/', resultPreview.numberOfPages.all, 'total pages', '|', resultPreview.revCounter + " revisions");
@@ -25,7 +28,7 @@ var counterRevisions = 0;
             if (parsedRequest.n && parsedRequest.f) { console.log('Error (input): only one of n.Edit or frequencyEdit is required.'); return; }
             if (!parsedRequest.e) { console.log('Error (input): -e flag is required for "info" modality.'); return; }
 
-            let resultPreview = await wrapperPreview(parsedRequest);
+            let resultPreview = await wrappersModality.Preview(parsedRequest);
             console.log('Time elapsed ' + (resultPreview.timer) / 1000 + 's', '|', resultPreview.numberOfPages.misaligned, 'misaligned pages', '/', resultPreview.numberOfPages.all, 'total pages', '|', resultPreview.revCounter + " revisions");
 
             if (resultPreview.resultofPreview.length == 0) { console.log('No pages for the query.'); return; }
@@ -513,282 +516,6 @@ async function wrapperInfo(parsedRequest) { //da splittare caso erro e caso body
     });
 };
 
-function wrapperPreview(parsedRequest) { //da splittare caso erro e caso body===undefined
-    return new Promise((resolve, reject) => {
-        var mediaWikiServer;
-        let answers = {};
-        let answers2 = {};
-        let answers3 = {};
-        let answers4 = {};
-        let answers5 = {};
-        let answers6 = {};
-
-        mediaWikiServer = parsedRequest.h;
-        answers.query = parsedRequest.q;
-        answers2.timespan = parsedRequest.t;
-        answers3.nEditCriteria = parsedRequest.n;
-        answers4.frequencyEditCriteria = parsedRequest.f;
-
-
-        if (parsedRequest.hasOwnProperty('e')) {
-            answers5.export = true;
-            answers6.fileName = parsedRequest.e;
-        }
-
-        let indexPreferences = {};
-
-        if (parsedRequest.hasOwnProperty('i')) {
-            if (parsedRequest.i.includes('all')) {
-                indexPreferences = { edit: true, views: true, talks: true };
-            }
-            else {
-                if (parsedRequest.i.includes('edit')) indexPreferences.edit = true;
-                if (parsedRequest.i.includes('views')) indexPreferences.views = true;
-                if (parsedRequest.i.includes('comments')) indexPreferences.talks = true;
-            }
-        }
-
-        let filtraDisallineate;
-
-        if (parsedRequest.hasOwnProperty('a')) filtraDisallineate = false;
-        else filtraDisallineate = true;
-
-        //if (isNaN(answers3.nEditCriteria) || answers3.nEditCriteria < 0) { console.log('Error (nEditCriteria): ' + answers3.nEditCriteria + ' is not a valid nEditCriteria'); return; };
-        //if (isNaN(answers4.frequencyEditCriteria) || answers4.frequencyEditCriteria < 0) { console.log('Error (frequencyEditCriteria): ' + answers4.frequencyEditCriteria + ' is not a valid frequencyEditCriteria'); return; };
-
-
-        queryArray = answers.query.split(",");
-        let info = {
-            "protocol": "https",  // default to 'http'
-            "server": mediaWikiServer,  // host name of MediaWiki-powered site
-            "path": "/w",                  // path to api.php script
-            "debug": false,                // is more verbose when set to true
-            "username": "Monitorwikibotdb",             // account to be used when logIn is called (optional)
-            "password": "Slart1bartfastW",             // password to be used when logIn is called (optional)
-            "userAgent": "belluccidamiano@gmail.com",      // define custom bot's user agent
-            "concurrency": 100               // how many API requests can be run in parallel (defaults to 3)
-        }
-
-        let start = new Date().getTime();
-
-        try {
-            client = new bot(info);
-        } catch (e) { return; };
-
-        client.logIn(async error => {
-
-            if (error) {
-                console.log(error);
-                return;
-            }
-            let queue = [];
-            var allPagesQuery = [];
-
-            console.log('Inizio retrieve pagine');
-
-            let inferencedQuery = [];
-
-            for (el of queryArray) {
-                let result = await wrapper.wrapperNameInference(encodeURI(el), mediaWikiServer);
-                //console.log(result);
-
-                inferencedQuery = inferencedQuery.concat(result);
-
-            }
-
-            suggestionQueue = [];
-
-            for (el of inferencedQuery) {
-                if (el.includes('suggestion:')) suggestionQueue.push(el.replace('suggestion:', ''));
-            }
-
-            inferencedQuery = inferencedQuery.filter((el) => {
-                return !el.includes('suggestion:');
-            });
-
-
-            let secondInferencedQuery = [];
-
-            for (el of suggestionQueue) {
-                let result = await wrapper.wrapperNameInference(encodeURI(el), mediaWikiServer);
-                //console.log(result);
-                secondInferencedQuery = secondInferencedQuery.concat(result.replace('suggestion:', ''));
-            }
-
-            inferencedQuery = inferencedQuery.concat(secondInferencedQuery);
-            queryArray = inferencedQuery;
-
-            //console.log(queryArray);
-
-            //return;
-
-            //divido le pagine e le categorie. per sapere se una pagina è una categoria devo vedere se chiedendo la lista delle pagine mi da error. in quel caso è una pagina
-
-            allPagesOfCategory = [];
-
-            for (el of queryArray) {
-                let categoryParams = {
-                    action: 'query',
-                    generator: 'categorymembers',
-                    gcmtitle: el,
-                    prop: 'info',
-                    cllimit: 'max',
-                    gcmlimit: 'max',
-                    format: 'json',
-                    gcmtype: 'page',/*|subcat*/
-                    gcmprop: 'ids|Ctitle|Csortkey|Ctype|Ctimestamp',
-                    /*gcmsort: 'timestamp',
-                    gcmstart: '2002-02-02T00:00:00.000Z',
-                    gcmend:'2005-02-02T00:00:00.000Z'*/
-                };
-                allPagesOfCategory.push(wrapper.wrapperGetPagesByCategory(categoryParams));
-
-            }
-            allPagesQuery = [];
-
-            allPagesQuery = await Promise.all(allPagesOfCategory);
-
-            let appArray = [];
-
-            for (el of allPagesQuery) {
-                appArray = appArray.concat(el);
-            }
-
-            allPagesQuery = appArray;
-
-
-
-            stringPages = allPagesQuery.filter((el) => {
-                return typeof el === 'string'
-            });
-
-            allPagesQuery = allPagesQuery.filter((el) => {
-                return typeof el !== 'string'
-            });
-
-
-            let promisesStringToId = [];
-            let resultStringToId = [];
-
-
-            for (el of stringPages) {
-                promisesStringToId.push(wrapper.wrapperGetPageId({ action: 'query', titles: el }));
-            }
-
-            resultStringToId = await Promise.all(promisesStringToId);
-
-            allPagesQuery = allPagesQuery.concat(resultStringToId);
-
-
-
-            console.log('Fine retrieve pagine');
-
-
-            //console.log("Number of pages that match the query: " + allPagesQuery.length + "\nProcessing the results, please wait...");
-
-            let queueFirstRevisions = [];
-            let chunkedAllPagesQuery = [];
-            let conteggio = 0;
-
-            console.log('Inizio retrieve data creazione delle pagine');
-
-            if (allPagesQuery.length > 500) {//splitto
-
-                let chunkedAllPagesQuery = [];
-                while (allPagesQuery.length > 0) {
-                    resultQueue = [];
-                    chunkedAllPagesQuery = allPagesQuery.slice(0, 30);
-                    for (el of chunkedAllPagesQuery) {
-                        resultQueue.push(wrapper.wrapperFirstRevision(el, mediaWikiServer));
-                    }
-                    allPagesQuery = allPagesQuery.slice(31, allPagesQuery.length);
-                    queueFirstRevisions = queueFirstRevisions.concat(await Promise.all(resultQueue));
-                    conteggio += 1;
-                    //console.log(conteggio);
-                }
-            }
-            else { //tutte assieme
-                for (el of allPagesQuery) {
-                    queueFirstRevisions.push(wrapper.wrapperFirstRevision(el, mediaWikiServer));
-                }
-                queueFirstRevisions = await Promise.all(queueFirstRevisions);
-            }
-            console.log('Fine retrieve data creazione delle pagine');
-
-            queueFirstRevisions = queueFirstRevisions.filter((el) => {
-                return !el.hasOwnProperty('error');
-            });
-
-            //console.log(queueFirstRevisions);
-
-            timespanArray2 = answers2.timespan.split(',');
-
-
-            timespanArray = answers2.timespan.split(',');
-
-            timespanArray[0] = timespanArray[0].substr(0, 4) + '-' + timespanArray[0].substr(4, 2) + '-' + timespanArray[0].substr(6, 2) + 'T00:00:00.000Z';
-
-            timespanArray[1] = timespanArray[1].substr(0, 4) + '-' + timespanArray[1].substr(4, 2) + '-' + timespanArray[1].substr(6, 2) + 'T23:59:59.999Z';
-
-            if (new Date(timespanArray[0]) > new Date(timespanArray[1])) { console.log('Error (timespan): ' + answers2.timespan + ' is an invalid timespan.'); return };
-
-            queueFirstRevisions = queueFirstRevisions.filter((el) => {
-                return new Date(el.firstRevision).getTime() <= new Date(timespanArray[1]).getTime(); //se la pagina è stata creata dopo del timespan end della pagina, allora non la metto tra le pagine da processare
-            });
-
-
-
-            allPagesQuery = []
-
-            for (el of queueFirstRevisions) {
-                allPagesQuery.push(el.title);
-            }
-
-            //console.log(allPagesQuery);
-
-            filterCriteria = { nEdit: answers3.nEditCriteria, frequencyEdit: answers4.frequencyEditCriteria };
-            //console.log('vediamo'+filterCriteria.nEdit);
-            console.log('Inizio retrieve revisioni delle pagine');
-
-
-            //console.log(timespanArray);
-            for (el of allPagesQuery) {
-
-                queue.push(wrapper.wrapperGetParametricRevisions(getParams({ page: el, start: timespanArray[0], end: timespanArray[1] }), getParams2(el), getParams({ page: 'Talk:' + el, start: timespanArray[0], end: timespanArray[1] }), timespanArray2, filterCriteria, filtraDisallineate, parsedRequest));
-                //queue.push(wrapper.wrapperGetParametricRevisions(getParams('Talk:' + el)));
-            }
-
-            let result = await Promise.all(queue);
-            console.log('Fine retrieve revisioni delle pagine');
-
-            //console.log(result[0]);
-
-
-            let misalignedPages = [];
-
-            misalignedPages = result.filter((el) => {
-                return el.misalignment.nEdit || el.misalignment.frequencyEdit;
-            });
-
-            if (!parsedRequest.hasOwnProperty('a')) {
-                result = misalignedPages;
-            }
-
-            for (el of result) {//conto pagine e revisioni totali
-                counterRevisions += el.revisions.history.length;
-            }
-
-            //console.log(result);
-
-            //wrapper.resetCounterValue();
-
-
-            //console.log(result);
-            resolve({ numberOfPages: { all: allPagesQuery.length, misaligned: misalignedPages.length }, resultofPreview: result, revCounter: counterRevisions, timer: new Date().getTime() - start });
-        });
-    });
-};
-
 
 
 var getParamsExport = revid => {
@@ -826,29 +553,7 @@ var getParams = (info) => {
     return params;
 }
 
-function parseRequest(processArgv) {
-    let arguments = processArgv.slice(2);
-    let stringArguments = [];
-    let requestObject = {};
 
-    for (let el of arguments) {
-        stringArguments += el + ' ';
-    }
-    arguments = stringArguments.split('-');
-
-    for (let el in arguments) {
-        arguments[el] = arguments[el].slice(0, arguments[el].length - 1);
-    }
-
-    for (let el in arguments) {
-        if (arguments[el] === '');
-        else if (arguments[el] === 'a') requestObject[arguments[el]] = '';
-        else {
-            requestObject[arguments[el].slice(0, 1)] = arguments[el].slice(2);
-        }
-    }
-    return requestObject;
-}
 
 var conteggioRevisioni = function counterRevions() {
     return counterRevisions;
