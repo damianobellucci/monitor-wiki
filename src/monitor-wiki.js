@@ -9,7 +9,7 @@ var fs = require('fs');
         let parsedRequest = functions.parseRequest(process.argv);
 
         if (parsedRequest.m === 'preview') {
-            if (parsedRequest.n && parsedRequest.f) { console.log('Error (input): only one of n.Edit or frequencyEdit is required.'); return; }
+            //if (parsedRequest.n && parsedRequest.f) { console.log('Error (input): only one of n.Edit or frequencyEdit is required.'); return; }
             let resultPreview = await Promise.resolve(wrappersModality.Preview(parsedRequest));
             console.log('Time elapsed ' + (resultPreview.timer) / 1000 + 's', '|', resultPreview.numberOfPages.misaligned, 'misaligned pages', '/', resultPreview.numberOfPages.all, 'total pages', '|', resultPreview.revCounter + " revisions");
         }

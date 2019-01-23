@@ -119,6 +119,8 @@ async function searchPages(parsedRequest) {
     });
 }
 
+
+
 async function searchFirstRevision(parsedRequest, timespanArray, allPagesQuery) {
     return new Promise(async (resolve, reject) => {
 
@@ -275,7 +277,7 @@ function getIndexFlagPreferences(parsedRequest) {
     return indexPreferences;
 }
 
-async function getPageViews(finalExport, timespanArray2, resultPreview) {
+/*async function getPageViews(finalExport, timespanArray2, resultPreview) {
     return new Promise(async (resolve, reject) => {
         let queueViews = [];
         let resultViews = [];
@@ -333,9 +335,66 @@ async function getPageViews(finalExport, timespanArray2, resultPreview) {
         console.log('Fine retrieve views relative alle pagine');
         resolve(resultViews);
     });
+}*/
+
+async function getPageViews(pagesInfo, timespanArray, parsedRequest) {
+    return new Promise(async (resolve, reject) => {
+        let queueViews = [];
+        let resultViews = [];
+
+        console.log('Inizio retrieve views relative alle pagine');
+
+        //console.log(Object.keys(finalExport.pages).length);
+        if (pagesInfo.length > 500) {
+            //ottengo array con tutte le pagine
+
+
+            let arrayOfPagesId = [];
+            for (page of pagesInfo) {
+                arrayOfPagesId.push(pagesInfo.pageid);
+            }
+            //console.log('\narrayOfPagesId',arrayOfPagesId.length);
+
+            while (arrayOfPagesId.length > 0) {
+                //console.log('\narrayOfPagesId', arrayOfPagesId.length);
+
+                conta += 1;
+                //console.log(conta);
+                queueViews = [];
+                chunkedArrayOfPagesId = arrayOfPagesId.slice(0, 25);
+                //wrappo
+                for (elIdOfChuncked of chunkedArrayOfPagesId) {
+                    queueViews.push(wrapper.wrapperViews({
+                        pageTitle: finalExport.pages[elIdOfChuncked].title,
+                        pageid: finalExport.pages[elIdOfChuncked].pageid,
+                        start: timespanArray[0],
+                        end: timespanArray[1],
+                        server: parsedRequest.h
+                    }));
+                }
+                arrayOfPagesId = arrayOfPagesId.slice(26, arrayOfPagesId.length);
+                resultViews = resultViews.concat(await Promise.all(queueViews));
+
+            }
+
+        } else {
+            for (page of pagesInfo) {
+                queueViews.push(wrapper.wrapperViews({
+                    pageTitle: page.title,
+                    pageid: page.pageid,
+                    start: timespanArray[0],
+                    end: timespanArray[1],
+                    server: parsedRequest.h
+                }));
+            }
+            resultViews = await Promise.all(queueViews);
+        }
+        console.log('Fine retrieve views relative alle pagine');
+        resolve(resultViews);
+    });
 }
 
-async function getPageTalks(finalExport, timespanArray) {
+/*async function getPageTalks(finalExport, timespanArray) {
     return new Promise(async (resolve, reject) => {
         queueTalks = [];
         console.log('Inizio retrieve talks delle pagine');
@@ -360,6 +419,33 @@ async function getPageTalks(finalExport, timespanArray) {
 
         resolve(resultTalks);
     });
+}*/
+
+async function getPageTalks(pages, timespanArray) {
+    return new Promise(async (resolve, reject) => {
+        queueTalks = [];
+        console.log('Inizio retrieve talks delle pagine');
+        for (page of pages) {
+            queueTalks.push(wrapper.wrapperTalks(
+                {
+                    action: 'query',
+                    prop: 'revisions',
+                    rvprop: ['ids', 'timestamp', 'size', 'flags', 'comment', 'user'].join('|'),
+                    rvdir: 'newer', // order by timestamp ascz
+                    rvlimit: 'max',
+                    titles: 'Talk:' + page.title,
+                    rvstart: timespanArray[0],
+                    rvend: timespanArray[1]
+                }
+                ,
+                page.pageid
+            ));
+        }
+        let resultTalks = await Promise.all(queueTalks);
+        console.log('Fine retrieve talks delle pagine');
+
+        resolve(resultTalks);
+    });
 }
 
 
@@ -371,5 +457,4 @@ module.exports.getIndexFlagPreferences = getIndexFlagPreferences;
 module.exports.getPageExport = getPageExport;
 module.exports.getPageViews = getPageViews;
 module.exports.getPageTalks = getPageTalks;
-
 

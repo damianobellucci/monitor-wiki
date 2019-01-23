@@ -2,6 +2,10 @@ var bot = require('nodemw');
 var fs = require('fs');
 const jsonfile = require('jsonfile');
 var functions = require('./functions.js');
+var wrapper = require('./wrappers.js');
+const chalk = require('chalk');
+
+
 
 function Preview(parsedRequest) { //da splittare caso erro e caso body===undefined
     return new Promise((resolve, reject) => {
@@ -32,7 +36,7 @@ function Preview(parsedRequest) { //da splittare caso erro e caso body===undefin
 
             ///////////////////////////////////////// RICERCA PAGINE /////////////////////////////////////////
             //Estrapolo i corrispondenti id delle pagine che soddisfano la query di ricerca (flag -q)
-            let allPagesQuery = await Promise.resolve(functions.searchPages(parsedRequest));
+            let pagesId = await Promise.resolve(functions.searchPages(parsedRequest));
             ///////////////////////////////////////// FINE RICERCA PAGINE /////////////////////////////////////////
 
             timespanArray = parsedRequest.t.split(',');
@@ -42,34 +46,249 @@ function Preview(parsedRequest) { //da splittare caso erro e caso body===undefin
             ///////////////////////////////////////// RICERCA DATA CREAZIONE PAGINE /////////////////////////////////////////
             //Per determinare se una pagina è stata creata all'interno del timespan (flag -t) e quindi includerlo
             //nella ricerca, ho bisogno della data di creazione della pagina
-            let queueFirstRevisions = await Promise.resolve(functions.searchFirstRevision(parsedRequest, timespanArray, allPagesQuery));
-            allPagesQuery = []
-            for (el of queueFirstRevisions) {
-                allPagesQuery.push(el.title);
-            }
+            let infoPagesCreatedInTimespan = await Promise.resolve(functions.searchFirstRevision(parsedRequest, timespanArray, pagesId));
+
+            //console.log(infoPagesCreatedInTimespan);
             ///////////////////////////////////////// FINE DATA CREAZIONE PAGINE /////////////////////////////////////////
 
             ///////////////////////////////////////// RICERCA REVISIONI PAGINE /////////////////////////////////////////
-            let revisions = await Promise.resolve(functions.searchRevisions(parsedRequest, timespanArray, allPagesQuery));
+            let revisions = [];
+            if (parsedRequest.hasOwnProperty('n') || parsedRequest.hasOwnProperty('f')) revisions = await Promise.resolve(functions.searchRevisions(parsedRequest, timespanArray, infoPagesCreatedInTimespan.map(pageInfo => pageInfo.title)));
             ///////////////////////////////////////// FINE REVISIONI PAGINE /////////////////////////////////////////
 
-            let misalignedPages = [];
+            ///////////////////////////////////////// RICERCA COMMENTI PAGINE /////////////////////////////////////////
+            let talksPagesInfo = [];
+            if (parsedRequest.hasOwnProperty('c')) talksPagesInfo = await Promise.resolve(functions.getPageTalks(infoPagesCreatedInTimespan, timespanArray));
 
-            misalignedPages = revisions.filter((el) => {
-                return el.misalignment.nEdit || el.misalignment.frequencyEdit;
-            });
+            ///////////////////////////////////////// FINE COMMENT PAGINE /////////////////////////////////////////
 
-            if (!parsedRequest.hasOwnProperty('a')) {
-                revisions = misalignedPages;
+            ///////////////////////////////////////// INZIO RICERCA VIEWS PAGINE /////////////////////////////////////////
+            let viewsPagesInfo = [];
+            if (parsedRequest.hasOwnProperty('v')) viewsPagesInfo = await Promise.resolve(functions.getPageViews(infoPagesCreatedInTimespan, parsedRequest.t.split(','), parsedRequest));
+            //console.log(viewsPagesInfo);
+            ///////////////////////////////////////// FINE RICERCA VIEWS PAGINE /////////////////////////////////////////
+
+            ///////////////////////////////////////// INZIO RICOMBINAZIONE /////////////////////////////////////////
+            let recombinedObject = {};
+
+            for (let page of infoPagesCreatedInTimespan) {
+                let object = { title: page.title, pageid: page.pageid };
+
+                if (parsedRequest.hasOwnProperty('n') || parsedRequest.hasOwnProperty('f')) {
+                    object.edits = revisions.find((el) => { return el.pageid === page.pageid });
+                }
+
+                if (parsedRequest.hasOwnProperty('c')) {
+                    object.comments = talksPagesInfo.find((el) => { return el.pageid === page.pageid });
+                }
+
+                if (parsedRequest.hasOwnProperty('v')) {
+                    object.views = viewsPagesInfo.find((el) => { return el.pageid === page.pageid });
+                }
+
+                recombinedObject[page.pageid] = object;
+            }
+            ///////////////////////////////////////// INZIO RICOMBINAZIONE /////////////////////////////////////////
+
+
+
+            ///////////////////////////////////////// INZIO AGGREGAZIONE /////////////////////////////////////////
+            let aggregatedObject = {};
+
+            for (let page in recombinedObject) {
+                let object = { title: recombinedObject[page].title, pageid: page };
+
+                if (parsedRequest.hasOwnProperty('n')) {
+                    object.edits = recombinedObject[page].edits.revisions.history.length;
+                }
+
+                if (parsedRequest.hasOwnProperty('f')) {
+                    object.frequency = Math.round(recombinedObject[page].edits.revisions.history.length * 1000 * 60 * 60 * 24 * 365 / (new Date(timespanArray[1]).getTime() - new Date(timespanArray[0]).getTime()), 2);
+                }
+
+                if (parsedRequest.hasOwnProperty('c')) {
+
+                    object.comments = recombinedObject[page].comments.history.length;
+                }
+
+                if (parsedRequest.hasOwnProperty('v')) {
+                    recombinedObject[page].views.dailyViews === 'Not Available' ?
+                        object.views = 'n/a' : object.views = recombinedObject[page].views.dailyViews.map(el => el.views).reduce((a, b) => a + b, 0);
+
+                }
+                aggregatedObject[page] = object;
             }
 
-            let counterRevisions = 0;
+            ///////////////////////////////////////// INIZIO TAG DISALLINEATE/NON DISALLINEATE /////////////////////////////////////////
 
-            for (el of revisions) {
-                counterRevisions += el.revisions.history.length;
+            for (let page in aggregatedObject) {
+                aggregatedObject[page].misalignment = {};
+
+
+                if (parsedRequest.hasOwnProperty('n')) {
+
+                    if (parsedRequest.n.split(',')[1] === '*')
+                        (aggregatedObject[page].edits >= parsedRequest.n.split(',')[0]) ?
+                            aggregatedObject[page].misalignment.edits = true : aggregatedObject[page].misalignment.edits = false
+                    else
+                        (aggregatedObject[page].edits >= parsedRequest.n.split(',')[0] && aggregatedObject[page].edits <= parsedRequest.n.split(',')[1]) ?
+                            aggregatedObject[page].misalignment.edits = true : aggregatedObject[page].misalignment.edits = false;
+
+                }
+
+                if (parsedRequest.hasOwnProperty('f')) {
+
+                    if (parsedRequest.f.split(',')[1] === '*')
+                        (aggregatedObject[page].frequency >= parsedRequest.f.split(',')[0]) ?
+                            aggregatedObject[page].misalignment.frequency = true : aggregatedObject[page].misalignment.frequency = false
+                    else
+                        (aggregatedObject[page].frequency >= parsedRequest.f.split(',')[0] && aggregatedObject[page].frequency <= parsedRequest.f.split(',')[1]) ?
+                            aggregatedObject[page].misalignment.frequency = true : aggregatedObject[page].misalignment.frequency = false;
+
+                }
+
+                if (parsedRequest.hasOwnProperty('c')) {
+
+                    if (parsedRequest.c.split(',')[1] === '*')
+                        (aggregatedObject[page].comments >= parsedRequest.c.split(',')[0]) ?
+                            aggregatedObject[page].misalignment.comments = true : aggregatedObject[page].misalignment.comments = false
+                    else
+                        (aggregatedObject[page].comments >= parsedRequest.c.split(',')[0] && aggregatedObject[page].comments <= parsedRequest.c.split(',')[1]) ?
+                            aggregatedObject[page].misalignment.comments = true : aggregatedObject[page].misalignment.comments = false;
+
+                }
+
+                if (parsedRequest.hasOwnProperty('v')) {
+
+                    if (aggregatedObject[page].views === 'n/a') aggregatedObject[page].misalignment.views = 'n/a';
+                    else {
+                        if (parsedRequest.v.split(',')[1] === '*')
+                            (aggregatedObject[page].views >= parsedRequest.v.split(',')[0]) ?
+                                aggregatedObject[page].misalignment.views = true : aggregatedObject[page].misalignment.views = false
+                        else
+                            (aggregatedObject[page].views >= parsedRequest.v.split(',')[0] && aggregatedObject[page].views <= parsedRequest.v.split(',')[1]) ?
+                                aggregatedObject[page].misalignment.views = true : aggregatedObject[page].misalignment.views = false;
+                    }
+
+                }
+            }
+            ///////////////////////////////////////// FINE TAG DISALLINEATE/NON DISALLINEATE /////////////////////////////////////////
+
+
+
+            ///////////////////////////////////////// FINE AGGREGAZIONE /////////////////////////////////////////
+            function isMisaligned(page, parsedRequest) {
+
+                /*console.log((
+                    (
+                        parsedRequest.hasOwnProperty('n') ? 1 : 0
+                    )
+                    +
+                    (
+                        parsedRequest.hasOwnProperty('f') ? 1 : 0
+                    )
+                    +
+                    (
+                        parsedRequest.hasOwnProperty('v') ? 1 : 0
+                    )
+                    +
+                    (
+                        parsedRequest.hasOwnProperty('c') ? 1 : 0
+                    )
+                )
+                +
+                (
+                    (
+                        page.misalignment.hasOwnProperty('edits') && page.misalignment.edits ? 1 : 0
+                    )
+                    +
+                    (
+                        page.misalignment.hasOwnProperty('frequency') && page.misalignment.frequency ? 1 : 0
+                    )
+                    +
+                    (
+                        page.misalignment.hasOwnProperty('views') && page.misalignment.views ? 1 : 0
+                    )
+                    +
+                    (
+                        page.misalignment.hasOwnProperty('comments') && page.misalignment.comments ? 1 : 0
+                    )
+                ));*/
+
+                if (
+                    (
+                        (
+                            parsedRequest.hasOwnProperty('n') ? 1 : 0
+                        )
+                        +
+                        (
+                            parsedRequest.hasOwnProperty('f') ? 1 : 0
+                        )
+                        +
+                        (
+                            parsedRequest.hasOwnProperty('v') ? 1 : 0
+                        )
+                        +
+                        (
+                            parsedRequest.hasOwnProperty('c') ? 1 : 0
+                        )
+                    )
+                    ==
+                    (
+                        (
+                            page.misalignment.hasOwnProperty('edits') && page.misalignment.edits ? 1 : 0
+                        )
+                        +
+                        (
+                            page.misalignment.hasOwnProperty('frequency') && page.misalignment.frequency ? 1 : 0
+                        )
+                        +
+                        (
+                            page.misalignment.hasOwnProperty('views') && page.misalignment.views ? 1 : 0
+                        )
+                        +
+                        (
+                            page.misalignment.hasOwnProperty('comments') && page.misalignment.comments ? 1 : 0
+                        )
+                    )
+                ) return true;
+                return false;
             }
 
-            resolve({ numberOfPages: { all: allPagesQuery.length, misaligned: misalignedPages.length }, resultofPreview: revisions, revCounter: counterRevisions, timer: new Date().getTime() - start });
+
+            for (let page in aggregatedObject) {
+
+                //se il numero tag di disallineamento ===true sono uguali al numero di tag immessi, la pagina è disallineata
+
+                !isMisaligned(aggregatedObject[page], parsedRequest) ?
+                    (
+                        parsedRequest.hasOwnProperty('a') ?
+                            console.log(
+                                'Title: ' + chalk.green(aggregatedObject[page].title), '|',
+                                'misalignment:', 'false', '|',
+                                aggregatedObject[page].hasOwnProperty('edits') ? 'edits: ' + aggregatedObject[page].edits : '',
+                                aggregatedObject[page].hasOwnProperty('frequency') ? 'frequency: ' + aggregatedObject[page].frequency : '',
+                                aggregatedObject[page].hasOwnProperty('comments') ? 'comments: ' + aggregatedObject[page].comments : '',
+                                aggregatedObject[page].hasOwnProperty('views') ? 'views: ' + aggregatedObject[page].views : ''
+                            ) :
+                            null
+                    ) : (
+                        console.log(
+                            'Title: ' + chalk.green(aggregatedObject[page].title) + ' |',
+                            'misalignment:', chalk.red('true'), '|',
+                            aggregatedObject[page].hasOwnProperty('edits') ? 'edits: ' + aggregatedObject[page].edits : '',
+                            aggregatedObject[page].hasOwnProperty('frequency') ? 'frequency: ' + aggregatedObject[page].frequency : '',
+                            aggregatedObject[page].hasOwnProperty('comments') ? 'comments: ' + aggregatedObject[page].comments : '',
+                            aggregatedObject[page].hasOwnProperty('views') ? 'views: ' + aggregatedObject[page].views : ''
+
+                        )
+                    );
+            }
+
+            return;
+            //ricombinazione e aggregazione
+            //stampa allineate/disallineate2
+            resolve();
         });
     });
 };
@@ -240,11 +459,11 @@ async function Info(parsedRequest) { //da splittare caso erro e caso body===unde
                     finalExport.query = parsedRequest;
 
                     fs.writeFile(parsedRequest.d, JSON.stringify(finalExport), function (err) {
-                        
+
                         if (err) throw err;
 
                         console.log('\nThe info export has been saved with name ' + parsedRequest.d);
-                        
+
                         resolve({ timer: new Date().getTime() - startExport });
                     });
                 }

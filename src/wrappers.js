@@ -136,47 +136,6 @@ var wrapperGetParametricRevisions = (params) => {
             newData.revisions.history = data.revisions;
             newData.revisions.count = data.revisions.length;
 
-            //taggo come disallineata
-            if (params.parsedRequest.m === 'preview' || params.parsedRequest.m === 'list') {
-                newData.misalignment = {};
-                let misalignmentNeditLog = [];
-                let misalignmentFrequencyLog = [];
-
-                if (params.parsedRequest.n) {
-                    if (newData.revisions.count >= params.parsedRequest.n) {
-                        newData.misalignment.nEdit = true;
-                    }
-                    else newData.misalignment.nEdit = false;
-
-                    misalignmentNeditLog = newData.misalignment.nEdit;
-                    if (newData.misalignment.nEdit) misalignmentNeditLog = chalk.red(newData.misalignment.nEdit);
-                }
-
-                let frequencyEdit = [];
-                if (params.parsedRequest.f) {
-
-                    frequencyTimespan = [];
-                    frequencyTimespan[0] = params.query.rvstart;
-                    frequencyTimespan[1] = params.query.rvend;
-                    var myDateStart = new Date(frequencyTimespan[0]);
-                    var myDateEnd = new Date(frequencyTimespan[1]);
-
-                    frequencyEdit = newData.revisions.count / ((myDateEnd.getTime() - myDateStart.getTime()) / (1000 * 60 * 60 * 24 * 365));
-
-                    if (frequencyEdit >= params.parsedRequest.f) {
-                        newData.misalignment.frequencyEdit = true;
-                    }
-                    else newData.misalignment.frequencyEdit = false;
-
-                    misalignmentFrequencyLog = newData.misalignment.frequencyEdit;
-
-                    if (newData.misalignment.frequencyEdit) misalignmentFrequencyLog = chalk.red(newData.misalignment.frequencyEdit);
-                }
-                if (params.parsedRequest.n) { if (params.parsedRequest.hasOwnProperty('a') || (misalignmentNeditLog)) console.log('Page title: ' + chalk.green(newData.title) + ' | ' + 'misalignement n.Edit: ' + misalignmentNeditLog + ' (' + newData.revisions.count + ')'); }
-                if (params.parsedRequest.f) { if (params.parsedRequest.hasOwnProperty('a') || (misalignmentFrequencyLog)) console.log('Page title: ' + chalk.green(newData.title) + ' | ' + 'misalignement frequency Edit: ' + misalignmentFrequencyLog, '(~ ' + Math.round(frequencyEdit) + ' edit/year)'); }
-            } else {
-                console.log('Page title: ' + chalk.green(newData.title));
-            }
             resolve(newData);
         });
     })
@@ -235,7 +194,6 @@ var wrapperExport = (params) => {
 
 var wrapperTalks = (params3, utilParams) => {
     return new Promise((resolve, reject) => {
-
         client.getAllParametricData(params3, function (err3, data3) {
             talk = {};
             if (err3) {
@@ -247,7 +205,6 @@ var wrapperTalks = (params3, utilParams) => {
                     pageid: utilParams
                 });
             }
-
             if (data3 !== undefined) {
                 if (data3.length == 1) {
                     data3 = data3[0].pages[Object.keys(data3[0].pages)[0]];
@@ -322,6 +279,55 @@ var wrapperViews = (params) => {
     });
 };
 
+var wrapperGetPagesInfo = (params) => { // category/noncategory 
+    return new Promise((resolve, reject) => {
+        client.getAllParametricData(params, function (err, data) {
+            if (err) { console.log(err); return; }
+            else {
+                data = data[0];
+                delete (data.normalized);
+                for (let index in data.pages) {
+                    delete (data.pages[index].contentmodel);
+                    delete (data.pages[index].pagelanguage);
+                    delete (data.pages[index].pagelanguagehtmlcode);
+                    delete (data.pages[index].pagelanguagedir);
+                    delete (data.pages[index].touched);
+                    delete (data.pages[index].lastrevid);
+                    delete (data.pages[index].length);
+                    delete (data.pages[index].length);
+                    delete (data.pages[index].missing);
+                }
+            }
+            resolve(data.pages);
+        });
+    });
+};
+
+var wrapperGetTalksId = (params) => { // category/noncategory 
+    return new Promise((resolve, reject) => {
+        client.getAllParametricData(params, function (err, data) {
+            if (err) { console.log(err); return; }
+            else {
+                data = data[0];
+                delete (data.normalized);
+                for (let index in data.pages) {
+                    delete (data.pages[index].contentmodel);
+                    delete (data.pages[index].pagelanguage);
+                    delete (data.pages[index].pagelanguagehtmlcode);
+                    delete (data.pages[index].pagelanguagedir);
+                    delete (data.pages[index].touched);
+                    delete (data.pages[index].lastrevid);
+                    delete (data.pages[index].length);
+                    delete (data.pages[index].length);
+                    delete (data.pages[index].missing);
+                }
+            }
+
+            console.log(data.pages); return;
+        });
+    });
+};
+
 //module.exports.wrapperGetAllRevisions = wrapperGetAllRevisions;
 module.exports.wrapperGetParametricRevisions = wrapperGetParametricRevisions;
 module.exports.wrapperGetPagesByCategory = wrapperGetPagesByCategory;
@@ -331,3 +337,5 @@ module.exports.wrapperTalks = wrapperTalks;
 module.exports.wrapperFirstRevision = wrapperFirstRevision;
 module.exports.wrapperGetPageId = wrapperGetPageId;
 module.exports.wrapperNameInference = wrapperNameInference;
+module.exports.wrapperGetPagesInfo = wrapperGetPagesInfo;
+module.exports.wrapperGetTalksId = wrapperGetTalksId;
