@@ -344,35 +344,22 @@ async function getPageViews(pagesInfo, timespanArray, parsedRequest) {
 
         console.log('Inizio retrieve views relative alle pagine');
 
-        //console.log(Object.keys(finalExport.pages).length);
         if (pagesInfo.length > 500) {
-            //ottengo array con tutte le pagine
 
-
-            let arrayOfPagesId = [];
-            for (page of pagesInfo) {
-                arrayOfPagesId.push(pagesInfo.pageid);
-            }
-            //console.log('\narrayOfPagesId',arrayOfPagesId.length);
-
-            while (arrayOfPagesId.length > 0) {
-                //console.log('\narrayOfPagesId', arrayOfPagesId.length);
-
-                conta += 1;
-                //console.log(conta);
+            while (pagesInfo.length > 0) {
                 queueViews = [];
-                chunkedArrayOfPagesId = arrayOfPagesId.slice(0, 25);
-                //wrappo
-                for (elIdOfChuncked of chunkedArrayOfPagesId) {
-                    queueViews.push(wrapper.wrapperViews({
-                        pageTitle: finalExport.pages[elIdOfChuncked].title,
-                        pageid: finalExport.pages[elIdOfChuncked].pageid,
+                chunkedArrayOfPages = pagesInfo.slice(0, 25);
+                for (let page of chunkedArrayOfPages) {
+                    let params = {
+                        pageTitle: page.title,
+                        pageid: page.pageid,
                         start: timespanArray[0],
                         end: timespanArray[1],
                         server: parsedRequest.h
-                    }));
+                    };
+                    queueViews.push(wrapper.wrapperViews(params));
                 }
-                arrayOfPagesId = arrayOfPagesId.slice(26, arrayOfPagesId.length);
+                pagesInfo = pagesInfo.slice(25, pagesInfo.length);
                 resultViews = resultViews.concat(await Promise.all(queueViews));
 
             }

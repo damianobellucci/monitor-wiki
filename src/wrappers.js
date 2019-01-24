@@ -227,8 +227,6 @@ var wrapperTalks = (params3, utilParams) => {
 
 var wrapperViews = (params) => {
     return new Promise((resolve, reject) => {
-        //console.log(params.start, params.end);
-
         //riscalo il timespan di un giorno
         params.start = params.start.substr(0, 4) + '-' + params.start.substr(4, 2) + '-' + params.start.substr(6, 2) + 'T00:00:00.000Z';
         params.start = new Date(params.start).getTime() + 1000 * 60 * 60 * 24;
@@ -271,7 +269,6 @@ var wrapperViews = (params) => {
 
                 }
                 //console.log(body);
-
 
 
             } resolve({ title: params.pageTitle, pageid: params.pageid, dailyViews: body.items });
