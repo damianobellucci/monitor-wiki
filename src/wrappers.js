@@ -325,6 +325,10 @@ var wrapperGetTalksId = (params) => { // category/noncategory
     });
 };
 
+function resetCounterExport (){
+    counterExport = 0;
+}
+
 //module.exports.wrapperGetAllRevisions = wrapperGetAllRevisions;
 module.exports.wrapperGetParametricRevisions = wrapperGetParametricRevisions;
 module.exports.wrapperGetPagesByCategory = wrapperGetPagesByCategory;
@@ -336,3 +340,5 @@ module.exports.wrapperGetPageId = wrapperGetPageId;
 module.exports.wrapperNameInference = wrapperNameInference;
 module.exports.wrapperGetPagesInfo = wrapperGetPagesInfo;
 module.exports.wrapperGetTalksId = wrapperGetTalksId;
+module.exports.resetCounterExport = resetCounterExport;
+

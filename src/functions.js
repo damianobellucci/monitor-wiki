@@ -19,9 +19,21 @@ function parseRequest(processArgv) {
         if (arguments[el] === '');
         else if (arguments[el] === 'a') requestObject[arguments[el]] = '';
         else {
-            requestObject[arguments[el].slice(0, 1)] = arguments[el].slice(2);
+            if (arguments[el].slice(0, 1) === 't') {
+                if (requestObject[arguments[el].slice(0, 1)] !== undefined) {
+                    requestObject[arguments[el].slice(0, 1)][Object.keys(requestObject[arguments[el].slice(0, 1)]).length] =
+                        arguments[el].slice(2).replace(' ', '');
+                } else {
+                    requestObject[arguments[el].slice(0, 1)] = {};
+                    requestObject[arguments[el].slice(0, 1)][0] = arguments[el].slice(2).replace(' ', '');
+
+                }
+            }
+            else requestObject[arguments[el].slice(0, 1)] = arguments[el].slice(2);
         }
     }
+    //requestObject.t = requestObject.t.replace(' ', '');
+    console.log(requestObject);
     return requestObject;
 }
 

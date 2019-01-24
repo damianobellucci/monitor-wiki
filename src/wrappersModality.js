@@ -48,7 +48,7 @@ function Preview(parsedRequest) { //da splittare caso erro e caso body===undefin
             //Per determinare se una pagina è stata creata all'interno del timespan (flag -t) e quindi includerlo
             //nella ricerca, ho bisogno della data di creazione della pagina
             let infoPagesCreatedInTimespan = await Promise.resolve(functions.searchFirstRevision(parsedRequest, timespanArray, pagesId));
-            
+
             //console.log(infoPagesCreatedInTimespan);
             ///////////////////////////////////////// FINE DATA CREAZIONE PAGINE /////////////////////////////////////////
 
@@ -284,7 +284,6 @@ async function Info(parsedRequest) { //da splittare caso erro e caso body===unde
 
                 let queueFirstRevisions = await Promise.resolve(functions.searchFirstRevision(parsedRequest, timespanArray, allPagesQuery));
 
-                console.log(queueFirstRevisions.map(el => el.title)); return;
                 allPagesQuery = []
 
                 for (el of queueFirstRevisions) {
@@ -323,6 +322,9 @@ async function Info(parsedRequest) { //da splittare caso erro e caso body===unde
 
                     let exportPagesObject = {};
                     let finalExport = {};
+                    finalExport.query = parsedRequest;
+
+
                     for (el in result) {
                         exportPagesObject[result[el].pageid] = result[el];
                     }
@@ -396,14 +398,8 @@ async function Info(parsedRequest) { //da splittare caso erro e caso body===unde
 
                     finalExport.query = parsedRequest;
 
-                    fs.writeFile(parsedRequest.d, JSON.stringify(finalExport), function (err) {
-
-                        if (err) throw err;
-
-                        console.log('\nThe info export has been saved with name ' + parsedRequest.d);
-
-                        resolve({ timer: new Date().getTime() - startExport });
-                    });
+                    wrapper.resetCounterExport();
+                    resolve(finalExport);
                 }
             });
         });
