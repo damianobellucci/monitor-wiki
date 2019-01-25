@@ -93,15 +93,26 @@ var fs = require('fs');
 
 
                         Object.keys(finalExport.result[resultPage].pages[page].revisions.history).forEach((revisionId) => {
-                            if (finalExport.result[resultPage].pages[page].revisions.history[revisionId].export.hasOwnProperty('links')) {
-                                finalExport.result[resultPage].pages[page].revisions.history[revisionId].export.links =
-                                finalExport.result[resultPage].pages[page].revisions.history[revisionId].export.links.list.length;
-                                    
-                            }
-                            if (finalExport.result[resultPage].pages[page].revisions.history[revisionId].export.hasOwnProperty('externallinks')) {
-                                finalExport.result[resultPage].pages[page].revisions.history[revisionId].export.externallinks =
-                                finalExport.result[resultPage].pages[page].revisions.history[revisionId].export.externallinks.list.length;
-                            }
+                            try {
+                                if (finalExport.result[resultPage].pages[page].revisions.history[revisionId].export.hasOwnProperty('links')) {
+                                    if (finalExport.result[resultPage].pages[page].revisions.history[revisionId].export.links === 'deleted revision')
+                                        finalExport.result[resultPage].pages[page].revisions.history[revisionId].export.links = 'n/a'
+                                    else finalExport.result[resultPage].pages[page].revisions.history[revisionId].export.links =
+                                        finalExport.result[resultPage].pages[page].revisions.history[revisionId].export.links.list.length;
+
+                                }
+                                if (finalExport.result[resultPage].pages[page].revisions.history[revisionId].export.hasOwnProperty('externallinks')) {
+                                    if (finalExport.result[resultPage].pages[page].revisions.history[revisionId].export.externallinks === 'deleted revision')
+                                        finalExport.result[resultPage].pages[page].revisions.history[revisionId].export.externallinks = 'n/a'
+                                    else finalExport.result[resultPage].pages[page].revisions.history[revisionId].export.externallinks =
+                                        finalExport.result[resultPage].pages[page].revisions.history[revisionId].export.externallinks.list.length;
+                                }
+                                if (finalExport.result[resultPage].pages[page].revisions.history[revisionId].export.hasOwnProperty('sections')) {
+                                    if (finalExport.result[resultPage].pages[page].revisions.history[revisionId].export.sections === 'deleted revision')
+                                        finalExport.result[resultPage].pages[page].revisions.history[revisionId].export.sections = 'n/a'
+                                }
+
+                            } catch (e) { console.log(finalExport.result[resultPage].pages[page].revisions.history[revisionId].export) }
                         });
 
                         aggregatedPage.revisions = {};
@@ -118,7 +129,6 @@ var fs = require('fs');
                         aggregatedPage.views = 'n/a' : aggregatedPage.views = finalExport.result[resultPage].pages[page].views.map(el => el.views).reduce((a, b) => a + b, 0);
 
                     aggregatedResultPage.pages[aggregatedPage.pageid] = aggregatedPage;
-                    console.log(aggregatedPage);
 
                 });
                 aggregatedExport.result[resultPage] = aggregatedResultPage;
