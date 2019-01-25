@@ -90,6 +90,23 @@ var fs = require('fs');
                         aggregatedPage.edits = finalExport.result[resultPage].pages[page].revisions.history.length;
                         aggregatedPage.minorEdits = finalExport.result[resultPage].pages[page].revisions.history.filter(el => { return el.hasOwnProperty('minor') }).length;
                         aggregatedPage.authors = Array.from(new Set(finalExport.result[resultPage].pages[page].revisions.history.map(el => el.user))).length;
+
+
+                        Object.keys(finalExport.result[resultPage].pages[page].revisions.history).forEach((revisionId) => {
+                            if (finalExport.result[resultPage].pages[page].revisions.history[revisionId].export.hasOwnProperty('links')) {
+                                finalExport.result[resultPage].pages[page].revisions.history[revisionId].export.links =
+                                finalExport.result[resultPage].pages[page].revisions.history[revisionId].export.links.list.length;
+                                    
+                            }
+                            if (finalExport.result[resultPage].pages[page].revisions.history[revisionId].export.hasOwnProperty('externallinks')) {
+                                finalExport.result[resultPage].pages[page].revisions.history[revisionId].export.externallinks =
+                                finalExport.result[resultPage].pages[page].revisions.history[revisionId].export.externallinks.list.length;
+                            }
+                        });
+
+                        aggregatedPage.revisions = {};
+                        aggregatedPage.revisions.history = finalExport.result[resultPage].pages[page].revisions.history;
+                        //aggrego risultati di export
                     }
                     //aggrego numero di commenti
                     finalExport.result[resultPage].pages[page].hasOwnProperty('talks') ?
