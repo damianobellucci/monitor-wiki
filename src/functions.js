@@ -33,7 +33,6 @@ function parseRequest(processArgv) {
         }
     }
     //requestObject.t = requestObject.t.replace(' ', '');
-    console.log(requestObject);
     return requestObject;
 }
 

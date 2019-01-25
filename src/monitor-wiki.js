@@ -16,6 +16,7 @@ var fs = require('fs');
         }
         else if (parsedRequest.m === 'list') {
             parsedRequest.t = parsedRequest.t[0];
+            console.log(parsedRequest);
             //if (!parsedRequest.n && !parsedRequest.f) { console.log('Error (input): n.Edit or frequencyEdit is required.'); return; }
             //if (parsedRequest.n && parsedRequest.f) { console.log('Error (input): only one of n.Edit or frequencyEdit is required.'); return; }
             //if (!parsedRequest.e) { console.log('Error (input): -e flag is required for "info" modality.'); return; }
@@ -34,6 +35,9 @@ var fs = require('fs');
         else if (parsedRequest.m === 'info') {
 
             if (!parsedRequest.f) { console.log('Error (input): missing input file.'); return; }
+
+            console.log(parsedRequest);
+
             //if (new Date(timespanArray[0]) > new Date(timespanArray[1])) { console.log('Error (timespan): ' + parsedRequest.t + ' is an invalid timespan.'); return };
             //if (isNaN(parsedRequest.n) || parsedRequest.n < 0) { console.log('Error (nEditCriteria): ' + parsedRequest.n + ' is not a valid nEditCriteria'); return; };
             //if (isNaN(parsedRequest.f) || parsedRequest.f < 0) { console.log('Error (frequencyEditCriteria): ' + parsedRequest.f + ' is not a valid frequencyEditCriteria'); return; };
@@ -57,6 +61,9 @@ var fs = require('fs');
         else if (parsedRequest.m === 'aggregateInfo') {
 
             if (!parsedRequest.f) { console.log('Error (input): missing input file.'); return; }
+
+            console.log(parsedRequest);
+
             //if (new Date(timespanArray[0]) > new Date(timespanArray[1])) { console.log('Error (timespan): ' + parsedRequest.t + ' is an invalid timespan.'); return };
             //if (isNaN(parsedRequest.n) || parsedRequest.n < 0) { console.log('Error (nEditCriteria): ' + parsedRequest.n + ' is not a valid nEditCriteria'); return; };
             //if (isNaN(parsedRequest.f) || parsedRequest.f < 0) { console.log('Error (frequencyEditCriteria): ' + parsedRequest.f + ' is not a valid frequencyEditCriteria'); return; };
@@ -129,7 +136,7 @@ var fs = require('fs');
                         finalExport.result[resultPage].pages[page].views === 'Not Available' ?
                             aggregatedPage.views = 'n/a' : aggregatedPage.views = finalExport.result[resultPage].pages[page].views.map(el => el.views).reduce((a, b) => a + b, 0);
                     }
-                    
+
                     aggregatedResultPage.pages[aggregatedPage.pageid] = aggregatedPage;
 
                 });
