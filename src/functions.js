@@ -82,6 +82,66 @@ async function searchPages(parsedRequest) {
 
         allPagesQuery = [];
 
+        let params = {
+            "action": "query",
+            "format": "json",
+            "prop": "info",
+            "titles": queryArray.join('|'),
+            "formatversion": "2"
+        };
+        let pagesInfo = await wrapper.wrapperGetPagesInfo(params);
+
+        //finché ci saranno pagine con ns 14:
+
+        let stackParsedCategories = [];
+        var conteggio = 0;
+
+        function thereAreCategories(pagesInfo) {
+            for (index in pagesInfo) {
+                if (pagesInfo[index].ns === 14) return true;
+            }
+            return false;
+        }
+        let stack = [];
+        while (thereAreCategories(pagesInfo)) {
+            var chunkList = [];
+
+            for (let index in pagesInfo) {
+                if (pagesInfo[index].ns === 14 && !stack.find(el => { return el === pagesInfo[index].pageid })) {
+                    //console.log('pageid processata:', pagesInfo[index].title);
+
+                    pagesInfo = pagesInfo.concat((await Promise.resolve(wrapper.wrapperGetInfoCategory(
+                        {
+                            "action": "query",
+                            "format": "json",
+                            "generator": "categorymembers",
+                            "formatversion": "2",
+                            "gcmpageid": pagesInfo[index].pageid,
+                            "gcmtype": "page|subcat",
+                            "gcmlimit": "max"
+                        }
+                    ))));
+                    //pagesinfo = pagesInfo.splice(index, 1);
+                    console.log('iterate:', conteggio, 'pageInfo:', pagesInfo.length, 'page:', pagesInfo[index].title);
+                    stack.push(pagesInfo[index].pageid);
+                    pagesInfo.splice(index, 1);
+
+                };
+            }
+            //pagesinfo = pagesInfo.splice(index, 1);
+
+
+
+            conteggio += 1;
+            //console.log('iterate:', conteggio, 'pageInfo:', pagesInfo.length);
+
+        }
+        //console.log(pagesInfo.map(el => el.title).join('|'));
+
+        return;
+
+
+
         for (el of queryArray) {
             let categoryParams = {
                 action: 'query',

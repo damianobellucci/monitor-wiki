@@ -18,7 +18,7 @@ function Preview(parsedRequest) { //da splittare caso erro e caso body===undefin
             "username": "Monitorwikibotdb",             // account to be used when logIn is called (optional)
             "password": "Slart1bartfastW",             // password to be used when logIn is called (optional)
             "userAgent": "belluccidamiano@gmail.com",      // define custom bot's user agent
-            "concurrency": 70               // how many API requests can be run in parallel (defaults to 3)
+            "concurrency": 100               // how many API requests can be run in parallel (defaults to 3)
         }
 
         let start = new Date().getTime();

@@ -32,7 +32,51 @@ var wrapperNameInference = (params) => { //da splittare caso erro e caso body===
 
 var wrapperGetPagesByCategory = (params) => {
     return new Promise((resolve, reject) => {
+        client.getAllParametricData(params, async function (err, data) {
+            if (err) {
+                if (err === 'Error returned by API: The category name you entered is not valid.' || err.includes('Bad title')) {
+                    //console.log('Error (input):', decodeURI(params.gcmtitle), 'is not a category.');
+                    resolve(params.gcmtitle);
+                }
+                else if (!err === 'Error returned by API: The category name you entered is not valid.') {
+                    console.log(err);
+                    return;
+                }
+                else if (err === 'Error returned by API: Namespace doesn\'t allow actual pages.') {
+                    console.log('Error (input)', 'get infos for the page \'' + decodeURI(params.gcmtitle) + '\' is not allowed.')
+                    return;
+                }
+                else {
+                    console.log(err);
+                    return;
+                }
 
+            }
+            else {
+
+                if (data === undefined || data[0] === undefined) { console.log('Error (title): the category \'' + decodeURI(params.gcmtitle) + '\' doesn\'t exist or doesn\'t contain any page.'); return; }
+
+                //console.log(util.inspect(data, false, null, true /* enable colors */));
+                let allPages = [];
+
+                for (let index = 0; index < data.length; index++) {
+                    for (el in data[index].pages) {
+                        //console.log({ title: data[index].pages[el].title, pageid: data[index].pages[el].pageid });
+                        allPages.push(data[index].pages[el].pageid);
+                    }
+                    //data[0].pages[Object.keys(data[0].pages)].revisions = data[0].pages[Object.keys(data[0].pages)].revisions.concat(data[index].pages[Object.keys(data[index].pages)].revisions)
+                }
+                //console.log(allPages);
+                //data = data[0].pages[Object.keys(data[0].pages)[0]];
+
+                resolve(allPages);
+            }
+        });
+    })
+};
+var counteraggio = 0;
+var wrapperGetInfoCategory = (params) => {
+    return new Promise((resolve, reject) => {
         client.getAllParametricData(params, async function (err, data) {
             if (err) {
                 if (err === 'Error returned by API: The category name you entered is not valid.' || err.includes('Bad title')) {
@@ -62,13 +106,13 @@ var wrapperGetPagesByCategory = (params) => {
                 for (let index = 0; index < data.length; index++) {
                     for (el in data[index].pages) {
                         //console.log({ title: data[index].pages[el].title, pageid: data[index].pages[el].pageid });
-                        allPages.push(data[index].pages[el].pageid);
+                        allPages.push(data[index].pages[el]);
                     }
                     //data[0].pages[Object.keys(data[0].pages)].revisions = data[0].pages[Object.keys(data[0].pages)].revisions.concat(data[index].pages[Object.keys(data[index].pages)].revisions)
                 }
                 //console.log(allPages);
                 //data = data[0].pages[Object.keys(data[0].pages)[0]];
-
+                //console.log('EHEH',allPages.map(x=>x.title));
                 resolve(allPages);
             }
         });
@@ -325,7 +369,7 @@ var wrapperGetTalksId = (params) => { // category/noncategory
     });
 };
 
-function resetCounterExport (){
+function resetCounterExport() {
     counterExport = 0;
 }
 
@@ -341,4 +385,5 @@ module.exports.wrapperNameInference = wrapperNameInference;
 module.exports.wrapperGetPagesInfo = wrapperGetPagesInfo;
 module.exports.wrapperGetTalksId = wrapperGetTalksId;
 module.exports.resetCounterExport = resetCounterExport;
+module.exports.wrapperGetInfoCategory = wrapperGetInfoCategory;
 
