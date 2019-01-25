@@ -125,9 +125,11 @@ var fs = require('fs');
 
                     //aggrego views
 
-                    finalExport.result[resultPage].pages[page].views === 'Not Available' ?
-                        aggregatedPage.views = 'n/a' : aggregatedPage.views = finalExport.result[resultPage].pages[page].views.map(el => el.views).reduce((a, b) => a + b, 0);
-
+                    if (finalExport.result[resultPage].pages[page].hasOwnProperty('views')) {
+                        finalExport.result[resultPage].pages[page].views === 'Not Available' ?
+                            aggregatedPage.views = 'n/a' : aggregatedPage.views = finalExport.result[resultPage].pages[page].views.map(el => el.views).reduce((a, b) => a + b, 0);
+                    }
+                    
                     aggregatedResultPage.pages[aggregatedPage.pageid] = aggregatedPage;
 
                 });
