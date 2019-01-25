@@ -98,15 +98,18 @@ var wrapperGetInfoCategory = (params) => {
 
             }
             else {
-                if (data === undefined || data[0] === undefined) { console.log('Error (title): the category \'' + decodeURI(params.gcmtitle) + '\' doesn\'t exist or doesn\'t contain any page.'); return; }
+                if (data === undefined || data[0] === undefined) { resolve('n/a') }
 
                 //console.log(util.inspect(data, false, null, true /* enable colors */));
                 let allPages = [];
 
                 for (let index = 0; index < data.length; index++) {
-                    for (el in data[index].pages) {
-                        //console.log({ title: data[index].pages[el].title, pageid: data[index].pages[el].pageid });
-                        allPages.push(data[index].pages[el]);
+                    if (data[index] !== undefined) {
+                        for (el in data[index].pages) {
+                            allPages.push(data[index].pages[el]);
+                            //console.log({ title: data[index].pages[el].title, pageid: data[index].pages[el].pageid });
+
+                        }
                     }
                     //data[0].pages[Object.keys(data[0].pages)].revisions = data[0].pages[Object.keys(data[0].pages)].revisions.concat(data[index].pages[Object.keys(data[index].pages)].revisions)
                 }
@@ -118,6 +121,8 @@ var wrapperGetInfoCategory = (params) => {
         });
     })
 };
+
+
 
 var wrapperGetPageId = (params) => {
     return new Promise((resolve, reject) => {
@@ -142,7 +147,11 @@ var wrapperFirstRevision = (title, server) => { //da splittare caso erro e caso 
             else if (body === undefined || body.query === undefined) resolve({ error: '' });
 
             else {
-                body.query.pages[Object.keys(body.query.pages)[0]].firstRevision = body.query.pages[Object.keys(body.query.pages)[0]].revisions[0].timestamp;
+                try {
+                    body.query.pages[Object.keys(body.query.pages)[0]].firstRevision = body.query.pages[Object.keys(body.query.pages)[0]].revisions[0].timestamp;
+                } catch (e) {
+                    resolve({ error: '' });
+                }
                 delete body.query.pages[Object.keys(body.query.pages)[0]].revisions;
                 //console.log(conteggioFirstRevision);
                 resolve(body.query.pages[Object.keys(body.query.pages)[0]]);

@@ -102,43 +102,49 @@ async function searchPages(parsedRequest) {
             }
             return false;
         }
+
         let stack = [];
-        while (thereAreCategories(pagesInfo)) {
+        let level = 0;
+
+        while (thereAreCategories(pagesInfo) && level < 3) {
+
             var chunkList = [];
 
             for (let index in pagesInfo) {
-                if (pagesInfo[index].ns === 14 && !stack.find(el => { return el === pagesInfo[index].pageid })) {
-                    //console.log('pageid processata:', pagesInfo[index].title);
+                if (pagesInfo[index] !== 'n/a' && pagesInfo[index].ns === 14) {
 
-                    pagesInfo = pagesInfo.concat((await Promise.resolve(wrapper.wrapperGetInfoCategory(
-                        {
-                            "action": "query",
-                            "format": "json",
-                            "generator": "categorymembers",
-                            "formatversion": "2",
-                            "gcmpageid": pagesInfo[index].pageid,
-                            "gcmtype": "page|subcat",
-                            "gcmlimit": "max"
-                        }
-                    ))));
-                    //pagesinfo = pagesInfo.splice(index, 1);
-                    console.log('iterate:', conteggio, 'pageInfo:', pagesInfo.length, 'page:', pagesInfo[index].title);
-                    stack.push(pagesInfo[index].pageid);
-                    pagesInfo.splice(index, 1);
+                    if (!stack.find(el => { return el === pagesInfo[index].pageid })) {
+                        //console.log('pageid processata:', pagesInfo[index].title);
 
-                };
+                        pagesInfo = pagesInfo.concat((await Promise.resolve(wrapper.wrapperGetInfoCategory(
+                            {
+                                "action": "query",
+                                "format": "json",
+                                "generator": "categorymembers",
+                                "formatversion": "2",
+                                "gcmpageid": pagesInfo[index].pageid,
+                                "gcmtype": "page|subcat",
+                                "gcmlimit": "max"
+                            }
+                        ))));
+                        //pagesinfo = pagesInfo.splice(index, 1);
+                        console.log('iterate:', conteggio, 'pageInfo:', pagesInfo.length, 'page:', pagesInfo[index].title);
+                        stack.push(pagesInfo[index].pageid);
+                        pagesInfo.splice(index, 1);
+
+                    } else {
+                        console.log('DUPLICATO:' + pagesInfo[index].title);
+                    }
+                }
             }
             //pagesinfo = pagesInfo.splice(index, 1);
-
-
-
             conteggio += 1;
             //console.log('iterate:', conteggio, 'pageInfo:', pagesInfo.length);
-
+            level += 1;
         }
         //console.log(pagesInfo.map(el => el.title).join('|'));
+        resolve(pagesInfo.filter(el => { return el.ns !== 14 }).map(el => el.pageid));
 
-        return;
 
 
 
