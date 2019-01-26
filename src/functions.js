@@ -1,5 +1,8 @@
 var wrapper = require('./wrappers.js');
 var _ = require('underscore');
+var fs = require('fs');
+
+
 
 function parseRequest(processArgv) {
     let stringArguments = [];
@@ -652,6 +655,18 @@ function sanityCheckInfo(parsedRequest) {
     });
 }
 
+function readFile(file) {
+    return new Promise((resolve, reject) => {
+        fs.readFile(file, function read(err, data) {
+            if (err) {
+                throw err;
+            }
+            resolve(data);
+        });
+    });
+}
+
+
 module.exports.parseRequest = parseRequest;
 module.exports.searchPages = searchPages;
 module.exports.searchFirstRevision = searchFirstRevision;
@@ -663,4 +678,4 @@ module.exports.getPageTalks = getPageTalks;
 module.exports.sanityCheckPreview = sanityCheckPreview;
 module.exports.sanityCheckList = sanityCheckList;
 module.exports.sanityCheckInfo = sanityCheckInfo;
-
+module.exports.readFile = readFile;

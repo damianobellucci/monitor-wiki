@@ -1,20 +1,27 @@
 var functions = require('./functions.js');
 var wrappersModality = require('./wrappersModality.js');
-var fs = require('fs');
 
 
 //MAIN
 (async () => {
     try {
 
-        let modality = process.argv.splice(0, 3)[2].replace(' ', '');
+        let modality = process.argv.slice(2, 3)[0].replace(' ', '');
+
 
         if (modality !== 'preview' && modality !== 'list' && modality !== 'info' && modality && 'aggregatedInfo') {
             console.log('Error:', modality, 'is an invalid modality.');
             return;
         }
 
-        let parsedRequest = functions.parseRequest(process.argv);
+
+        let commandLineQuery = process.argv.slice(3);
+        //caso in cui c'è un file di settaggio in input
+        if (commandLineQuery.length == 1) {
+            commandLineQuery = (await functions.readFile(commandLineQuery[0])).toString();
+        }
+
+        let parsedRequest = functions.parseRequest(commandLineQuery);
 
         if (modality === 'preview') {
 

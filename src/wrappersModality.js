@@ -254,7 +254,10 @@ async function Info(parsedRequest) { //da splittare caso erro e caso body===unde
 
             try {
                 client = new bot(info);
-            } catch (e) { return; };
+            } catch (e) { 
+            
+                console.log(e);
+                return; };
 
             client.logIn(async error => {
 

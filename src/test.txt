@@ -1,0 +1,1 @@
+-f listFile.json -t 20180101,20180130 -t 20021212,20031222 -d infoFile.json -i edit,views,comments,nlinks
