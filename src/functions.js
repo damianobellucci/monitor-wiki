@@ -515,52 +515,142 @@ async function getPageTalks(pages, timespanArray) {
 
 
 function sanityCheckPreview(parsedRequest) {
-    
-    //gestione parametri invalidi
-    for (key of Object.keys(parsedRequest)) {
-        if (key !== 'h' && key !== 'q' && key !== 't' && key !== 'f' && key !== 'n' && key !== 'v' && key !== 'c') {
-            console.log('Error:', '-' + key, 'is not a valid parameter.');
-            return;
+    return new Promise((resolve, reject) => {
+
+        //gestione parametri invalidi
+        for (key of Object.keys(parsedRequest)) {
+            if (key !== 'h' && key !== 'q' && key !== 't' && key !== 'f' && key !== 'n' && key !== 'v' && key !== 'c') {
+                throw ('Error:', '-' + key, 'is not a valid parameter.');
+            }
         }
-    }
 
-    //controllo che si siano i parametri minimi per inoltrare la richiesta
-    if (!parsedRequest.hasOwnProperty('h')) { console.log('Error: ', 'missing -h parameter.'); return; };
-    if (!parsedRequest.hasOwnProperty('q')) { console.log('Error: ', 'missing -q parameter.'); return; };
-    if (!parsedRequest.hasOwnProperty('t')) { console.log('Error: ', 'missing -t parameter.'); return; };
+        //controllo che si siano i parametri minimi per inoltrare la richiesta
+        if (!parsedRequest.hasOwnProperty('h')) { throw ('Error: ', 'missing -h parameter.'); };
+        if (!parsedRequest.hasOwnProperty('q')) { throw ('Error: ', 'missing -q parameter.'); };
+        if (!parsedRequest.hasOwnProperty('t')) { throw ('Error: ', 'missing -t parameter.'); };
 
-    //controllo la validità dei valori parametri
-    for (i in parsedRequest.t) {
-        let timespanControl = parsedRequest.t[i].replace(' ', '').split(',');
-        if (
-            isNaN(timespanControl[0]) ||
-            isNaN(timespanControl[1]) ||
-            timespanControl[0].length != 8 ||
-            timespanControl[1].length != 8
-        ) {
-            console.log('Error: ', parsedRequest.t[i].replace(' ', ''), 'is an invalid parameter for -t');
-            return;
+        //controllo la validità dei valori parametri
+        for (i in parsedRequest.t) {
+            let timespanControl = parsedRequest.t[i].replace(' ', '').split(',');
+            if (
+                isNaN(timespanControl[0]) ||
+                isNaN(timespanControl[1]) ||
+                timespanControl[0].length != 8 ||
+                timespanControl[1].length != 8
+            ) {
+                throw ('Error: ', parsedRequest.t[i].replace(' ', ''), 'is an invalid parameter for -t');
+            }
         }
-    }
 
-    for (let key of Object.keys(parsedRequest)) {
-        if (key !== 'h' && key !== 'q' && key !== 't') {
-            if (parsedRequest.hasOwnProperty(key)) {
-                parsedRequest[key] = parsedRequest[key].replace(' ', '');
-                let control = parsedRequest[key].split(',');
+        for (let key of Object.keys(parsedRequest)) {
+            if (key !== 'h' && key !== 'q' && key !== 't') {
+                if (parsedRequest.hasOwnProperty(key)) {
+                    parsedRequest[key] = parsedRequest[key].replace(' ', '');
+                    let control = parsedRequest[key].split(',');
 
-                if (
-                    isNaN(control[0]) ||
-                    (isNaN(control[1]) && (control[1]) !== '*')
-                ) {
-                    console.log('Error: ', parsedRequest[key], 'is an invalid parameter for -t');
-                    return;
+
+                    if (control.length < 2 ||
+                        isNaN(control[0]) ||
+                        (isNaN(control[1]) && (control[1]) !== '*')
+                    ) {
+                        throw ('Error: ', parsedRequest[key], 'is an invalid parameter for', key);
+                    }
                 }
             }
         }
-    }
+        resolve();
+    });
 }
 
+function sanityCheckList(parsedRequest) {
+
+    return new Promise((resolve, reject) => {
+
+        //gestione parametri invalidi
+        for (key of Object.keys(parsedRequest)) {
+            if (key !== 'h' && key !== 'q' && key !== 't' && key !== 'f' && key !== 'n' && key !== 'v' && key !== 'c' && key !== 'e') {
+                throw ('Error:', '-' + key, 'is not a valid parameter.');
+            }
+        }
+
+        //controllo che si siano i parametri minimi per inoltrare la richiesta
+        if (!parsedRequest.hasOwnProperty('h')) { throw ('Error: ', 'missing -h parameter.'); };
+        if (!parsedRequest.hasOwnProperty('q')) { throw ('Error: ', 'missing -q parameter.'); };
+        if (!parsedRequest.hasOwnProperty('t')) { throw ('Error: ', 'missing -t parameter.'); };
+        //if (!parsedRequest.hasOwnProperty('e')) { console.log('Error: ', 'missing -e parameter.'); return; };
+
+
+        //controllo la validità dei valori parametri
+        for (i in parsedRequest.t) {
+            let timespanControl = parsedRequest.t[i].replace(' ', '').split(',');
+            if (
+                isNaN(timespanControl[0]) ||
+                isNaN(timespanControl[1]) ||
+                timespanControl[0].length != 8 ||
+                timespanControl[1].length != 8
+            ) {
+                throw ('Error: ', parsedRequest.t[i].replace(' ', ''), 'is an invalid parameter for -t');
+            }
+        }
+
+        for (let key of Object.keys(parsedRequest)) {
+            if (key !== 'h' && key !== 'q' && key !== 't') {
+                if (parsedRequest.hasOwnProperty(key)) {
+                    parsedRequest[key] = parsedRequest[key].replace(' ', '');
+                    let control = parsedRequest[key].split(',');
+                    if (
+                        control.length < 2 ||
+                        isNaN(control[0]) ||
+                        (isNaN(control[1]) && (control[1]) !== '*')
+                    ) {
+                        throw ('Error: ', parsedRequest[key], 'is an invalid parameter for ', key);
+                    }
+                }
+            }
+        }
+        resolve();
+    });
+}
+
+function sanityCheckInfo(parsedRequest) {
+    return new Promise((resolve, reject) => {
+        console.log(Object.keys(parsedRequest).length);
+        //gestione parametri invalidi
+        for (key of Object.keys(parsedRequest)) {
+            if (key !== 'q' && key !== 't' && key !== 'f' && key !== 'n' && key !== 'v' && key !== 'c' && key !== 'i' && key !== 'd') {
+                console.log('Error:', '-' + key, 'is not a valid parameter.');
+                return;
+            }
+        }
+
+        //controllo che si siano i parametri minimi per inoltrare la richiesta
+        if (!parsedRequest.hasOwnProperty('f')) { throw ('Error: ', 'missing -f parameter.'); };
+        if (!parsedRequest.hasOwnProperty('t')) { throw ('Error: ', 'missing -t parameter.'); };
+        if (!parsedRequest.hasOwnProperty('d')) { throw ('Error: ', 'missing -d parameter.'); };
+
+
+        //controllo la validità dei valori parametri
+        for (i in parsedRequest.t) {
+            let timespanControl = parsedRequest.t[i].replace(' ', '').split(',');
+            if (
+                isNaN(timespanControl[0]) ||
+                isNaN(timespanControl[1]) ||
+                timespanControl[0].length != 8 ||
+                timespanControl[1].length != 8
+            ) {
+                throw ('Error: ', parsedRequest.t[i].replace(' ', ''), 'is an invalid parameter for -t');
+            }
+        }
+
+        for (el of parsedRequest.i.replace(' ', '').split(',')) {
+            if (el !== 'edit' && el !== 'views' && el !== 'comments' && el !== 'nlinks' && el !== 'listlinks') {
+                console.log('Error: ', el, 'is an invalid value for -i');
+                return;
+            }
+        }
+        resolve();
+    });
+}
 
 module.exports.parseRequest = parseRequest;
 module.exports.searchPages = searchPages;
@@ -571,5 +661,6 @@ module.exports.getPageExport = getPageExport;
 module.exports.getPageViews = getPageViews;
 module.exports.getPageTalks = getPageTalks;
 module.exports.sanityCheckPreview = sanityCheckPreview;
-
+module.exports.sanityCheckList = sanityCheckList;
+module.exports.sanityCheckInfo = sanityCheckInfo;
 

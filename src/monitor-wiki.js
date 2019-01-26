@@ -18,22 +18,19 @@ var fs = require('fs');
 
         if (modality === 'preview') {
 
-            functions.sanityCheckPreview(parsedRequest);
+            await functions.sanityCheckPreview(parsedRequest);
 
             parsedRequest.t = parsedRequest.t[0];
-            
+
             await Promise.resolve(wrappersModality.Preview(parsedRequest));
         }
         else if (modality === 'list') {
+
+            await functions.sanityCheckList(parsedRequest);
+
             parsedRequest.t = parsedRequest.t[0];
-            console.log(parsedRequest);
-            //if (!parsedRequest.n && !parsedRequest.f) { console.log('Error (input): n.Edit or frequencyEdit is required.'); return; }
-            //if (parsedRequest.n && parsedRequest.f) { console.log('Error (input): only one of n.Edit or frequencyEdit is required.'); return; }
-            //if (!parsedRequest.e) { console.log('Error (input): -e flag is required for "info" modality.'); return; }
 
             let resultPreview = await Promise.resolve(wrappersModality.Preview(parsedRequest));
-
-            //if (resultPreview.resultofPreview.length == 0) { console.log('No pages for the query.'); return; }
 
             let finalObject = { pages: resultPreview, query: parsedRequest };
 
@@ -44,13 +41,7 @@ var fs = require('fs');
         }
         else if (modality === 'info') {
 
-            if (!parsedRequest.f) { console.log('Error (input): missing input file.'); return; }
-
-            console.log(parsedRequest);
-
-            //if (new Date(timespanArray[0]) > new Date(timespanArray[1])) { console.log('Error (timespan): ' + parsedRequest.t + ' is an invalid timespan.'); return };
-            //if (isNaN(parsedRequest.n) || parsedRequest.n < 0) { console.log('Error (nEditCriteria): ' + parsedRequest.n + ' is not a valid nEditCriteria'); return; };
-            //if (isNaN(parsedRequest.f) || parsedRequest.f < 0) { console.log('Error (frequencyEditCriteria): ' + parsedRequest.f + ' is not a valid frequencyEditCriteria'); return; };
+            await functions.sanityCheckInfo(parsedRequest);
 
             let finalExport = { query: parsedRequest, result: {} };
             let stringParsedRequest = JSON.stringify(parsedRequest);
@@ -70,18 +61,10 @@ var fs = require('fs');
         }
         else if (modality === 'aggregateInfo') {
 
-            if (!parsedRequest.f) { console.log('Error (input): missing input file.'); return; }
-
-            console.log(parsedRequest);
-
-            //if (new Date(timespanArray[0]) > new Date(timespanArray[1])) { console.log('Error (timespan): ' + parsedRequest.t + ' is an invalid timespan.'); return };
-            //if (isNaN(parsedRequest.n) || parsedRequest.n < 0) { console.log('Error (nEditCriteria): ' + parsedRequest.n + ' is not a valid nEditCriteria'); return; };
-            //if (isNaN(parsedRequest.f) || parsedRequest.f < 0) { console.log('Error (frequencyEditCriteria): ' + parsedRequest.f + ' is not a valid frequencyEditCriteria'); return; };
+            await functions.sanityCheckInfo(parsedRequest);
 
             let finalExport = { query: parsedRequest, result: {} };
             let stringParsedRequest = JSON.stringify(parsedRequest);
-
-
 
             for (let i = 0; i < Object.keys(parsedRequest.t).length; i++) {
                 let params = JSON.parse(stringParsedRequest);
