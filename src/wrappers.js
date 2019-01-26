@@ -253,8 +253,8 @@ var wrapperTalks = (params3, utilParams) => {
                 console.log(err3);
 
                 resolve({
-                    history: 'error',
-                    count: 'error',
+                    history: 'n/a',
+                    count: 'n/a',
                     pageid: utilParams
                 });
             }

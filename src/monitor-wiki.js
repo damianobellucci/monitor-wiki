@@ -6,15 +6,25 @@ var fs = require('fs');
 //MAIN
 (async () => {
     try {
+
+        let modality = process.argv.splice(0, 3)[2].replace(' ', '');
+
+        if (modality !== 'preview' && modality !== 'list' && modality !== 'info' && modality && 'aggregatedInfo') {
+            console.log('Error:', modality, 'is an invalid modality.');
+            return;
+        }
+
         let parsedRequest = functions.parseRequest(process.argv);
 
-        if (parsedRequest.m === 'preview') {
+        if (modality === 'preview') {
+
+            functions.sanityCheckPreview(parsedRequest);
+
             parsedRequest.t = parsedRequest.t[0];
-            console.log(parsedRequest);
-            //if (parsedRequest.n && parsedRequest.f) { console.log('Error (input): only one of n.Edit or frequencyEdit is required.'); return; }
+            
             await Promise.resolve(wrappersModality.Preview(parsedRequest));
         }
-        else if (parsedRequest.m === 'list') {
+        else if (modality === 'list') {
             parsedRequest.t = parsedRequest.t[0];
             console.log(parsedRequest);
             //if (!parsedRequest.n && !parsedRequest.f) { console.log('Error (input): n.Edit or frequencyEdit is required.'); return; }
@@ -32,7 +42,7 @@ var fs = require('fs');
                 console.log('Page list has been saved with name: ' + parsedRequest.e);
             });
         }
-        else if (parsedRequest.m === 'info') {
+        else if (modality === 'info') {
 
             if (!parsedRequest.f) { console.log('Error (input): missing input file.'); return; }
 
@@ -58,7 +68,7 @@ var fs = require('fs');
                 //console.log('Time elapsed for export: ' + resultInfo.timer / 1000 + 's');
             });
         }
-        else if (parsedRequest.m === 'aggregateInfo') {
+        else if (modality === 'aggregateInfo') {
 
             if (!parsedRequest.f) { console.log('Error (input): missing input file.'); return; }
 

@@ -2,7 +2,6 @@ var wrapper = require('./wrappers.js');
 var _ = require('underscore');
 
 function parseRequest(processArgv) {
-    let arguments = processArgv.slice(2);
     let stringArguments = [];
     let requestObject = {};
 
@@ -515,6 +514,54 @@ async function getPageTalks(pages, timespanArray) {
 }
 
 
+function sanityCheckPreview(parsedRequest) {
+    
+    //gestione parametri invalidi
+    for (key of Object.keys(parsedRequest)) {
+        if (key !== 'h' && key !== 'q' && key !== 't' && key !== 'f' && key !== 'n' && key !== 'v' && key !== 'c') {
+            console.log('Error:', '-' + key, 'is not a valid parameter.');
+            return;
+        }
+    }
+
+    //controllo che si siano i parametri minimi per inoltrare la richiesta
+    if (!parsedRequest.hasOwnProperty('h')) { console.log('Error: ', 'missing -h parameter.'); return; };
+    if (!parsedRequest.hasOwnProperty('q')) { console.log('Error: ', 'missing -q parameter.'); return; };
+    if (!parsedRequest.hasOwnProperty('t')) { console.log('Error: ', 'missing -t parameter.'); return; };
+
+    //controllo la validità dei valori parametri
+    for (i in parsedRequest.t) {
+        let timespanControl = parsedRequest.t[i].replace(' ', '').split(',');
+        if (
+            isNaN(timespanControl[0]) ||
+            isNaN(timespanControl[1]) ||
+            timespanControl[0].length != 8 ||
+            timespanControl[1].length != 8
+        ) {
+            console.log('Error: ', parsedRequest.t[i].replace(' ', ''), 'is an invalid parameter for -t');
+            return;
+        }
+    }
+
+    for (let key of Object.keys(parsedRequest)) {
+        if (key !== 'h' && key !== 'q' && key !== 't') {
+            if (parsedRequest.hasOwnProperty(key)) {
+                parsedRequest[key] = parsedRequest[key].replace(' ', '');
+                let control = parsedRequest[key].split(',');
+
+                if (
+                    isNaN(control[0]) ||
+                    (isNaN(control[1]) && (control[1]) !== '*')
+                ) {
+                    console.log('Error: ', parsedRequest[key], 'is an invalid parameter for -t');
+                    return;
+                }
+            }
+        }
+    }
+}
+
+
 module.exports.parseRequest = parseRequest;
 module.exports.searchPages = searchPages;
 module.exports.searchFirstRevision = searchFirstRevision;
@@ -523,4 +570,6 @@ module.exports.getIndexFlagPreferences = getIndexFlagPreferences;
 module.exports.getPageExport = getPageExport;
 module.exports.getPageViews = getPageViews;
 module.exports.getPageTalks = getPageTalks;
+module.exports.sanityCheckPreview = sanityCheckPreview;
+
 
