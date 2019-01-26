@@ -134,6 +134,8 @@ async function searchPages(parsedRequest) {
 
                     } else {
                         console.log('DUPLICATO:' + pagesInfo[index].title);
+                        pagesInfo.splice(index, 1);
+
                     }
                 }
             }
