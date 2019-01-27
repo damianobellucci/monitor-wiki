@@ -203,13 +203,15 @@ var wrapperGetParametricRevisions = (params) => {
     })
 };
 
+var counterFailedExport = 0;
+
 var wrapperExport = (params) => {
     return new Promise((resolve, reject) => {
 
         client.getAllParametricData(params.query, function (err, data) {
             //console.log(params);
             //parseObject = { title: data.title, pageid: data.pageid, revid: data.revid, nLinks: data.links.length, nExtLinks: data.externallinks.length, nSections: data.sections.length, displayTitle: data.displaytitle }
-            if (err) {
+            if (err || params.revision.revid === 819820642 && counterFailedExport < 10) {
                 if (err === 'Error returned by API: You don\'t have permission to view deleted revision text.') {
                     counterExport++;
                     //console.log(err);
@@ -218,7 +220,12 @@ var wrapperExport = (params) => {
                     }]);
                 }
                 else {
-                    console.log(err);
+                    counterFailedExport += 1;
+
+                    console.log('Error (export call API): try to do the call another time.', 'Tot', counterFailedExport, 'request failed.');
+
+                    params.revision.error = '';
+                    resolve(params.revision);
                 }
             }
             else {
@@ -246,7 +253,7 @@ var wrapperExport = (params) => {
                 //console.log(counterExport);
 
 
-                process.stdout.write("Downloading " + counterExport + "/" + params.counterRevisions + ": " + Math.round(counterExport * 100 / params.counterRevisions) + "%" + "\r");
+                //process.stdout.write("Downloading " + counterExport + "/" + params.counterRevisions + ": " + Math.round(counterExport * 100 / params.counterRevisions) + "%" + "\r");
                 //console.log(data);
                 resolve(data);
             }

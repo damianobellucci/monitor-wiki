@@ -296,10 +296,20 @@ async function searchRevisions(parsedRequest, timespanArray, allPagesQuery) {
 async function getPageExport(result, indexPreferences, counterRevisions) {
     return new Promise(async (resolve, reject) => {
         let exportQueue = [];
-
+        let resultExport = [];
         //input:result
-        for (el in result) {
-            for (rev of result[el].revisions.history) {
+        //do {
+        //console.log(result);
+
+        let stackRevisions = [];
+        for (let page of result) {
+            for (let rev of page.revisions.history) {
+                stackRevisions.push(rev);
+            }
+        }
+
+        do {
+            for (rev of stackRevisions) {
                 let params = {
                     query: {
                         action: "parse",
@@ -308,13 +318,23 @@ async function getPageExport(result, indexPreferences, counterRevisions) {
                         prop: ((indexPreferences.nlinks || indexPreferences.listlinks) ? "links|externallinks" : "") + "|sections|revid|displaytitle"
                     },
                     indexPreferences: indexPreferences,
-                    counterRevisions: counterRevisions
+                    counterRevisions: counterRevisions,
+                    revision: rev
                 }
                 exportQueue.push(wrapper.wrapperExport(params));
             }
-        }
-        let resultExport = await Promise.all(exportQueue);
-        console.log('\nFine retrieve informazioni delle revisioni');
+            resultExport = resultExport.concat(await Promise.all(exportQueue));
+
+            exportQueue = [];
+            stackRevisions=[];
+            stackRevisions = resultExport.filter(el => { return el.hasOwnProperty('error') });
+            resultExport = resultExport.filter(el => { return !el.hasOwnProperty('error') });
+            //console.log(stackRevisions.length);
+
+
+        } while (stackRevisions.length > 0)
+
+        console.log('\nFine download informazioni revisioni');
 
         let newResultExport = [];
         //console.log(resultExport);
