@@ -60,7 +60,7 @@ var fs = require('fs');
                 finalExport.result[i] = await Promise.resolve(wrappersModality.Info(params));
             }
 
-            fs.writeFile(parsedRequest.d, JSON.stringify(finalExport), function (err) {
+            fs.writeFile('../results/' + parsedRequest.d, JSON.stringify(finalExport), function (err) {
                 if (err) throw err;
                 console.log('Export completed');
 

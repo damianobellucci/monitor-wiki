@@ -148,7 +148,7 @@ async function searchPages(parsedRequest) {
             level += 1;
         }
         //console.log(pagesInfo.map(el => el.title).join('|'));
-        resolve(pagesInfo.filter(el => { return el.ns !== 14 }).map(el => el.pageid));
+        resolve(_.uniq(pagesInfo.filter(el => { return el.ns !== 14 }).map(el => el.pageid)));
 
         for (el of queryArray) {
             let categoryParams = {
@@ -200,40 +200,48 @@ async function searchPages(parsedRequest) {
 
 async function searchFirstRevision(parsedRequest, timespanArray, allPagesQuery) {
     return new Promise(async (resolve, reject) => {
-
-        console.log('\nInizio ricerca data creazione delle pagine');
+        console.log('\nInizio ricerca data creazione');
 
         let queueFirstRevisions = [];
+        let resultQueue = [];
 
         //nella ricerca della data di creazione delle pagine, la libreria nodemw non riconosce alcuni parametri 
         //per la richiesta della prima revisione di una pagina, quindi devo gestire le richieste autonomamente
 
-        if (allPagesQuery.length > 500) {//se le pagine sono molte, splitto l'array per evitare di fare troppe richieste alla voltaed incorrere nel timeout error
+        do {
+            if (allPagesQuery.length > 500) {//se le pagine sono molte, splitto l'array per evitare di fare troppe richieste alla voltaed incorrere nel timeout error
 
-            let chunkedAllPagesQuery = [];
-            while (allPagesQuery.length > 0) {
-                resultQueue = [];
-                chunkedAllPagesQuery = allPagesQuery.slice(0, 30);
-                for (let el of chunkedAllPagesQuery) {
+                let chunkedAllPagesQuery = [];
+                while (allPagesQuery.length > 0) {
+                    resultQueue = [];
+                    chunkedAllPagesQuery = allPagesQuery.slice(0, 30);
+                    for (let el of chunkedAllPagesQuery) {
+                        resultQueue.push(wrapper.wrapperFirstRevision(el, parsedRequest.h));
+                    }
+                    allPagesQuery = allPagesQuery.slice(30, allPagesQuery.length);
+                    queueFirstRevisions = queueFirstRevisions.concat(await Promise.all(resultQueue));
+                }
+            }
+            else { //tutte assieme
+                for (el of allPagesQuery) {
                     resultQueue.push(wrapper.wrapperFirstRevision(el, parsedRequest.h));
                 }
-                allPagesQuery = allPagesQuery.slice(31, allPagesQuery.length);
                 queueFirstRevisions = queueFirstRevisions.concat(await Promise.all(resultQueue));
             }
-        }
-        else { //tutte assieme
-            for (el of allPagesQuery) {
-                queueFirstRevisions.push(wrapper.wrapperFirstRevision(el, parsedRequest.h));
-            }
-            queueFirstRevisions = await Promise.all(queueFirstRevisions);
-        }
-        console.log('\nFine retrieve data creazione delle pagine');
+            //pulisco stacks
+            resultQueue = [];
+
+            allPagesQuery = queueFirstRevisions.filter(el => { return el.hasOwnProperty('error') }).map(el => el.title);
+            queueFirstRevisions = queueFirstRevisions.filter(el => { return !el.hasOwnProperty('error') });
+
+        } while (allPagesQuery.length > 0)
+
+        console.log('\nFine ricerca data creazione');
 
         //raramente succede che la richiesta venga soddisfatta ma il body sia undefined, filtro quindi questi casi e eslcudo le pagine corrispondenti
         queueFirstRevisions = queueFirstRevisions.filter((el) => {
             return !el.hasOwnProperty('error');
         });
-
 
         //se la pagina è stata creata dopo del timespan end della pagina, allora non la metto tra le pagine da processare   
         queueFirstRevisions = queueFirstRevisions.filter((el) => {
@@ -248,7 +256,7 @@ async function searchRevisions(parsedRequest, timespanArray, allPagesQuery) {
     return new Promise(async (resolve, reject) => {
         let queue = [];
 
-        console.log('\nInizio ricerca revisioni delle pagine');
+        console.log('\nInizio ricerca revisioni');
 
         let resultOfQuery = [];
         do {
@@ -280,7 +288,7 @@ async function searchRevisions(parsedRequest, timespanArray, allPagesQuery) {
 
         //
         //console.log(resultOfQuery)
-        console.log('\nFine retrieve revisioni delle pagine');
+        console.log('\nFine ricerca revisioni');
         resolve(resultOfQuery);
     });
 }
@@ -366,72 +374,12 @@ function getIndexFlagPreferences(parsedRequest) {
     return indexPreferences;
 }
 
-/*async function getPageViews(finalExport, timespanArray2, resultPreview) {
-    return new Promise(async (resolve, reject) => {
-        let queueViews = [];
-        let resultViews = [];
-
-        console.log('Inizio retrieve views relative alle pagine');
-
-        //console.log(Object.keys(finalExport.pages).length);
-        if (Object.keys(finalExport.pages).length > 500) {
-            //ottengo array con tutte le pagine
-
-
-            let arrayOfPagesId = [];
-            for (elId in finalExport.pages) {
-                arrayOfPagesId.push(elId);
-            }
-            //console.log('\narrayOfPagesId',arrayOfPagesId.length);
-
-            while (arrayOfPagesId.length > 0) {
-                //console.log('\narrayOfPagesId', arrayOfPagesId.length);
-
-                conta += 1;
-                //console.log(conta);
-                queueViews = [];
-                chunkedArrayOfPagesId = arrayOfPagesId.slice(0, 25);
-                //wrappo
-                for (elIdOfChuncked of chunkedArrayOfPagesId) {
-                    queueViews.push(wrapper.wrapperViews({
-                        pageTitle: finalExport.pages[elIdOfChuncked].title,
-                        pageid: finalExport.pages[elIdOfChuncked].pageid,
-                        start: timespanArray2[0],
-                        end: timespanArray2[1],
-                        server: resultPreview.query.h
-                    }));
-                }
-                arrayOfPagesId = arrayOfPagesId.slice(26, arrayOfPagesId.length);
-                resultViews = resultViews.concat(await Promise.all(queueViews));
-
-            }
-
-        } else {
-            for (elPageId in finalExport.pages) {
-                //console.log(finalExport.pages[elPageId].title);
-
-                //console.log(queryArray[0],queryArray[1]);
-                queueViews.push(wrapper.wrapperViews({
-                    pageTitle: finalExport.pages[elPageId].title,
-                    pageid: finalExport.pages[elPageId].pageid,
-                    start: timespanArray2[0],
-                    end: timespanArray2[1],
-                    server: resultPreview.query.h
-                }));
-            }
-            resultViews = await Promise.all(queueViews);
-        }
-        console.log('Fine retrieve views relative alle pagine');
-        resolve(resultViews);
-    });
-}*/
-
 async function getPageViews(pagesInfo, timespanArray, parsedRequest) {
     return new Promise(async (resolve, reject) => {
         let queueViews = [];
         let resultViews = [];
 
-        console.log('\n Inizio retrieve views relative alle pagine');
+        console.log('\nInizio ricerca views');
 
         do {
             if (pagesInfo.length > 500) {
@@ -471,64 +419,50 @@ async function getPageViews(pagesInfo, timespanArray, parsedRequest) {
             resultViews = resultViews.filter(el => { return !el.hasOwnProperty('error') });
             //console.log(pagesInfo);
         }
-        
         while (pagesInfo.length > 0)
 
-        console.log('\n Fine retrieve views relative alle pagine');
+        console.log('\nFine ricerca views');
 
         resolve(resultViews);
     });
 }
 
-/*async function getPageTalks(finalExport, timespanArray) {
-    return new Promise(async (resolve, reject) => {
-        queueTalks = [];
-        console.log('Inizio retrieve talks delle pagine');
-        for (elPageId in finalExport.pages) {
-            queueTalks.push(wrapper.wrapperTalks(
-                {
-                    action: 'query',
-                    prop: 'revisions',
-                    rvprop: ['ids', 'timestamp', 'size', 'flags', 'comment', 'user'].join('|'),
-                    rvdir: 'newer', // order by timestamp ascz
-                    rvlimit: 'max',
-                    titles: 'Talk:' + finalExport.pages[elPageId].title,
-                    rvstart: timespanArray[0],
-                    rvend: timespanArray[1]
-                }
-                ,
-                finalExport.pages[elPageId].pageid
-            ));
-        }
-        let resultTalks = await Promise.all(queueTalks);
-        console.log('Fine retrieve talks delle pagine');
-
-        resolve(resultTalks);
-    });
-}*/
-
 async function getPageTalks(pages, timespanArray) {
     return new Promise(async (resolve, reject) => {
-        queueTalks = [];
-        console.log('\n Inizio retrieve talks delle pagine');
-        for (page of pages) {
-            queueTalks.push(wrapper.wrapperTalks(
-                {
-                    action: 'query',
-                    prop: 'revisions',
-                    rvprop: ['ids', 'timestamp', 'size', 'flags', 'comment', 'user'].join('|'),
-                    rvdir: 'newer', // order by timestamp ascz
-                    rvlimit: 'max',
-                    titles: 'Talk:' + page.title,
-                    rvstart: timespanArray[0],
-                    rvend: timespanArray[1]
-                }
-                ,
-                page.pageid
-            ));
-        }
-        let resultTalks = await Promise.all(queueTalks);
-        console.log('\n Fine retrieve talks delle pagine');
+        let queueTalks = [];
+        let resultTalks = [];
+        console.log('\nInizio ricerca talks delle pagine');
+        do {
+            for (let page of pages) {
+
+                queueTalks.push(wrapper.wrapperTalks(
+                    {
+                        action: 'query',
+                        prop: 'revisions',
+                        rvprop: ['ids', 'timestamp', 'size', 'flags', 'comment', 'user'].join('|'),
+                        rvdir: 'newer', // order by timestamp ascz
+                        rvlimit: 'max',
+                        titles: 'Talk:' + page.title,
+                        rvstart: timespanArray[0],
+                        rvend: timespanArray[1]
+                    }
+                    ,
+                    page
+                ));
+            }
+
+            resultTalks = resultTalks.concat(await Promise.all(queueTalks));
+
+            queueTalks = [];
+
+            pages = resultTalks.filter(el => { return el.hasOwnProperty('error') });
+
+            resultTalks = resultTalks.filter(el => { return !el.hasOwnProperty('error') });
+            //console.log(pages.length);
+
+        } while (pages.length > 0)
+
+        console.log('\nFine ricerca talks');
 
         resolve(resultTalks);
     });

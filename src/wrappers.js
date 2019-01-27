@@ -134,12 +134,18 @@ var wrapperGetPageId = (params) => {
     });
 };
 
+var counterFailedFirstRevision = 0;
+
 var wrapperFirstRevision = (title, server) => { //da splittare caso erro e caso body===undefined
     return new Promise((resolve, reject) => {
         let urlRequest = 'https://' + server + '/w/api.php?action=query&prop=revisions&rvlimit=1&rvprop=timestamp&rvdir=newer&pageids=' + title + '&format=json';
         request(urlRequest, { json: true }, (err, res, body) => {
             //console.log(title);
-            if (err) { console.log(title, err); return; }
+            if (err || title === 4566347 && counterFailedFirstRevision < 10) {
+                counterFailedFirstRevision += 1;
+                console.log('Error (creation date call API): try to do the call another time for page', title + '.', 'Tot.', counterFailedFirstRevision, 'request failed.');
+                resolve({ title: title, error: '' });
+            }
 
             //raramente succede che la richiesta venga soddisfatta ma il body sia undefined, filtro quindi questi casi e eslcudo le pagine corrispondenti
             else if (body === undefined || body.query === undefined) resolve({ error: '' });
@@ -248,18 +254,19 @@ var wrapperExport = (params) => {
     })
 };
 
-var wrapperTalks = (params3, utilParams) => {
+var counterFailedTalks = 0;
+
+var wrapperTalks = (params3, page) => {
     return new Promise((resolve, reject) => {
         client.getAllParametricData(params3, function (err3, data3) {
             talk = {};
-            if (err3) {
-                console.log(err3);
+            if (err3 || page.title === 'Steve Bucknall' && counterFailedTalks < 10) {
+                counterFailedTalks += 1;
+                console.log('Error (talks call API): try to do the call another time for page', page.title + '.', 'Tot.', counterFailedTalks, 'request failed.');
 
-                resolve({
-                    history: 'n/a',
-                    count: 'n/a',
-                    pageid: utilParams
-                });
+                page.error = '';
+
+                resolve(page);
             }
             if (data3 !== undefined) {
                 if (data3.length == 1) {
@@ -274,7 +281,7 @@ var wrapperTalks = (params3, utilParams) => {
                 if (!data3.hasOwnProperty('revisions')) data3.revisions = [];
                 talk.history = data3.revisions;
                 talk.count = data3.revisions.length;
-                talk.pageid = utilParams;
+                talk.pageid = page.pageid;
                 resolve(talk);
             }
         });
