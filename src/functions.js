@@ -2,7 +2,7 @@ var wrapper = require('./wrappers.js');
 var _ = require('underscore');
 var fs = require('fs');
 
-function parseRequest(processArgv) {
+function parseRequest() {
     let stringArguments = [];
     let requestObject = {};
 
@@ -14,6 +14,7 @@ function parseRequest(processArgv) {
     for (let el in arguments) {
         arguments[el] = arguments[el].slice(0, arguments[el].length - 1);
     }
+
 
     for (let el in arguments) {
         if (arguments[el] === '');
@@ -33,6 +34,7 @@ function parseRequest(processArgv) {
         }
     }
     //requestObject.t = requestObject.t.replace(' ', '');
+    console.log(requestObject);
     return requestObject;
 }
 
@@ -451,7 +453,6 @@ async function getPageViews(pagesInfo, timespanArray, parsedRequest) {
                 }
 
             } else {
-
 
                 for (let page of pagesInfo) {
                     queueViews.push(wrapper.wrapperViews({
