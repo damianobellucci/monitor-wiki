@@ -122,8 +122,6 @@ var wrapperGetInfoCategory = (params) => {
     })
 };
 
-
-
 var wrapperGetPageId = (params) => {
     return new Promise((resolve, reject) => {
         client.getAllParametricData(params, function (err, data) {
@@ -161,12 +159,17 @@ var wrapperFirstRevision = (title, server) => { //da splittare caso erro e caso 
     });
 };
 
+var contaggio = 0;
 var wrapperGetParametricRevisions = (params) => {
     return new Promise((resolve, reject) => {
 
         client.getAllParametricData(params.query, function (err, data) {
+            //console.log(params);
+
             if (err) {
-                console.log(err);
+                contaggio += 1;
+                console.log('Error (revisions): try to do the call another time for page', params.query.titles + '.', 'Tot.', contaggio, 'request failed.');
+                resolve({ page: params.query.titles, error: '' });
                 return;
             }
 
@@ -278,6 +281,8 @@ var wrapperTalks = (params3, utilParams) => {
     });
 };
 
+var counterFailedViews = 0;
+
 var wrapperViews = (params) => {
     return new Promise((resolve, reject) => {
         //riscalo il timespan di un giorno
@@ -302,8 +307,16 @@ var wrapperViews = (params) => {
 
         request(urlRequest, { json: true }, (err, res, body) => {
             //console.log(body);
-            if (err) console.log(params.pageTitle, err);
-            if (err || body.title === 'Not found.') { /*return*/ /*console.log(params.pageTitle, err)*/;
+            if ((err || params.pageid === 57468431 && counterFailedViews < 10)) {
+                params.error = '';
+                params.title = params.pageTitle;
+                delete (params.pageTitle);
+                counterFailedViews += 1;
+
+                console.log('Error (views): try to do the call another time for page', params.title + '.', 'Tot.', counterFailedViews, 'request failed.');
+                resolve(params);
+            }
+            if (body.title === 'Not found.') { /*return*/ /*console.log(params.pageTitle, err)*/; //caso views non disponibili per via del primo maggio 2015
                 resolve({ title: params.pageTitle, pageid: params.pageid, dailyViews: 'Not Available' });
             }
             else {//formatto oggetto view

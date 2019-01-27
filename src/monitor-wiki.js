@@ -1,5 +1,6 @@
 var functions = require('./functions.js');
 var wrappersModality = require('./wrappersModality.js');
+var fs = require('fs');
 
 
 //MAIN
@@ -9,7 +10,7 @@ var wrappersModality = require('./wrappersModality.js');
         let modality = process.argv.slice(2, 3)[0].replace(' ', '');
 
 
-        if (modality !== 'preview' && modality !== 'list' && modality !== 'info' && modality && 'aggregatedInfo') {
+        if (modality !== 'preview' && modality !== 'list' && modality !== 'info' && modality !== 'aggregateInfo') {
             console.log('Error:', modality, 'is an invalid modality.');
             return;
         }
@@ -18,7 +19,7 @@ var wrappersModality = require('./wrappersModality.js');
         let commandLineQuery = process.argv.slice(3);
         //caso in cui c'è un file di settaggio in input
         if (commandLineQuery.length == 1) {
-            commandLineQuery = (await functions.readFile(commandLineQuery[0])).toString();
+            commandLineQuery = (await functions.readFile('../test/' + commandLineQuery[0])).toString();
         }
 
         let parsedRequest = functions.parseRequest(commandLineQuery);
@@ -41,7 +42,7 @@ var wrappersModality = require('./wrappersModality.js');
 
             let finalObject = { pages: resultPreview, query: parsedRequest };
 
-            fs.writeFile(parsedRequest.e, JSON.stringify(finalObject), function (err) {
+            fs.writeFile('../results/' + parsedRequest.e, JSON.stringify(finalObject), function (err) {
                 if (err) throw err;
                 console.log('Page list has been saved with name: ' + parsedRequest.e);
             });

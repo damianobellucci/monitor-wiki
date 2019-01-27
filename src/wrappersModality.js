@@ -18,7 +18,7 @@ function Preview(parsedRequest) { //da splittare caso erro e caso body===undefin
             "username": "Monitorwikibotdb",             // account to be used when logIn is called (optional)
             "password": "Slart1bartfastW",             // password to be used when logIn is called (optional)
             "userAgent": "belluccidamiano@gmail.com",      // define custom bot's user agent
-            "concurrency": 15               // how many API requests can be run in parallel (defaults to 3)
+            "concurrency": 100               // how many API requests can be run in parallel (defaults to 3)
         }
 
         let start = new Date().getTime();
@@ -284,7 +284,7 @@ async function Info(parsedRequest) { //da splittare caso erro e caso body===unde
                 timespanArray[0] = timespanArray[0].substr(0, 4) + '-' + timespanArray[0].substr(4, 2) + '-' + timespanArray[0].substr(6, 2) + 'T00:00:00.000Z';
                 timespanArray[1] = timespanArray[1].substr(0, 4) + '-' + timespanArray[1].substr(4, 2) + '-' + timespanArray[1].substr(6, 2) + 'T23:59:59.999Z';
 
-                console.log('Inizio retrieve data creazione delle pagine');
+                console.log('\nInizio retrieve data creazione delle pagine');
 
                 parsedRequest.h = resultPreview.query.h;
 

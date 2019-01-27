@@ -2,8 +2,6 @@ var wrapper = require('./wrappers.js');
 var _ = require('underscore');
 var fs = require('fs');
 
-
-
 function parseRequest(processArgv) {
     let stringArguments = [];
     let requestObject = {};
@@ -41,7 +39,7 @@ function parseRequest(processArgv) {
 async function searchPages(parsedRequest) {
     return new Promise(async (resolve, reject) => {
 
-        console.log('Inizio ricerca pagine');
+        console.log('\nInizio ricerca pagine');
 
         let queryArray = parsedRequest.q.split(",");
         let allPagesQuery = [];
@@ -130,14 +128,15 @@ async function searchPages(parsedRequest) {
                             }
                         ))));
                         //pagesinfo = pagesInfo.splice(index, 1);
-                        console.log('iterate:', conteggio, 'pageInfo:', pagesInfo.length, 'page:', pagesInfo[index].title);
+                        //console.log('level:', conteggio, 'total pages:', pagesInfo.length, 'parsed category:', pagesInfo[index].title);
+                        process.stdout.write('level: ' + conteggio + ', total pages: ' + pagesInfo.length + ', parsed: ' + pagesInfo[index].title + "                                  " + "\r");
+
                         stack.push(pagesInfo[index].pageid);
                         pagesInfo.splice(index, 1);
 
                     } else {
-                        console.log('DUPLICATO:' + pagesInfo[index].title);
+                        //console.log('DUPLICATO:' + pagesInfo[index].title);
                         pagesInfo.splice(index, 1);
-
                     }
                 }
             }
@@ -148,9 +147,6 @@ async function searchPages(parsedRequest) {
         }
         //console.log(pagesInfo.map(el => el.title).join('|'));
         resolve(pagesInfo.filter(el => { return el.ns !== 14 }).map(el => el.pageid));
-
-
-
 
         for (el of queryArray) {
             let categoryParams = {
@@ -200,12 +196,10 @@ async function searchPages(parsedRequest) {
     });
 }
 
-
-
 async function searchFirstRevision(parsedRequest, timespanArray, allPagesQuery) {
     return new Promise(async (resolve, reject) => {
 
-        console.log('Inizio ricerca data creazione delle pagine');
+        console.log('\nInizio ricerca data creazione delle pagine');
 
         let queueFirstRevisions = [];
 
@@ -231,7 +225,7 @@ async function searchFirstRevision(parsedRequest, timespanArray, allPagesQuery) 
             }
             queueFirstRevisions = await Promise.all(queueFirstRevisions);
         }
-        console.log('Fine retrieve data creazione delle pagine');
+        console.log('\nFine retrieve data creazione delle pagine');
 
         //raramente succede che la richiesta venga soddisfatta ma il body sia undefined, filtro quindi questi casi e eslcudo le pagine corrispondenti
         queueFirstRevisions = queueFirstRevisions.filter((el) => {
@@ -252,28 +246,40 @@ async function searchRevisions(parsedRequest, timespanArray, allPagesQuery) {
     return new Promise(async (resolve, reject) => {
         let queue = [];
 
-        console.log('Inizio ricerca revisioni delle pagine');
+        console.log('\nInizio ricerca revisioni delle pagine');
 
-        for (el of allPagesQuery) {
-            let params = {
-                query: {
-                    action: 'query',
-                    prop: 'revisions',
-                    rvprop: ['ids', 'timestamp', 'size', 'flags', 'comment', 'user'].join('|'),
-                    rvdir: 'newer', // order by timestamp asc
-                    rvlimit: 'max',
-                    titles: el,
-                    rvstart: timespanArray[0],
-                    rvend: timespanArray[1]
-                },
-                parsedRequest: parsedRequest
+        let resultOfQuery = [];
+        do {
+            //console.log(allPagesQuery);
+            for (el of allPagesQuery) {
+                let params = {
+                    query: {
+                        action: 'query',
+                        prop: 'revisions',
+                        rvprop: ['ids', 'timestamp', 'size', 'flags', 'comment', 'user'].join('|'),
+                        rvdir: 'newer', // order by timestamp asc
+                        rvlimit: 'max',
+                        titles: el,
+                        rvstart: timespanArray[0],
+                        rvend: timespanArray[1]
+                    },
+                    parsedRequest: parsedRequest
+                }
+                queue.push(wrapper.wrapperGetParametricRevisions(params));
             }
-            queue.push(wrapper.wrapperGetParametricRevisions(params));
-        }
 
-        let result = await Promise.all(queue);
-        console.log('Fine retrieve revisioni delle pagine');
-        resolve(result);
+            resultOfQuery = resultOfQuery.concat(await Promise.all(queue));
+            queue = [];
+            //console.log(result);return;
+            allPagesQuery = resultOfQuery.filter(el => { return el.hasOwnProperty('error') }).map(el => el.page);
+            resultOfQuery = resultOfQuery.filter(el => { return !el.hasOwnProperty('error') });
+
+        } while (allPagesQuery.length > 0)
+
+        //
+        //console.log(resultOfQuery)
+        console.log('\nFine retrieve revisioni delle pagine');
+        resolve(resultOfQuery);
     });
 }
 
@@ -423,41 +429,52 @@ async function getPageViews(pagesInfo, timespanArray, parsedRequest) {
         let queueViews = [];
         let resultViews = [];
 
-        console.log('Inizio retrieve views relative alle pagine');
+        console.log('\n Inizio retrieve views relative alle pagine');
 
-        if (pagesInfo.length > 500) {
+        do {
+            if (pagesInfo.length > 500) {
+                while (pagesInfo.length > 0) {
+                    queueViews = [];
+                    chunkedArrayOfPages = pagesInfo.slice(0, 25);
+                    for (let page of chunkedArrayOfPages) {
+                        let params = {
+                            pageTitle: page.title,
+                            pageid: page.pageid,
+                            start: timespanArray[0],
+                            end: timespanArray[1],
+                            server: parsedRequest.h
+                        };
+                        queueViews.push(wrapper.wrapperViews(params));
+                    }
+                    pagesInfo = pagesInfo.slice(25, pagesInfo.length);
+                    resultViews = resultViews.concat(await Promise.all(queueViews));
+                }
 
-            while (pagesInfo.length > 0) {
-                queueViews = [];
-                chunkedArrayOfPages = pagesInfo.slice(0, 25);
-                for (let page of chunkedArrayOfPages) {
-                    let params = {
+            } else {
+
+
+                for (let page of pagesInfo) {
+                    queueViews.push(wrapper.wrapperViews({
                         pageTitle: page.title,
                         pageid: page.pageid,
                         start: timespanArray[0],
                         end: timespanArray[1],
                         server: parsedRequest.h
-                    };
-                    queueViews.push(wrapper.wrapperViews(params));
+                    }));
                 }
-                pagesInfo = pagesInfo.slice(25, pagesInfo.length);
                 resultViews = resultViews.concat(await Promise.all(queueViews));
 
             }
-
-        } else {
-            for (page of pagesInfo) {
-                queueViews.push(wrapper.wrapperViews({
-                    pageTitle: page.title,
-                    pageid: page.pageid,
-                    start: timespanArray[0],
-                    end: timespanArray[1],
-                    server: parsedRequest.h
-                }));
-            }
-            resultViews = await Promise.all(queueViews);
+            queueViews = []
+            pagesInfo = resultViews.filter(el => { return el.hasOwnProperty('error') });
+            resultViews = resultViews.filter(el => { return !el.hasOwnProperty('error') });
+            //console.log(pagesInfo);
         }
-        console.log('Fine retrieve views relative alle pagine');
+        
+        while (pagesInfo.length > 0)
+
+        console.log('\n Fine retrieve views relative alle pagine');
+
         resolve(resultViews);
     });
 }
@@ -492,7 +509,7 @@ async function getPageViews(pagesInfo, timespanArray, parsedRequest) {
 async function getPageTalks(pages, timespanArray) {
     return new Promise(async (resolve, reject) => {
         queueTalks = [];
-        console.log('Inizio retrieve talks delle pagine');
+        console.log('\n Inizio retrieve talks delle pagine');
         for (page of pages) {
             queueTalks.push(wrapper.wrapperTalks(
                 {
@@ -510,12 +527,11 @@ async function getPageTalks(pages, timespanArray) {
             ));
         }
         let resultTalks = await Promise.all(queueTalks);
-        console.log('Fine retrieve talks delle pagine');
+        console.log('\n Fine retrieve talks delle pagine');
 
         resolve(resultTalks);
     });
 }
-
 
 function sanityCheckPreview(parsedRequest) {
     return new Promise((resolve, reject) => {
@@ -523,14 +539,15 @@ function sanityCheckPreview(parsedRequest) {
         //gestione parametri invalidi
         for (key of Object.keys(parsedRequest)) {
             if (key !== 'h' && key !== 'q' && key !== 't' && key !== 'f' && key !== 'n' && key !== 'v' && key !== 'c') {
-                throw ('Error:', '-' + key, 'is not a valid parameter.');
+                console.log('Error:', '-' + key, 'is not a valid parameter.');
+                return;
             }
         }
 
         //controllo che si siano i parametri minimi per inoltrare la richiesta
-        if (!parsedRequest.hasOwnProperty('h')) { throw ('Error: ', 'missing -h parameter.'); };
-        if (!parsedRequest.hasOwnProperty('q')) { throw ('Error: ', 'missing -q parameter.'); };
-        if (!parsedRequest.hasOwnProperty('t')) { throw ('Error: ', 'missing -t parameter.'); };
+        if (!parsedRequest.hasOwnProperty('h')) { console.log('Error: ', 'missing -h parameter.'); return; };
+        if (!parsedRequest.hasOwnProperty('q')) { console.log('Error: ', 'missing -q parameter.'); return; };
+        if (!parsedRequest.hasOwnProperty('t')) { console.log('Error: ', 'missing -t parameter.'); return; };
 
         //controllo la validità dei valori parametri
         for (i in parsedRequest.t) {
@@ -541,7 +558,7 @@ function sanityCheckPreview(parsedRequest) {
                 timespanControl[0].length != 8 ||
                 timespanControl[1].length != 8
             ) {
-                throw ('Error: ', parsedRequest.t[i].replace(' ', ''), 'is an invalid parameter for -t');
+                console.log('Error: ', parsedRequest.t[i].replace(' ', ''), 'is an invalid parameter for -t');
             }
         }
 
@@ -556,7 +573,8 @@ function sanityCheckPreview(parsedRequest) {
                         isNaN(control[0]) ||
                         (isNaN(control[1]) && (control[1]) !== '*')
                     ) {
-                        throw ('Error: ', parsedRequest[key], 'is an invalid parameter for', key);
+                        console.log('Error: ', parsedRequest[key], 'is an invalid parameter for', key);
+                        return;
                     }
                 }
             }
@@ -572,14 +590,15 @@ function sanityCheckList(parsedRequest) {
         //gestione parametri invalidi
         for (key of Object.keys(parsedRequest)) {
             if (key !== 'h' && key !== 'q' && key !== 't' && key !== 'f' && key !== 'n' && key !== 'v' && key !== 'c' && key !== 'e') {
-                throw ('Error:', '-' + key, 'is not a valid parameter.');
+                console.log('Error:', '-' + key, 'is not a valid parameter.');
+                return;
             }
         }
 
         //controllo che si siano i parametri minimi per inoltrare la richiesta
-        if (!parsedRequest.hasOwnProperty('h')) { throw ('Error: ', 'missing -h parameter.'); };
-        if (!parsedRequest.hasOwnProperty('q')) { throw ('Error: ', 'missing -q parameter.'); };
-        if (!parsedRequest.hasOwnProperty('t')) { throw ('Error: ', 'missing -t parameter.'); };
+        if (!parsedRequest.hasOwnProperty('h')) { console.log('Error: ', 'missing -h parameter.'); return; };
+        if (!parsedRequest.hasOwnProperty('q')) { console.log('Error: ', 'missing -q parameter.'); return; };
+        if (!parsedRequest.hasOwnProperty('t')) { console.log('Error: ', 'missing -t parameter.'); return; };
         //if (!parsedRequest.hasOwnProperty('e')) { console.log('Error: ', 'missing -e parameter.'); return; };
 
 
@@ -592,12 +611,13 @@ function sanityCheckList(parsedRequest) {
                 timespanControl[0].length != 8 ||
                 timespanControl[1].length != 8
             ) {
-                throw ('Error: ', parsedRequest.t[i].replace(' ', ''), 'is an invalid parameter for -t');
+                console.log('Error: ', parsedRequest.t[i].replace(' ', ''), 'is an invalid parameter for -t');
+                return;
             }
         }
 
         for (let key of Object.keys(parsedRequest)) {
-            if (key !== 'h' && key !== 'q' && key !== 't') {
+            if (key !== 'h' && key !== 'q' && key !== 't' && key !== 'e') {
                 if (parsedRequest.hasOwnProperty(key)) {
                     parsedRequest[key] = parsedRequest[key].replace(' ', '');
                     let control = parsedRequest[key].split(',');
@@ -606,7 +626,8 @@ function sanityCheckList(parsedRequest) {
                         isNaN(control[0]) ||
                         (isNaN(control[1]) && (control[1]) !== '*')
                     ) {
-                        throw ('Error: ', parsedRequest[key], 'is an invalid parameter for ', key);
+                        console.log('Error: ', parsedRequest[key], 'is an invalid parameter for -' + key);
+                        return;
                     }
                 }
             }
@@ -617,7 +638,7 @@ function sanityCheckList(parsedRequest) {
 
 function sanityCheckInfo(parsedRequest) {
     return new Promise((resolve, reject) => {
-        console.log(Object.keys(parsedRequest).length);
+
         //gestione parametri invalidi
         for (key of Object.keys(parsedRequest)) {
             if (key !== 'q' && key !== 't' && key !== 'f' && key !== 'n' && key !== 'v' && key !== 'c' && key !== 'i' && key !== 'd') {
@@ -665,7 +686,6 @@ function readFile(file) {
         });
     });
 }
-
 
 module.exports.parseRequest = parseRequest;
 module.exports.searchPages = searchPages;
