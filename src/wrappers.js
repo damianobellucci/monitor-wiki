@@ -1,7 +1,13 @@
 const request = require('request');
-const chalk = require('chalk');
 monitorWiki = require('./monitor-wiki.js');
 var counterExport = 0;
+
+var counterDataCreazione = 0;
+var counterFailedFirstRevision = 0;
+var counterFailedRevisions = 0;
+var counterFailedViews = 0;
+var counterFailedExport = 0;
+var counterFailedTalks = 0;
 
 var wrapperNameInference = (params) => { //da splittare caso erro e caso body===undefined
     return new Promise((resolve, reject) => {
@@ -74,7 +80,7 @@ var wrapperGetPagesByCategory = (params) => {
         });
     })
 };
-var counteraggio = 0;
+
 var wrapperGetInfoCategory = (params) => {
     return new Promise((resolve, reject) => {
         client.getAllParametricData(params, async function (err, data) {
@@ -134,41 +140,6 @@ var wrapperGetPageId = (params) => {
     });
 };
 
-var counterDataCreazione = 0;
-
-/*var wrapperFirstRevision = (title, server) => { //da splittare caso erro e caso body===undefined
-    return new Promise((resolve, reject) => {
-        let urlRequest = 'https://' + server + '/w/api.php?action=query&prop=revisions&rvlimit=1&rvprop=timestamp&rvdir=newer&pageids=' + title + '&format=json';
-        request(urlRequest, { json: true }, (err, res, body) => {
-            counterDataCreazione += 1;
-            process.stdout.write("Counter data creazione: " + counterDataCreazione + " " + title + '\r');
-
-            //console.log(title);
-            if (err || body === undefined || body.query === undefined || title === 4566347 && counterFailedFirstRevision < 10) {
-                counterDataCreazione -= 1;
-
-                counterFailedFirstRevision += 1;
-                console.log('\nError (creation date call API): try to do the call another time for page', title + '.', 'Tot.', counterFailedFirstRevision, 'request failed.');
-                resolve({ title: title, error: '' });
-            }
-
-            else {
-                try {
-                    body.query.pages[Object.keys(body.query.pages)[0]].firstRevision = body.query.pages[Object.keys(body.query.pages)[0]].revisions[0].timestamp;
-                } catch (e) {
-                    resolve({ error: '' });
-                }
-                delete body.query.pages[Object.keys(body.query.pages)[0]].revisions;
-                //console.log(conteggioFirstRevision);
-                resolve(body.query.pages[Object.keys(body.query.pages)[0]]);
-            }
-        });
-
-    });
-};*/
-
-var counterFailedFirstRevision = 0;
-
 var wrapperFirstRevision = (params) => {
     return new Promise((resolve, reject) => {
         client.getAllParametricData(params, function (err, data) {
@@ -203,7 +174,6 @@ var wrapperFirstRevision = (params) => {
     });
 };
 
-var contaggio = 0;
 var wrapperGetParametricRevisions = (params) => {
     return new Promise((resolve, reject) => {
 
@@ -211,8 +181,8 @@ var wrapperGetParametricRevisions = (params) => {
             //console.log(params);
 
             if (err) {
-                contaggio += 1;
-                console.log('Error (revisions): try to do the call another time for page', params.query.titles + '.', 'Tot.', contaggio, 'request failed.');
+                counterFailedRevisions += 1;
+                console.log('Error (revisions): try to do the call another time for page', params.query.titles + '.', 'Tot.', counterFailedRevisions, 'request failed.');
                 resolve({ page: params.query.titles, error: '' });
                 return;
             }
@@ -240,8 +210,6 @@ var wrapperGetParametricRevisions = (params) => {
         });
     })
 };
-
-var counterFailedExport = 0;
 
 var wrapperExport = (params) => {
     return new Promise((resolve, reject) => {
@@ -299,8 +267,6 @@ var wrapperExport = (params) => {
     })
 };
 
-var counterFailedTalks = 0;
-
 var wrapperTalks = (params3, page) => {
     return new Promise((resolve, reject) => {
         client.getAllParametricData(params3, function (err3, data3) {
@@ -332,8 +298,6 @@ var wrapperTalks = (params3, page) => {
         });
     });
 };
-
-var counterFailedViews = 0;
 
 var wrapperViews = (params) => {
     return new Promise((resolve, reject) => {
@@ -445,7 +409,6 @@ function resetCounterExport() {
     counterExport = 0;
 }
 
-//module.exports.wrapperGetAllRevisions = wrapperGetAllRevisions;
 module.exports.wrapperGetParametricRevisions = wrapperGetParametricRevisions;
 module.exports.wrapperGetPagesByCategory = wrapperGetPagesByCategory;
 module.exports.wrapperExport = wrapperExport;

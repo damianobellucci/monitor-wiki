@@ -6,8 +6,6 @@ var wrapper = require('./wrappers.js');
 const chalk = require('chalk');
 const _ = require('underscore');
 
-
-
 function Preview(parsedRequest) { //da splittare caso erro e caso body===undefined
     return new Promise((resolve, reject) => {
 
@@ -21,8 +19,6 @@ function Preview(parsedRequest) { //da splittare caso erro e caso body===undefin
             "userAgent": "belluccidamiano@gmail.com",      // define custom bot's user agent
             "concurrency": 100               // how many API requests can be run in parallel (defaults to 3)
         }
-
-        let start = new Date().getTime();
 
         try {
             client = new bot(info);
@@ -51,7 +47,7 @@ function Preview(parsedRequest) { //da splittare caso erro e caso body===undefin
             ///////////////////////////////////////// RICERCA DATA CREAZIONE PAGINE /////////////////////////////////////////
             //Per determinare se una pagina è stata creata all'interno del timespan (flag -t) e quindi includerlo
             //nella ricerca, ho bisogno della data di creazione della pagina
-            console.log('\n' + 'Tot pagine prima la cernita (prima revisione):' + pagesId.length);
+            console.log('\n' + 'Tot pagine prima della cernita (prima revisione):' + pagesId.length);
 
             let infoPagesCreatedInTimespan = await Promise.resolve(functions.searchFirstRevision(parsedRequest, timespanArray, pagesId));
 
@@ -75,8 +71,8 @@ function Preview(parsedRequest) { //da splittare caso erro e caso body===undefin
             //console.log(viewsPagesInfo);
 
             ///////////////////////////////////////// FINE RICERCA VIEWS PAGINE /////////////////////////////////////////
-            ///////////////////////////////////////// INZIO RICOMBINAZIONE /////////////////////////////////////////
 
+            ///////////////////////////////////////// INZIO RICOMBINAZIONE /////////////////////////////////////////
 
             let recombinedObject = {};
 
@@ -101,8 +97,8 @@ function Preview(parsedRequest) { //da splittare caso erro e caso body===undefin
 
             ///////////////////////////////////////// FINE RICOMBINAZIONE ////////////////////////////////////////
 
-
             ///////////////////////////////////////// INZIO AGGREGAZIONE /////////////////////////////////////////
+            
             let aggregatedObject = {};
 
             for (let page in recombinedObject) {
@@ -131,8 +127,6 @@ function Preview(parsedRequest) { //da splittare caso erro e caso body===undefin
                 }
                 aggregatedObject[page] = object;
             }
-
-
 
             ///////////////////////////////////////// INIZIO TAG DISALLINEATE/NON DISALLINEATE /////////////////////////////////////////
 
@@ -175,7 +169,7 @@ function Preview(parsedRequest) { //da splittare caso erro e caso body===undefin
 
                 if (parsedRequest.hasOwnProperty('v')) {
 
-                    if (aggregatedObject[page].views === 'n/a') aggregatedObject[page].misalignment.views = 'n/a';
+                    if (aggregatedObject[page].views === 'n/a') aggregatedObject[page].misalignment.views = 'n/a'; //mettendo come valore di misalignment.views n/a, in isMisaligned la pagina risulterà disallineata
                     else {
                         if (parsedRequest.v.split(',')[1] === '*')
                             (aggregatedObject[page].views >= parsedRequest.v.split(',')[0]) ?
@@ -190,14 +184,13 @@ function Preview(parsedRequest) { //da splittare caso erro e caso body===undefin
 
             ///
             for (let page in aggregatedObject) {
-                aggregatedObject[page].misalignment = { isMisaligned: isMisaligned(aggregatedObject[page], parsedRequest), misalignmentForFilter: aggregatedObject[page].misalignment };
+                aggregatedObject[page].misalignment = { isMisaligned: functions.isMisaligned(aggregatedObject[page], parsedRequest), misalignmentForFilter: aggregatedObject[page].misalignment };
             }
             ///
 
             ///////////////////////////////////////// FINE TAG DISALLINEATE/NON DISALLINEATE /////////////////////////////////////////
 
-
-            /////////
+            ///////// se non c'è flag -a tolgo dal risultato le pagine non disallineate
             if (!parsedRequest.hasOwnProperty('a'))
                 for (let page in aggregatedObject) {
                     !aggregatedObject[page].misalignment.isMisaligned ? delete (aggregatedObject[page]) : null;
@@ -244,7 +237,7 @@ function Preview(parsedRequest) { //da splittare caso erro e caso body===undefin
     });
 };
 
-async function Info(parsedRequest) { //da splittare caso erro e caso body===undefined
+async function Info(parsedRequest) {
     return new Promise(async (resolve, reject) => {
 
         console.log('Lettura file di input');
@@ -432,82 +425,3 @@ async function Info(parsedRequest) { //da splittare caso erro e caso body===unde
 module.exports.Preview = Preview;
 module.exports.Info = Info;
 
-
-//se il numero tag di disallineamento ===true sono uguali al numero di tag immessi, la pagina è disallineata
-function isMisaligned(page, parsedRequest) {
-
-    /*console.log((
-        (
-            parsedRequest.hasOwnProperty('n') ? 1 : 0
-        )
-        +
-        (
-            parsedRequest.hasOwnProperty('f') ? 1 : 0
-        )
-        +
-        (
-            parsedRequest.hasOwnProperty('v') ? 1 : 0
-        )
-        +
-        (
-            parsedRequest.hasOwnProperty('c') ? 1 : 0
-        )
-    )
-    +
-    (
-        (
-            page.misalignment.hasOwnProperty('edits') && page.misalignment.edits ? 1 : 0
-        )
-        +
-        (
-            page.misalignment.hasOwnProperty('frequency') && page.misalignment.frequency ? 1 : 0
-        )
-        +
-        (
-            page.misalignment.hasOwnProperty('views') && page.misalignment.views ? 1 : 0
-        )
-        +
-        (
-            page.misalignment.hasOwnProperty('comments') && page.misalignment.comments ? 1 : 0
-        )
-    ));*/
-
-    if (
-        (
-            (
-                parsedRequest.hasOwnProperty('n') ? 1 : 0
-            )
-            +
-            (
-                parsedRequest.hasOwnProperty('f') ? 1 : 0
-            )
-            +
-            (
-                parsedRequest.hasOwnProperty('v') ? 1 : 0
-            )
-            +
-            (
-                parsedRequest.hasOwnProperty('c') ? 1 : 0
-            )
-        )
-        ==
-        (
-            (
-                page.misalignment.hasOwnProperty('edits') && page.misalignment.edits ? 1 : 0
-            )
-            +
-            (
-                page.misalignment.hasOwnProperty('frequency') && page.misalignment.frequency ? 1 : 0
-            )
-            +
-            (
-                page.misalignment.hasOwnProperty('views') && page.misalignment.views ? 1 : 0
-            )
-            +
-            (
-                page.misalignment.hasOwnProperty('comments') && page.misalignment.comments ? 1 : 0
-            )
-        )
-    ) return true;
-    return false;
-}

@@ -1,1 +1,1 @@
--h en.wikipedia.org -q category:emerging technologies -t 20180101,20190101 -n 0,* -v 0,* -c 0,* -f 0,*
+-h en.wikipedia.org -q category:fabriano -t 20180101,20190101 -n 0,* -v 0,* -c 0,* -f 0,*

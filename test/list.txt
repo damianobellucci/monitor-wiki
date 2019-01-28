@@ -1,1 +1,1 @@
--h en.wikipedia.org -q category:emerging technologies -t 20180101,20190101 -n 0,* -v 0,* -c 0,* -f 0,* -e list2.json
+-h en.wikipedia.org -q category:fabriano -t 20021212,20031212 -n 10,* -v 1,* -c 0,* -f 0,* -e list.json -a

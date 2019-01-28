@@ -439,7 +439,7 @@ function sanityCheckPreview(parsedRequest) {
 
         //gestione parametri invalidi
         for (key of Object.keys(parsedRequest)) {
-            if (key !== 'h' && key !== 'q' && key !== 't' && key !== 'f' && key !== 'n' && key !== 'v' && key !== 'c') {
+            if (key !== 'a' && key !== 'h' && key !== 'q' && key !== 't' && key !== 'f' && key !== 'n' && key !== 'v' && key !== 'c') {
                 console.log('Error:', '-' + key, 'is not a valid parameter.');
                 return;
             }
@@ -490,7 +490,7 @@ function sanityCheckList(parsedRequest) {
 
         //gestione parametri invalidi
         for (key of Object.keys(parsedRequest)) {
-            if (key !== 'h' && key !== 'q' && key !== 't' && key !== 'f' && key !== 'n' && key !== 'v' && key !== 'c' && key !== 'e') {
+            if (key !== 'a' && key !== 'h' && key !== 'q' && key !== 't' && key !== 'f' && key !== 'n' && key !== 'v' && key !== 'c' && key !== 'e') {
                 console.log('Error:', '-' + key, 'is not a valid parameter.');
                 return;
             }
@@ -518,7 +518,7 @@ function sanityCheckList(parsedRequest) {
         }
 
         for (let key of Object.keys(parsedRequest)) {
-            if (key !== 'h' && key !== 'q' && key !== 't' && key !== 'e') {
+            if (key !== 'a' && key !== 'h' && key !== 'q' && key !== 't' && key !== 'e') {
                 if (parsedRequest.hasOwnProperty(key)) {
                     parsedRequest[key] = parsedRequest[key].replace(' ', '');
                     let control = parsedRequest[key].split(',');
@@ -588,6 +588,85 @@ function readFile(file) {
     });
 }
 
+function isMisaligned(page, parsedRequest) {
+    //se il numero tag di disallineamento ===true sono uguali al numero di tag immessi, la pagina è disallineata
+
+    /*console.log((
+        (
+            parsedRequest.hasOwnProperty('n') ? 1 : 0
+        )
+        +
+        (
+            parsedRequest.hasOwnProperty('f') ? 1 : 0
+        )
+        +
+        (
+            parsedRequest.hasOwnProperty('v') ? 1 : 0
+        )
+        +
+        (
+            parsedRequest.hasOwnProperty('c') ? 1 : 0
+        )
+    )
+    +
+    (
+        (
+            page.misalignment.hasOwnProperty('edits') && page.misalignment.edits ? 1 : 0
+        )
+        +
+        (
+            page.misalignment.hasOwnProperty('frequency') && page.misalignment.frequency ? 1 : 0
+        )
+        +
+        (
+            page.misalignment.hasOwnProperty('views') && page.misalignment.views ? 1 : 0
+        )
+        +
+        (
+            page.misalignment.hasOwnProperty('comments') && page.misalignment.comments ? 1 : 0
+        )
+    ));*/
+
+    if (
+        (
+            (
+                parsedRequest.hasOwnProperty('n') ? 1 : 0
+            )
+            +
+            (
+                parsedRequest.hasOwnProperty('f') ? 1 : 0
+            )
+            +
+            (
+                parsedRequest.hasOwnProperty('v') ? 1 : 0
+            )
+            +
+            (
+                parsedRequest.hasOwnProperty('c') ? 1 : 0
+            )
+        )
+        ==
+        (
+            (
+                page.misalignment.hasOwnProperty('edits') && page.misalignment.edits ? 1 : 0
+            )
+            +
+            (
+                page.misalignment.hasOwnProperty('frequency') && page.misalignment.frequency ? 1 : 0
+            )
+            +
+            (
+                page.misalignment.hasOwnProperty('views') && page.misalignment.views ? 1 : 0
+            )
+            +
+            (
+                page.misalignment.hasOwnProperty('comments') && page.misalignment.comments ? 1 : 0
+            )
+        )
+    ) return true;
+    return false;
+}
+
 module.exports.parseRequest = parseRequest;
 module.exports.searchPages = searchPages;
 module.exports.searchFirstRevision = searchFirstRevision;
@@ -600,3 +679,4 @@ module.exports.sanityCheckPreview = sanityCheckPreview;
 module.exports.sanityCheckList = sanityCheckList;
 module.exports.sanityCheckInfo = sanityCheckInfo;
 module.exports.readFile = readFile;
+module.exports.isMisaligned = isMisaligned;
