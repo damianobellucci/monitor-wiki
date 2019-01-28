@@ -44,7 +44,7 @@ var fs = require('fs');
 
             fs.writeFile('../results/' + parsedRequest.e.replace(" ", ""), JSON.stringify(finalObject), function (err) {
                 if (err) throw err;
-                console.log('\nPage list has been saved with name: ' + parsedRequest.e, '\n');
+                console.log('Page list has been saved with name: ' + parsedRequest.e, '\n');
             });
         }
         else if (modality === 'info') {
@@ -158,7 +158,7 @@ var fs = require('fs');
                 if (err) throw err;
 
                 console.log('\nAggregated pages info has been saved with name: ' + parsedRequest.d);
-                console.log('\nTime elapsed for all the process aggregateInfo: ', (new Date().getTime() - start) / 1000 + 's', '\n');
+                console.log('\nTime elapsed for all the process aggregateInfo:', (new Date().getTime() - start) / 1000 + 's', '\n');
             });
         }
     }

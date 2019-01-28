@@ -155,7 +155,7 @@ var wrapperFirstRevision = (params) => {
                 try {
                     body = {};
                     body.query = data[0];
-                    process.stdout.write("Counter data creazione: " + counterDataCreazione + " " + params.pageids + '\r');
+                    process.stdout.write("Counter data creazione: " + counterDataCreazione +' pageid: '+ params.pageids + '\r');
                     body.query.pages[Object.keys(body.query.pages)[0]].firstRevision = body.query.pages[Object.keys(body.query.pages)[0]].revisions[0].timestamp;
                     delete body.query.pages[Object.keys(body.query.pages)[0]].revisions;
                     resolve(body.query.pages[Object.keys(body.query.pages)[0]]);
