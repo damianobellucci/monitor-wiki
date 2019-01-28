@@ -11,7 +11,7 @@ var fs = require('fs');
 
 
         if (modality !== 'preview' && modality !== 'list' && modality !== 'info' && modality !== 'aggregateInfo') {
-            console.log('Error:', modality, 'is an invalid modality.');
+            console.log('\nError:', modality, 'is an invalid modality.');
             return;
         }
 
@@ -44,7 +44,7 @@ var fs = require('fs');
 
             fs.writeFile('../results/' + parsedRequest.e.replace(" ", ""), JSON.stringify(finalObject), function (err) {
                 if (err) throw err;
-                console.log('Page list has been saved with name: ' + parsedRequest.e);
+                console.log('\nPage list has been saved with name: ' + parsedRequest.e, '\n');
             });
         }
         else if (modality === 'info') {
@@ -61,15 +61,16 @@ var fs = require('fs');
                 finalExport.result[i] = await Promise.resolve(wrappersModality.Info(params));
             }
 
+            console.log('\nFine preparazione file');
+
             fs.writeFile('../results/' + parsedRequest.d, JSON.stringify(finalExport), function (err) {
                 if (err) throw err;
-                console.log('Export completed');
-
-                //console.log('Time elapsed for export: ' + resultInfo.timer / 1000 + 's');
+                console.log('\nPages info has been saved with name: ' + parsedRequest.d);
+                console.log('\nTime elapsed for all the process info:', (new Date().getTime() - start) / 1000 + 's', '\n');
             });
-            console.log('Time elapsed for all the process info: ', (new Date().getTime() - start) / 1000, 's');
         }
         else if (modality === 'aggregateInfo') {
+            start = new Date().getTime();
 
             await functions.sanityCheckInfo(parsedRequest);
 
@@ -82,8 +83,9 @@ var fs = require('fs');
                 finalExport.result[i] = await Promise.resolve(wrappersModality.Info(params));
             }
 
-            let aggregatedExport = { query: parsedRequest, result: {} };
+            console.log('\nInizio preparazione file');
 
+            let aggregatedExport = { query: parsedRequest, result: {} };
 
             Object.keys(finalExport.result).forEach((resultPage) => {
                 aggregatedResultPage = { timespan: parsedRequest.t[resultPage], pages: {} };
@@ -150,9 +152,13 @@ var fs = require('fs');
                 aggregatedExport.result[resultPage] = aggregatedResultPage;
             })
 
+            console.log('\nFine preparazione file');
+
             fs.writeFile('../results/' + parsedRequest.d, JSON.stringify(aggregatedExport), function (err) {
                 if (err) throw err;
-                console.log('Export completed');
+
+                console.log('\nAggregated pages info has been saved with name: ' + parsedRequest.d);
+                console.log('\nTime elapsed for all the process aggregateInfo: ', (new Date().getTime() - start) / 1000 + 's', '\n');
             });
         }
     }

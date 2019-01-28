@@ -36,7 +36,7 @@ function Preview(parsedRequest) { //da splittare caso erro e caso body===undefin
             //Estrapolo i corrispondenti id delle pagine che soddisfano la query di ricerca (flag -q)
             let pagesId = await Promise.resolve(functions.searchPages(parsedRequest));
 
-            console.log('\nTot pagine dopo cernita (doppioni): ', pagesId.length);
+            console.log('\nTot. pagine dopo cernita (doppioni): ', pagesId.length);
 
             ///////////////////////////////////////// FINE RICERCA PAGINE /////////////////////////////////////////
 
@@ -47,11 +47,11 @@ function Preview(parsedRequest) { //da splittare caso erro e caso body===undefin
             ///////////////////////////////////////// RICERCA DATA CREAZIONE PAGINE /////////////////////////////////////////
             //Per determinare se una pagina è stata creata all'interno del timespan (flag -t) e quindi includerlo
             //nella ricerca, ho bisogno della data di creazione della pagina
-            console.log('\n' + 'Tot pagine prima della cernita (prima revisione):' + pagesId.length);
+            console.log('\n' + 'Tot. pagine prima della cernita (prima revisione):', pagesId.length);
 
             let infoPagesCreatedInTimespan = await Promise.resolve(functions.searchFirstRevision(parsedRequest, timespanArray, pagesId));
 
-            console.log('\n' + 'Tot pagine dopo la cernita (prima revisione):' + infoPagesCreatedInTimespan.length);
+            console.log('\n' + 'Tot. pagine dopo la cernita (prima revisione):', infoPagesCreatedInTimespan.length);
             ///////////////////////////////////////// FINE DATA CREAZIONE PAGINE /////////////////////////////////////////
 
             ///////////////////////////////////////// RICERCA REVISIONI PAGINE /////////////////////////////////////////
@@ -98,7 +98,7 @@ function Preview(parsedRequest) { //da splittare caso erro e caso body===undefin
             ///////////////////////////////////////// FINE RICOMBINAZIONE ////////////////////////////////////////
 
             ///////////////////////////////////////// INZIO AGGREGAZIONE /////////////////////////////////////////
-            
+
             let aggregatedObject = {};
 
             for (let page in recombinedObject) {
@@ -229,8 +229,8 @@ function Preview(parsedRequest) { //da splittare caso erro e caso body===undefin
             }
 
             console.log(
-                'Time elapsed:', Math.round((new Date().getTime() - start) / 1000) + 's', ',',
-                counterMisalignedPages, 'misaligned pages', '/', infoPagesCreatedInTimespan.length, 'total pages'
+                '\nTime elapsed:', Math.round((new Date().getTime() - start) / 1000) + 's', ',',
+                counterMisalignedPages, 'misaligned pages', '/', infoPagesCreatedInTimespan.length, 'total pages', '\n'
             );
             resolve(aggregatedObject);
         });
@@ -240,13 +240,13 @@ function Preview(parsedRequest) { //da splittare caso erro e caso body===undefin
 async function Info(parsedRequest) {
     return new Promise(async (resolve, reject) => {
 
-        console.log('Lettura file di input');
+        console.log('\nInizio lettura file di input');
         //jsonfile.readFile('results/'+parsedRequest.f, async function (err, resultPreview) {
 
         let resultPreview = JSON.parse((await functions.readFile('../results/' + parsedRequest.f)));
 
         if (resultPreview.pages.length == 0) { console.log('Error: input file doesn\'t contain any page.'); return; }
-        console.log('Lettura file di input completata');
+        console.log('\nFine lettura file di input');
         //console.log(Object.values(resultPreview.pages).map(el => el.title)); return;
 
         let info = {
@@ -277,8 +277,6 @@ async function Info(parsedRequest) {
             let queue = [];
             var allPagesQuery = [];
 
-            console.log('Inizio ricerca pagine');
-
             let arrayOfPageId = [];
 
 
@@ -293,7 +291,6 @@ async function Info(parsedRequest) {
             timespanArray[0] = timespanArray[0].substr(0, 4) + '-' + timespanArray[0].substr(4, 2) + '-' + timespanArray[0].substr(6, 2) + 'T00:00:00.000Z';
             timespanArray[1] = timespanArray[1].substr(0, 4) + '-' + timespanArray[1].substr(4, 2) + '-' + timespanArray[1].substr(6, 2) + 'T23:59:59.999Z';
 
-            console.log('\nInizio ricerca data creazione delle pagine');
 
             parsedRequest.h = resultPreview.query.h;
 
@@ -306,9 +303,9 @@ async function Info(parsedRequest) {
                 allPagesQuery.push(el.title);
             }
 
-            console.log('Inizio ricerca revisioni delle pagine');
 
             let start = new Date().getTime();
+
 
             let result = await Promise.resolve(functions.searchRevisions(parsedRequest, timespanArray, allPagesQuery));
 
@@ -319,19 +316,21 @@ async function Info(parsedRequest) {
                 counterRevisions += el.revisions.history.length;
             }
 
-            console.log('Time elapsed ' + (new Date().getTime() - start) / 1000 + 's', '|', result.length, 'total pages', '|', counterRevisions + " revisions");
+            console.log('\n' + 'Time elapsed ' + (new Date().getTime() - start) / 1000 + 's', '|', result.length, 'total pages', '|', counterRevisions + " revisions");
 
 
             if (result.length == 0) { console.log('Error: there aren\'t pages for the timespan ' + parsedRequest.t + '.'); return; }
             else {
 
-                console.log('Inizio ricerca informazioni delle revisioni');
                 let startExport = new Date().getTime();
 
                 let indexPreferences = functions.getIndexFlagPreferences(parsedRequest);
 
 
                 /////////////////////////////////////////INIZIO RICERCA EXPORT/////////////////////////////////////////////////
+                
+                console.log('\nInizio ricerca informazioni delle revisioni\n');
+
                 if (indexPreferences.edit) {
                     result = await functions.getPageExport(result, indexPreferences, counterRevisions)
                 }
@@ -401,7 +400,7 @@ async function Info(parsedRequest) {
                 }
                 /////////////////////////////////////////FINE RICERCA TALKS/////////////////////////////////////////////////
 
-                console.log('Inizio preparazione file di export');
+                console.log('\nInizio preparazione file');
 
                 ///////////////////////////////////// INIZIO CALCOLO DAYS OF AGE ////////////////////////////////////////////////////
                 for (el of queueFirstRevisions) {

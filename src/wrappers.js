@@ -40,16 +40,16 @@ var wrapperGetPagesByCategory = (params) => {
     return new Promise((resolve, reject) => {
         client.getAllParametricData(params, async function (err, data) {
             if (err) {
-                if (err === 'Error returned by API: The category name you entered is not valid.' || err.includes('Bad title')) {
+                if (err === '\nError returned by API: The category name you entered is not valid.' || err.includes('Bad title')) {
                     //console.log('Error (input):', decodeURI(params.gcmtitle), 'is not a category.');
                     resolve(params.gcmtitle);
                 }
-                else if (!err === 'Error returned by API: The category name you entered is not valid.') {
+                else if (!err === '\nError returned by API: The category name you entered is not valid.') {
                     console.log(err);
                     return;
                 }
-                else if (err === 'Error returned by API: Namespace doesn\'t allow actual pages.') {
-                    console.log('Error (input)', 'get infos for the page \'' + decodeURI(params.gcmtitle) + '\' is not allowed.')
+                else if (err === '\nError returned by API: Namespace doesn\'t allow actual pages.') {
+                    console.log('\nError (input)', 'get infos for the page \'' + decodeURI(params.gcmtitle) + '\' is not allowed.')
                     return;
                 }
                 else {
@@ -60,7 +60,7 @@ var wrapperGetPagesByCategory = (params) => {
             }
             else {
 
-                if (data === undefined || data[0] === undefined) { console.log('Error (title): the category \'' + decodeURI(params.gcmtitle) + '\' doesn\'t exist or doesn\'t contain any page.'); return; }
+                if (data === undefined || data[0] === undefined) { console.log('\nError (title): the category \'' + decodeURI(params.gcmtitle) + '\' doesn\'t exist or doesn\'t contain any page.'); return; }
 
                 //console.log(util.inspect(data, false, null, true /* enable colors */));
                 let allPages = [];
@@ -85,16 +85,16 @@ var wrapperGetInfoCategory = (params) => {
     return new Promise((resolve, reject) => {
         client.getAllParametricData(params, async function (err, data) {
             if (err) {
-                if (err === 'Error returned by API: The category name you entered is not valid.' || err.includes('Bad title')) {
+                if (err === '\nError returned by API: The category name you entered is not valid.' || err.includes('Bad title')) {
                     //console.log('Error (input):', decodeURI(params.gcmtitle), 'is not a category.');
                     resolve(params.gcmtitle);
                 }
-                else if (!err === 'Error returned by API: The category name you entered is not valid.') {
+                else if (!err === '\nError returned by API: The category name you entered is not valid.') {
                     console.log(err);
                     return;
                 }
-                else if (err === 'Error returned by API: Namespace doesn\'t allow actual pages.') {
-                    console.log('Error (input)', 'get infos for the page \'' + decodeURI(params.gcmtitle) + '\' is not allowed.')
+                else if (err === '\nError returned by API: Namespace doesn\'t allow actual pages.') {
+                    console.log('\nError (input)', 'get infos for the page \'' + decodeURI(params.gcmtitle) + '\' is not allowed.')
                     return;
                 }
                 else {
@@ -133,7 +133,7 @@ var wrapperGetPageId = (params) => {
         client.getAllParametricData(params, function (err, data) {
             if (err) { console.log(err); return; }
             else {
-                if (data[0].pages.hasOwnProperty('-1')) { console.log('Error (title): the page \'' + decodeURI(params.titles) + '\' doesn\'t exist.'); return; };
+                if (data[0].pages.hasOwnProperty('-1')) { console.log('\nError (title): the page \'' + decodeURI(params.titles) + '\' doesn\'t exist.'); return; };
                 resolve(data[0].pages[Object.keys(data[0].pages)[0]].pageid);
             }
         });
@@ -163,7 +163,7 @@ var wrapperFirstRevision = (params) => {
                 } catch (e) {
                     counterDataCreazione -= 1;
                     counterFailedFirstRevision += 1;
-                    console.log('\nID DELLA PAGINA INCRIMINATA', params.pageids);
+                    //console.log('\nID DELLA PAGINA INCRIMINATA', params.pageids);
                     console.log('\nError (first revision call API): try to do the call another time.', 'Tot', counterFailedFirstRevision, 'request failed.');
                     resolve({ pageid: params.pageids, error: '' })
                 };
@@ -182,7 +182,7 @@ var wrapperGetParametricRevisions = (params) => {
 
             if (err) {
                 counterFailedRevisions += 1;
-                console.log('Error (revisions): try to do the call another time for page', params.query.titles + '.', 'Tot.', counterFailedRevisions, 'request failed.');
+                console.log('\nError (revisions): try to do the call another time for page', params.query.titles + '.', 'Tot.', counterFailedRevisions, 'request failed.');
                 resolve({ page: params.query.titles, error: '' });
                 return;
             }
@@ -228,7 +228,7 @@ var wrapperExport = (params) => {
                 else {
                     counterFailedExport += 1;
 
-                    console.log('Error (export call API): try to do the call another time.', 'Tot', counterFailedExport, 'request failed.');
+                    console.log('\nError (export call API): try to do the call another time.', 'Tot', counterFailedExport, 'request failed.');
 
                     params.revision.error = '';
                     resolve(params.revision);
@@ -282,7 +282,7 @@ var wrapperTalks = (params3, page) => {
             talk = {};
             if (err3 /*|| page.title === 'Steve Bucknall' && counterFailedTalks < 10*/) {
                 counterFailedTalks += 1;
-                console.log('Error (talks call API): try to do the call another time for page', page.title + '.', 'Tot.', counterFailedTalks, 'request failed.');
+                console.log('\nError (talks call API): try to do the call another time for page', page.title + '.', 'Tot.', counterFailedTalks, 'request failed.');
 
                 page.error = '';
 
@@ -336,7 +336,7 @@ var wrapperViews = (params) => {
                 delete (params.pageTitle);
                 counterFailedViews += 1;
 
-                console.log('Error (views): try to do the call another time for page', params.title + '.', 'Tot.', counterFailedViews, 'request failed.');
+                console.log('\nError (views): try to do the call another time for page', params.title + '.', 'Tot.', counterFailedViews, 'request failed.');
                 resolve(params);
             }
             if (body === undefined || body.title === 'Not found.') { /*return*/ /*console.log(params.pageTitle, err)*/; //caso views non disponibili per via del primo maggio 2015

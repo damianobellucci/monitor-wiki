@@ -34,14 +34,14 @@ function parseRequest() {
         }
     }
     //requestObject.t = requestObject.t.replace(' ', '');
-    console.log(requestObject);
+    console.log('\n', requestObject);
     return requestObject;
 }
 
 async function searchPages(parsedRequest) {
     return new Promise(async (resolve, reject) => {
 
-        console.log('\nInizio ricerca pagine');
+        console.log('\nInizio ricerca pagine\n');
 
         let queryArray = parsedRequest.q.split(",");
         let allPagesQuery = [];
@@ -58,7 +58,7 @@ async function searchPages(parsedRequest) {
         let suggestionQueue = [];
 
         for (let el of inferencedQuery) {
-            console.log(el);
+            //console.log(el);
 
             if (el.includes('suggestion:')) suggestionQueue.push(el.replace('suggestion:', ''));
         }
@@ -131,7 +131,7 @@ async function searchPages(parsedRequest) {
                         ))));
                         //pagesinfo = pagesInfo.splice(index, 1);
                         //console.log('level:', conteggio, 'total pages:', pagesInfo.length, 'parsed category:', pagesInfo[index].title);
-                        process.stdout.write('level: ' + conteggio + ', total pages: ' + pagesInfo.length + ', parsed: ' + pagesInfo[index].title + "                                  " + "\r");
+                        process.stdout.write('Level: ' + conteggio + ', total pages: ' + pagesInfo.length + ', parsed: ' + pagesInfo[index].title + "                                  " + "\r");
 
                         stack.push(pagesInfo[index].pageid);
                         pagesInfo.splice(index, 1);
@@ -149,7 +149,7 @@ async function searchPages(parsedRequest) {
         }
         //console.log(pagesInfo.map(el => el.title).join('|'));
 
-        console.log('\nTot pagine prima della cernita (doppioni): ', pagesInfo.filter(el => { return el.ns !== 14 }).map(el => el.pageid).length);
+        console.log('\n\nTot pagine prima della cernita (doppioni): ', pagesInfo.filter(el => { return el.ns !== 14 }).map(el => el.pageid).length);
 
         resolve(_.uniq(pagesInfo.filter(el => { return el.ns !== 14 }).map(el => el.pageid)));
 
@@ -159,7 +159,7 @@ async function searchPages(parsedRequest) {
 
 async function searchFirstRevision(parsedRequest, timespanArray, allPagesQuery) {
     return new Promise(async (resolve, reject) => {
-        console.log('\nInizio ricerca data creazione');
+        console.log('\nInizio ricerca data creazione\n');
 
         let queueFirstRevisions = [];
         let resultQueue = [];
@@ -187,7 +187,7 @@ async function searchFirstRevision(parsedRequest, timespanArray, allPagesQuery) 
 
         } while (allPagesQuery.length > 0)
 
-        console.log('\nFine ricerca data creazione');
+        console.log('\n\nFine ricerca data creazione');
 
         //se la pagina è stata creata dopo del timespan end della pagina, allora non la metto tra le pagine da processare   
         queueFirstRevisions = queueFirstRevisions.filter((el) => {
@@ -280,7 +280,7 @@ async function getPageExport(result, indexPreferences, counterRevisions) {
 
         } while (stackRevisions.length > 0)
 
-        console.log('\nFine download informazioni revisioni');
+        console.log('\n\nFine ricerca informazioni revisioni');
 
         let newResultExport = [];
         //console.log(resultExport);
@@ -397,7 +397,7 @@ async function getPageTalks(pages, timespanArray) {
     return new Promise(async (resolve, reject) => {
         let queueTalks = [];
         let resultTalks = [];
-        console.log('\nInizio ricerca talks delle pagine');
+        console.log('\nInizio ricerca talks');
         do {
             for (let page of pages) {
 
@@ -440,15 +440,15 @@ function sanityCheckPreview(parsedRequest) {
         //gestione parametri invalidi
         for (key of Object.keys(parsedRequest)) {
             if (key !== 'a' && key !== 'h' && key !== 'q' && key !== 't' && key !== 'f' && key !== 'n' && key !== 'v' && key !== 'c') {
-                console.log('Error:', '-' + key, 'is not a valid parameter.');
+                console.log('\nError:', '-' + key, 'is not a valid parameter.');
                 return;
             }
         }
 
         //controllo che si siano i parametri minimi per inoltrare la richiesta
-        if (!parsedRequest.hasOwnProperty('h')) { console.log('Error: ', 'missing -h parameter.'); return; };
-        if (!parsedRequest.hasOwnProperty('q')) { console.log('Error: ', 'missing -q parameter.'); return; };
-        if (!parsedRequest.hasOwnProperty('t')) { console.log('Error: ', 'missing -t parameter.'); return; };
+        if (!parsedRequest.hasOwnProperty('h')) { console.log('\nError: ', 'missing -h parameter.'); return; };
+        if (!parsedRequest.hasOwnProperty('q')) { console.log('\nError: ', 'missing -q parameter.'); return; };
+        if (!parsedRequest.hasOwnProperty('t')) { console.log('\nError: ', 'missing -t parameter.'); return; };
 
         //controllo la validità dei valori parametri
         for (i in parsedRequest.t) {
@@ -459,7 +459,7 @@ function sanityCheckPreview(parsedRequest) {
                 timespanControl[0].length != 8 ||
                 timespanControl[1].length != 8
             ) {
-                console.log('Error: ', parsedRequest.t[i].replace(' ', ''), 'is an invalid parameter for -t');
+                console.log('\nError: ', parsedRequest.t[i].replace(' ', ''), 'is an invalid parameter for -t');
             }
         }
 
@@ -474,7 +474,7 @@ function sanityCheckPreview(parsedRequest) {
                         isNaN(control[0]) ||
                         (isNaN(control[1]) && (control[1]) !== '*')
                     ) {
-                        console.log('Error: ', parsedRequest[key], 'is an invalid parameter for', key);
+                        console.log('\nError: ', parsedRequest[key], 'is an invalid parameter for', key);
                         return;
                     }
                 }
@@ -491,15 +491,15 @@ function sanityCheckList(parsedRequest) {
         //gestione parametri invalidi
         for (key of Object.keys(parsedRequest)) {
             if (key !== 'a' && key !== 'h' && key !== 'q' && key !== 't' && key !== 'f' && key !== 'n' && key !== 'v' && key !== 'c' && key !== 'e') {
-                console.log('Error:', '-' + key, 'is not a valid parameter.');
+                console.log('\nError:', '-' + key, 'is not a valid parameter.');
                 return;
             }
         }
 
         //controllo che si siano i parametri minimi per inoltrare la richiesta
-        if (!parsedRequest.hasOwnProperty('h')) { console.log('Error: ', 'missing -h parameter.'); return; };
-        if (!parsedRequest.hasOwnProperty('q')) { console.log('Error: ', 'missing -q parameter.'); return; };
-        if (!parsedRequest.hasOwnProperty('t')) { console.log('Error: ', 'missing -t parameter.'); return; };
+        if (!parsedRequest.hasOwnProperty('h')) { console.log('\nError: ', 'missing -h parameter.'); return; };
+        if (!parsedRequest.hasOwnProperty('q')) { console.log('\nError: ', 'missing -q parameter.'); return; };
+        if (!parsedRequest.hasOwnProperty('t')) { console.log('\nError: ', 'missing -t parameter.'); return; };
         //if (!parsedRequest.hasOwnProperty('e')) { console.log('Error: ', 'missing -e parameter.'); return; };
 
 
@@ -512,7 +512,7 @@ function sanityCheckList(parsedRequest) {
                 timespanControl[0].length != 8 ||
                 timespanControl[1].length != 8
             ) {
-                console.log('Error: ', parsedRequest.t[i].replace(' ', ''), 'is an invalid parameter for -t');
+                console.log('\nError: ', parsedRequest.t[i].replace(' ', ''), 'is an invalid parameter for -t');
                 return;
             }
         }
@@ -527,7 +527,7 @@ function sanityCheckList(parsedRequest) {
                         isNaN(control[0]) ||
                         (isNaN(control[1]) && (control[1]) !== '*')
                     ) {
-                        console.log('Error: ', parsedRequest[key], 'is an invalid parameter for -' + key);
+                        console.log('\nError: ', parsedRequest[key], 'is an invalid parameter for -' + key);
                         return;
                     }
                 }
@@ -543,7 +543,7 @@ function sanityCheckInfo(parsedRequest) {
         //gestione parametri invalidi
         for (key of Object.keys(parsedRequest)) {
             if (key !== 'q' && key !== 't' && key !== 'f' && key !== 'n' && key !== 'v' && key !== 'c' && key !== 'i' && key !== 'd') {
-                console.log('Error:', '-' + key, 'is not a valid parameter.');
+                console.log('\nError:', '-' + key, 'is not a valid parameter.');
                 return;
             }
         }
@@ -569,7 +569,7 @@ function sanityCheckInfo(parsedRequest) {
 
         for (el of parsedRequest.i.replace(' ', '').split(',')) {
             if (el !== 'edit' && el !== 'views' && el !== 'comments' && el !== 'nlinks' && el !== 'listlinks') {
-                console.log('Error: ', el, 'is an invalid value for -i');
+                console.log('\nError: ', el, 'is an invalid value for -i');
                 return;
             }
         }
