@@ -190,11 +190,17 @@ async function searchFirstRevision(parsedRequest, timespanArray, allPagesQuery) 
         console.log('\n\nFine ricerca data creazione');
 
         //se la pagina è stata creata dopo del timespan end della pagina, allora non la metto tra le pagine da processare   
-        queueFirstRevisions = queueFirstRevisions.filter((el) => {
+        pagesCreatedInTimespan = queueFirstRevisions.filter((el) => {
             return new Date(el.firstRevision).getTime() <= new Date(timespanArray[1]).getTime();
         });
 
-        resolve(queueFirstRevisions);
+        pagesNotCreatedInTimespan = queueFirstRevisions.filter((el) => {
+            return new Date(el.firstRevision).getTime() > new Date(timespanArray[1]).getTime();
+        });
+
+        objectFirstRevision = { pagesCreatedInTimespan: pagesCreatedInTimespan, pagesNotCreatedInTimespan: pagesNotCreatedInTimespan };
+
+        resolve(objectFirstRevision);
     });
 }
 
@@ -387,7 +393,7 @@ async function getPageViews(pagesInfo, timespanArray, parsedRequest) {
         }
         while (pagesInfo.length > 0)
 
-        console.log('\nFine ricerca views');
+        console.log('\nFine ricerca views\n');
 
         resolve(resultViews);
     });

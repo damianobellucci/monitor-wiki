@@ -49,7 +49,9 @@ function Preview(parsedRequest) { //da splittare caso erro e caso body===undefin
             //nella ricerca, ho bisogno della data di creazione della pagina
             console.log('\n' + 'Tot. pagine prima della cernita (prima revisione):', pagesId.length);
 
-            let infoPagesCreatedInTimespan = await Promise.resolve(functions.searchFirstRevision(parsedRequest, timespanArray, pagesId));
+            let objectFirstRevision = await Promise.resolve(functions.searchFirstRevision(parsedRequest, timespanArray, pagesId));
+
+            let infoPagesCreatedInTimespan = objectFirstRevision.pagesCreatedInTimespan;
 
             console.log('\n' + 'Tot. pagine dopo la cernita (prima revisione):', infoPagesCreatedInTimespan.length);
             ///////////////////////////////////////// FINE DATA CREAZIONE PAGINE /////////////////////////////////////////
@@ -295,7 +297,10 @@ async function Info(parsedRequest) {
             parsedRequest.h = resultPreview.query.h;
 
 
-            let queueFirstRevisions = await Promise.resolve(functions.searchFirstRevision(parsedRequest, timespanArray, allPagesQuery));
+            let objectFirstRevision = await Promise.resolve(functions.searchFirstRevision(parsedRequest, timespanArray, allPagesQuery));
+
+
+            let queueFirstRevisions = objectFirstRevision.pagesCreatedInTimespan;
 
             allPagesQuery = []
 
@@ -328,7 +333,7 @@ async function Info(parsedRequest) {
 
 
                 /////////////////////////////////////////INIZIO RICERCA EXPORT/////////////////////////////////////////////////
-                
+
                 console.log('\nInizio ricerca informazioni delle revisioni\n');
 
                 if (indexPreferences.edit) {
