@@ -182,7 +182,8 @@ async function searchFirstRevision(parsedRequest, timespanArray, allPagesQuery) 
             }
             queueFirstRevisions = queueFirstRevisions.concat(await Promise.all(resultQueue));
 
-            allPagesQuery = queueFirstRevisions.filter((el) => { return el.hasOwnProperty('error'); }).map(el => el.pageid);
+            allPagesQuery = _.uniq(queueFirstRevisions.filter((el) => { return el.hasOwnProperty('error'); }).map(el => el.pageid));
+            queueFirstRevisions = queueFirstRevisions.filter(el => { return !el.hasOwnProperty('error'); });
 
         } while (allPagesQuery.length > 0)
 

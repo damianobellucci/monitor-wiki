@@ -172,21 +172,27 @@ var counterFailedFirstRevision = 0;
 var wrapperFirstRevision = (params) => {
     return new Promise((resolve, reject) => {
         client.getAllParametricData(params, function (err, data) {
-            if (err) { console.log(err); return; }
+            if (err) {
+                console.log(err);
+                counterFailedFirstRevision += 1;
+                //console.log('\nID DELLA PAGINA INCRIMINATA', params.pageids);
+                console.log('\nError (first revision call API): try to do the call another time.', 'Tot', counterFailedFirstRevision, 'request failed.');
+                resolve({ pageid: params.pageids, error: '' })
+            }
             else {
                 counterDataCreazione += 1;
                 try {
                     body = {};
                     body.query = data[0];
-                    process.stdout.write("\nCounter data creazione: " + counterDataCreazione + " " + params.pageids + '\r');
+                    process.stdout.write("Counter data creazione: " + counterDataCreazione + " " + params.pageids + '\r');
                     body.query.pages[Object.keys(body.query.pages)[0]].firstRevision = body.query.pages[Object.keys(body.query.pages)[0]].revisions[0].timestamp;
                     delete body.query.pages[Object.keys(body.query.pages)[0]].revisions;
                     resolve(body.query.pages[Object.keys(body.query.pages)[0]]);
 
                 } catch (e) {
                     counterDataCreazione -= 1;
-                    counterFailedFirstRevision+=1;
-                    console.log('\nID DELLA PAGINA INCRIMINATA',params.pageids);
+                    counterFailedFirstRevision += 1;
+                    console.log('\nID DELLA PAGINA INCRIMINATA', params.pageids);
                     console.log('\nError (first revision call API): try to do the call another time.', 'Tot', counterFailedFirstRevision, 'request failed.');
                     resolve({ pageid: params.pageids, error: '' })
                 };
