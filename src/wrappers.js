@@ -134,21 +134,23 @@ var wrapperGetPageId = (params) => {
     });
 };
 
-var counterFailedFirstRevision = 0;
+var counterDataCreazione = 0;
 
-var wrapperFirstRevision = (title, server) => { //da splittare caso erro e caso body===undefined
+/*var wrapperFirstRevision = (title, server) => { //da splittare caso erro e caso body===undefined
     return new Promise((resolve, reject) => {
         let urlRequest = 'https://' + server + '/w/api.php?action=query&prop=revisions&rvlimit=1&rvprop=timestamp&rvdir=newer&pageids=' + title + '&format=json';
         request(urlRequest, { json: true }, (err, res, body) => {
+            counterDataCreazione += 1;
+            process.stdout.write("Counter data creazione: " + counterDataCreazione + " " + title + '\r');
+
             //console.log(title);
-            if (err || title === 4566347 && counterFailedFirstRevision < 10) {
+            if (err || body === undefined || body.query === undefined || title === 4566347 && counterFailedFirstRevision < 10) {
+                counterDataCreazione -= 1;
+
                 counterFailedFirstRevision += 1;
-                console.log('Error (creation date call API): try to do the call another time for page', title + '.', 'Tot.', counterFailedFirstRevision, 'request failed.');
+                console.log('\nError (creation date call API): try to do the call another time for page', title + '.', 'Tot.', counterFailedFirstRevision, 'request failed.');
                 resolve({ title: title, error: '' });
             }
-
-            //raramente succede che la richiesta venga soddisfatta ma il body sia undefined, filtro quindi questi casi e eslcudo le pagine corrispondenti
-            else if (body === undefined || body.query === undefined) resolve({ error: '' });
 
             else {
                 try {
@@ -162,6 +164,36 @@ var wrapperFirstRevision = (title, server) => { //da splittare caso erro e caso 
             }
         });
 
+    });
+};*/
+
+var counterFailedFirstRevision = 0;
+
+var wrapperFirstRevision = (params) => {
+    return new Promise((resolve, reject) => {
+        client.getAllParametricData(params, function (err, data) {
+            if (err) { console.log(err); return; }
+            else {
+                counterDataCreazione += 1;
+                try {
+                    body = {};
+                    body.query = data[0];
+                    process.stdout.write("\nCounter data creazione: " + counterDataCreazione + " " + params.pageids + '\r');
+                    body.query.pages[Object.keys(body.query.pages)[0]].firstRevision = body.query.pages[Object.keys(body.query.pages)[0]].revisions[0].timestamp;
+                    delete body.query.pages[Object.keys(body.query.pages)[0]].revisions;
+                    resolve(body.query.pages[Object.keys(body.query.pages)[0]]);
+
+                } catch (e) {
+                    counterDataCreazione -= 1;
+                    counterFailedFirstRevision+=1;
+                    console.log('\nID DELLA PAGINA INCRIMINATA',params.pageids);
+                    console.log('\nError (first revision call API): try to do the call another time.', 'Tot', counterFailedFirstRevision, 'request failed.');
+                    resolve({ pageid: params.pageids, error: '' })
+                };
+
+            }
+
+        });
     });
 };
 
@@ -211,7 +243,7 @@ var wrapperExport = (params) => {
         client.getAllParametricData(params.query, function (err, data) {
             //console.log(params);
             //parseObject = { title: data.title, pageid: data.pageid, revid: data.revid, nLinks: data.links.length, nExtLinks: data.externallinks.length, nSections: data.sections.length, displayTitle: data.displaytitle }
-            if (err || params.revision.revid === 819820642 && counterFailedExport < 10) {
+            if (err /*|| params.revision.revid === 819820642 && counterFailedExport < 10*/) {
                 if (err === 'Error returned by API: You don\'t have permission to view deleted revision text.') {
                     counterExport++;
                     //console.log(err);
@@ -267,7 +299,7 @@ var wrapperTalks = (params3, page) => {
     return new Promise((resolve, reject) => {
         client.getAllParametricData(params3, function (err3, data3) {
             talk = {};
-            if (err3 || page.title === 'Steve Bucknall' && counterFailedTalks < 10) {
+            if (err3 /*|| page.title === 'Steve Bucknall' && counterFailedTalks < 10*/) {
                 counterFailedTalks += 1;
                 console.log('Error (talks call API): try to do the call another time for page', page.title + '.', 'Tot.', counterFailedTalks, 'request failed.');
 
@@ -316,12 +348,10 @@ var wrapperViews = (params) => {
 
 
         //console.log(params.start, params.end);
-
         let urlRequest = 'https://wikimedia.org/api/rest_v1/metrics/pageviews/per-article/' + params.server + '/all-access/all-agents/' + encodeURI(params.pageTitle) + '/daily/' + params.start + '/' + params.end;
 
         request(urlRequest, { json: true }, (err, res, body) => {
-            //console.log(body);
-            if ((err || params.pageid === 57468431 && counterFailedViews < 10)) {
+            if ((err /*|| params.pageid === 57468431 && counterFailedViews < 10*/)) {
                 params.error = '';
                 params.title = params.pageTitle;
                 delete (params.pageTitle);
@@ -330,7 +360,7 @@ var wrapperViews = (params) => {
                 console.log('Error (views): try to do the call another time for page', params.title + '.', 'Tot.', counterFailedViews, 'request failed.');
                 resolve(params);
             }
-            if (body.title === 'Not found.') { /*return*/ /*console.log(params.pageTitle, err)*/; //caso views non disponibili per via del primo maggio 2015
+            if (body === undefined || body.title === 'Not found.') { /*return*/ /*console.log(params.pageTitle, err)*/; //caso views non disponibili per via del primo maggio 2015
                 resolve({ title: params.pageTitle, pageid: params.pageid, dailyViews: 'Not Available' });
             }
             else {//formatto oggetto view
@@ -350,8 +380,8 @@ var wrapperViews = (params) => {
                 }
                 //console.log(body);
 
-
-            } resolve({ title: params.pageTitle, pageid: params.pageid, dailyViews: body.items });
+                resolve({ title: params.pageTitle, pageid: params.pageid, dailyViews: body.items });
+            }
         });
     });
 };
@@ -422,4 +452,5 @@ module.exports.wrapperGetPagesInfo = wrapperGetPagesInfo;
 module.exports.wrapperGetTalksId = wrapperGetTalksId;
 module.exports.resetCounterExport = resetCounterExport;
 module.exports.wrapperGetInfoCategory = wrapperGetInfoCategory;
+module.exports.wrapperFirstRevision = wrapperFirstRevision;
 

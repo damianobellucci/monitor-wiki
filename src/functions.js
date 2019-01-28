@@ -148,53 +148,12 @@ async function searchPages(parsedRequest) {
             level += 1;
         }
         //console.log(pagesInfo.map(el => el.title).join('|'));
+
+        console.log('\nTot pagine prima della cernita (doppioni): ', pagesInfo.filter(el => { return el.ns !== 14 }).map(el => el.pageid).length);
+
         resolve(_.uniq(pagesInfo.filter(el => { return el.ns !== 14 }).map(el => el.pageid)));
 
-        for (el of queryArray) {
-            let categoryParams = {
-                action: 'query',
-                generator: 'categorymembers',
-                gcmtitle: el,
-                prop: 'info',
-                cllimit: 'max',
-                gcmlimit: 'max',
-                format: 'json',
-                gcmtype: 'page',/*|subcat*/
-                gcmprop: 'ids|Ctitle|Csortkey|Ctype|Ctimestamp',
-            };
-            allPagesQuery.push(wrapper.wrapperGetPagesByCategory(categoryParams));
-        }
 
-        allPagesQuery = await Promise.all(allPagesQuery); //in questo risultato ci saranno anche le pagine che non sono risultate categorie
-
-        let appArray = [];
-
-        for (el of allPagesQuery) {
-            appArray = appArray.concat(el);
-        }
-
-        allPagesQuery = appArray;
-
-        //filtro le pagine provenienti da categorie dalle pagine che non sono categorie
-        stringPages = allPagesQuery.filter((el) => {
-            return typeof el === 'string'
-        });
-        allPagesQuery = allPagesQuery.filter((el) => { //ora allPagesQuery contiene solo pagine provenienti da categorie
-            return typeof el !== 'string'
-        });
-
-        let stringToIdPages = [];
-
-        for (el of stringPages) {
-            let params = { action: 'query', titles: el };
-            stringToIdPages = stringToIdPages.concat(wrapper.wrapperGetPageId(params));
-        }
-
-        stringToIdPages = await Promise.all(stringToIdPages);
-
-        allPagesQuery = allPagesQuery.concat(stringToIdPages); //unisco le pagine provenienti dalle categorie alle pagine non categoria
-
-        resolve(allPagesQuery);
     });
 }
 
@@ -205,43 +164,29 @@ async function searchFirstRevision(parsedRequest, timespanArray, allPagesQuery) 
         let queueFirstRevisions = [];
         let resultQueue = [];
 
-        //nella ricerca della data di creazione delle pagine, la libreria nodemw non riconosce alcuni parametri 
-        //per la richiesta della prima revisione di una pagina, quindi devo gestire le richieste autonomamente
+        allPagesQuery = allPagesQuery.filter(el => { return el !== undefined });
 
         do {
-            if (allPagesQuery.length > 500) {//se le pagine sono molte, splitto l'array per evitare di fare troppe richieste alla voltaed incorrere nel timeout error
-
-                let chunkedAllPagesQuery = [];
-                while (allPagesQuery.length > 0) {
-                    resultQueue = [];
-                    chunkedAllPagesQuery = allPagesQuery.slice(0, 30);
-                    for (let el of chunkedAllPagesQuery) {
-                        resultQueue.push(wrapper.wrapperFirstRevision(el, parsedRequest.h));
-                    }
-                    allPagesQuery = allPagesQuery.slice(30, allPagesQuery.length);
-                    queueFirstRevisions = queueFirstRevisions.concat(await Promise.all(resultQueue));
-                }
-            }
-            else { //tutte assieme
-                for (el of allPagesQuery) {
-                    resultQueue.push(wrapper.wrapperFirstRevision(el, parsedRequest.h));
-                }
-                queueFirstRevisions = queueFirstRevisions.concat(await Promise.all(resultQueue));
-            }
-            //pulisco stacks
             resultQueue = [];
+            for (let el of allPagesQuery) {
+                let params = {
+                    "action": "query",
+                    "format": "json",
+                    "prop": "revisions",
+                    "pageids": el,
+                    "rvprop": "timestamp",
+                    "rvlimit": "max",
+                    "rvdir": "newer"
+                }
+                resultQueue.push(wrapper.wrapperFirstRevision(params));
+            }
+            queueFirstRevisions = queueFirstRevisions.concat(await Promise.all(resultQueue));
 
-            allPagesQuery = queueFirstRevisions.filter(el => { return el.hasOwnProperty('error') }).map(el => el.title);
-            queueFirstRevisions = queueFirstRevisions.filter(el => { return !el.hasOwnProperty('error') });
+            allPagesQuery = queueFirstRevisions.filter((el) => { return el.hasOwnProperty('error'); }).map(el => el.pageid);
 
         } while (allPagesQuery.length > 0)
 
         console.log('\nFine ricerca data creazione');
-
-        //raramente succede che la richiesta venga soddisfatta ma il body sia undefined, filtro quindi questi casi e eslcudo le pagine corrispondenti
-        queueFirstRevisions = queueFirstRevisions.filter((el) => {
-            return !el.hasOwnProperty('error');
-        });
 
         //se la pagina è stata creata dopo del timespan end della pagina, allora non la metto tra le pagine da processare   
         queueFirstRevisions = queueFirstRevisions.filter((el) => {
@@ -326,7 +271,7 @@ async function getPageExport(result, indexPreferences, counterRevisions) {
             resultExport = resultExport.concat(await Promise.all(exportQueue));
 
             exportQueue = [];
-            stackRevisions=[];
+            stackRevisions = [];
             stackRevisions = resultExport.filter(el => { return el.hasOwnProperty('error') });
             resultExport = resultExport.filter(el => { return !el.hasOwnProperty('error') });
             //console.log(stackRevisions.length);

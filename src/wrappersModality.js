@@ -39,6 +39,9 @@ function Preview(parsedRequest) { //da splittare caso erro e caso body===undefin
             ///////////////////////////////////////// RICERCA PAGINE /////////////////////////////////////////
             //Estrapolo i corrispondenti id delle pagine che soddisfano la query di ricerca (flag -q)
             let pagesId = await Promise.resolve(functions.searchPages(parsedRequest));
+
+            console.log('\nTot pagine dopo cernita (doppioni): ', pagesId.length);
+
             ///////////////////////////////////////// FINE RICERCA PAGINE /////////////////////////////////////////
 
             timespanArray = parsedRequest.t.split(',');
@@ -48,9 +51,11 @@ function Preview(parsedRequest) { //da splittare caso erro e caso body===undefin
             ///////////////////////////////////////// RICERCA DATA CREAZIONE PAGINE /////////////////////////////////////////
             //Per determinare se una pagina è stata creata all'interno del timespan (flag -t) e quindi includerlo
             //nella ricerca, ho bisogno della data di creazione della pagina
+            console.log('\n' + 'Tot pagine prima la cernita (prima revisione):' + pagesId.length);
+
             let infoPagesCreatedInTimespan = await Promise.resolve(functions.searchFirstRevision(parsedRequest, timespanArray, pagesId));
 
-            //console.log(infoPagesCreatedInTimespan);
+            console.log('\n' + 'Tot pagine dopo la cernita (prima revisione):' + infoPagesCreatedInTimespan.length);
             ///////////////////////////////////////// FINE DATA CREAZIONE PAGINE /////////////////////////////////////////
 
             ///////////////////////////////////////// RICERCA REVISIONI PAGINE /////////////////////////////////////////
