@@ -100,7 +100,7 @@ var fs = require('fs');
                     if (finalExport.result[resultPage].pages[page].hasOwnProperty('notYetCreated')) {
                         aggregatedPage.notYetCreated = '';
                         delete (aggregatedPage.daysOfAge);
-                        console.log(aggregatedPage);
+                        //console.log(aggregatedPage);
                     }
 
                     //aggrego il numero di revisioni (utenti,minor edits)
