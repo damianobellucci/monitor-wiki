@@ -93,8 +93,15 @@ var fs = require('fs');
                     let aggregatedPage = {
                         pageid: finalExport.result[resultPage].pages[page].pageid,
                         title: finalExport.result[resultPage].pages[page].title,
-                        daysOfAge: finalExport.result[resultPage].pages[page].daysOfAge
+                        daysOfAge: finalExport.result[resultPage].pages[page].daysOfAge,
+                        firstRevision: finalExport.result[resultPage].pages[page].firstRevision
                     };
+
+                    if (finalExport.result[resultPage].pages[page].hasOwnProperty('notYetCreated')) {
+                        aggregatedPage.notYetCreated = '';
+                        delete (aggregatedPage.daysOfAge);
+                        console.log(aggregatedPage);
+                    }
 
                     //aggrego il numero di revisioni (utenti,minor edits)
 

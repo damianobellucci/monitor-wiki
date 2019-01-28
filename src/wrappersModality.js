@@ -293,7 +293,6 @@ async function Info(parsedRequest) {
             timespanArray[0] = timespanArray[0].substr(0, 4) + '-' + timespanArray[0].substr(4, 2) + '-' + timespanArray[0].substr(6, 2) + 'T00:00:00.000Z';
             timespanArray[1] = timespanArray[1].substr(0, 4) + '-' + timespanArray[1].substr(4, 2) + '-' + timespanArray[1].substr(6, 2) + 'T23:59:59.999Z';
 
-
             parsedRequest.h = resultPreview.query.h;
 
 
@@ -308,9 +307,7 @@ async function Info(parsedRequest) {
                 allPagesQuery.push(el.title);
             }
 
-
             let start = new Date().getTime();
-
 
             let result = await Promise.resolve(functions.searchRevisions(parsedRequest, timespanArray, allPagesQuery));
 
@@ -411,10 +408,23 @@ async function Info(parsedRequest) {
                 for (el of queueFirstRevisions) {
                     //if (finalExport.pages[el.pageid] !== undefined) finalExport.pages[el.pageid].creationTimestamp = el;
                     pageDaysOfAge = Math.round((new Date(timespanArray[1]).getTime() - new Date(el.firstRevision).getTime()) / 1000 / 60 / 60 / 24);
-                    if (finalExport.pages[el.pageid] !== undefined) finalExport.pages[el.pageid].daysOfAge = pageDaysOfAge;
-                    //console.log(finalExport.pages[el.pageid].daysOfAge);
+                    if (finalExport.pages[el.pageid] !== undefined) {
+                        finalExport.pages[el.pageid].daysOfAge = pageDaysOfAge;
+                        //console.log(finalExport.pages[el.pageid].daysOfAge);
+                        finalExport.pages[el.pageid].firstRevision = el.firstRevision;
+                        //console.log(finalExport.pages[el.pageid]);
+                    }
                 }
                 ///////////////////////////////////// FINE CALCOLO DAYS OF AGE ////////////////////////////////////////////////////
+
+
+                for (let el of objectFirstRevision.pagesNotCreatedInTimespan) {
+                    //la pagina non era stata ancora creata quindi è inutile calcolare i giorni passati dalla creazione della pagina
+                    //pageDaysOfAge = Math.round((new Date(timespanArray[1]).getTime() - new Date(el.firstRevision).getTime()) / 1000 / 60 / 60 / 24);
+                    //el.daysOfAge = pageDaysOfAge;
+                    el.notYetCreated = '';
+                    finalExport.pages[el.pageid] = el;
+                }
 
                 finalExport.query = parsedRequest;
 
