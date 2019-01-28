@@ -239,16 +239,25 @@ var wrapperExport = (params) => {
 
                 if (params.indexPreferences.nlinks && params.indexPreferences.listlinks) {
 
-                    data[0].links = { count: data[0].links.length, list: data[0].links };
+                    let activeLinks = data[0].links.filter(link => { return link.hasOwnProperty('exists') && link.ns === 0 });
+
+                    data[0].links = { count: activeLinks.length, list: activeLinks };
                     data[0].externallinks = { count: data[0].externallinks.length, list: data[0].externallinks }
+
                 } else if (params.indexPreferences.nlinks) {
 
-                    data[0].links = { count: data[0].links.length };
+                    let activeLinks = data[0].links.filter(link => { return link.hasOwnProperty('exists') && link.ns === 0 });
+
+                    data[0].links = { count: activeLinks };
                     data[0].externallinks = { count: data[0].externallinks.length }
+
                 } else if (params.indexPreferences.listlinks) {
 
-                    data[0].links = { list: data[0].links };
-                    data[0].externallinks = { list: data[0].externallinks }
+                    let activeLinks = data[0].links.filter(link => { return link.hasOwnProperty('exists') && link.ns === 0 });
+
+                    data[0].links = { count: activeLinks.length, list: activeLinks };
+                    data[0].externallinks = { count: data[0].externallinks.length, list: data[0].externallinks }
+
                 }
 
                 data[0].sections = data[0].sections.length;
@@ -259,7 +268,7 @@ var wrapperExport = (params) => {
                 //console.log(counterExport);
 
 
-                //process.stdout.write("Downloading " + counterExport + "/" + params.counterRevisions + ": " + Math.round(counterExport * 100 / params.counterRevisions) + "%" + "\r");
+                process.stdout.write("Downloading " + counterExport + "/" + params.counterRevisions + ": " + Math.round(counterExport * 100 / params.counterRevisions) + "%" + "\r");
                 //console.log(data);
                 resolve(data);
             }

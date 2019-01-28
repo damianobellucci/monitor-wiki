@@ -1,0 +1,6 @@
+-h en.wikipedia.org -q category:italian music -t 20151212,20190101 -n 500,* -v 15000,* -c 10,* -e list.json
+
+
+
+//circa 8 minuti, Time elapsed: 453s , 67 misaligned pages / 6005 total pages
+-h en.wikipedia.org -q category:emerging technologies -t 20151212,20190101 -n 500,* -v 15000,* -c 10,* -e list.json

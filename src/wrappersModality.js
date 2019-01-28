@@ -293,7 +293,7 @@ async function Info(parsedRequest) {
             timespanArray[0] = timespanArray[0].substr(0, 4) + '-' + timespanArray[0].substr(4, 2) + '-' + timespanArray[0].substr(6, 2) + 'T00:00:00.000Z';
             timespanArray[1] = timespanArray[1].substr(0, 4) + '-' + timespanArray[1].substr(4, 2) + '-' + timespanArray[1].substr(6, 2) + 'T23:59:59.999Z';
 
-            console.log('\nInizio retrieve data creazione delle pagine');
+            console.log('\nInizio ricerca data creazione delle pagine');
 
             parsedRequest.h = resultPreview.query.h;
 
@@ -306,7 +306,7 @@ async function Info(parsedRequest) {
                 allPagesQuery.push(el.title);
             }
 
-            console.log('Inizio retrieve revisioni delle pagine');
+            console.log('Inizio ricerca revisioni delle pagine');
 
             let start = new Date().getTime();
 
@@ -325,13 +325,13 @@ async function Info(parsedRequest) {
             if (result.length == 0) { console.log('Error: there aren\'t pages for the timespan ' + parsedRequest.t + '.'); return; }
             else {
 
-                console.log('Inizio retrieve informazioni delle revisioni');
+                console.log('Inizio ricerca informazioni delle revisioni');
                 let startExport = new Date().getTime();
 
                 let indexPreferences = functions.getIndexFlagPreferences(parsedRequest);
 
 
-                /////////////////////////////////////////INIZIO RETRIEVE EXPORT/////////////////////////////////////////////////
+                /////////////////////////////////////////INIZIO RICERCA EXPORT/////////////////////////////////////////////////
                 if (indexPreferences.edit) {
                     result = await functions.getPageExport(result, indexPreferences, counterRevisions)
                 }
@@ -371,10 +371,10 @@ async function Info(parsedRequest) {
                     //console.log('tempo revid eliminate', ((new Date().getTime() - vediamoStart) / 1000));
                     /////FINE GESTIONE REVID ELIMINATE///////
                 }
-                /////////////////////////////////////////FINE RETRIEVE EXPORT/////////////////////////////////////////////////
+                /////////////////////////////////////////FINE RICERCA EXPORT/////////////////////////////////////////////////
 
 
-                /////////////////////////////////////////RETRIEVE VIEWS/////////////////////////////////////////////////
+                /////////////////////////////////////////RICERCA VIEWS/////////////////////////////////////////////////
                 if (indexPreferences.views) {
                     let resultViews = await Promise.resolve(functions.getPageViews(Object.values(finalExport.pages), parsedRequest.t.split(','), resultPreview.query));
                     //console.log(resultViews);return;
@@ -386,9 +386,9 @@ async function Info(parsedRequest) {
                         console.log(finalExport.pages[el].views);
                     }*/
                 }
-                /////////////////////////////////////////FINE RETRIEVE VIEWS/////////////////////////////////////////////////
+                /////////////////////////////////////////FINE RICERCA VIEWS/////////////////////////////////////////////////
 
-                /////////////////////////////////////////INIZIO RETRIEVE TALKS/////////////////////////////////////////////////
+                /////////////////////////////////////////INIZIO RICERCA TALKS/////////////////////////////////////////////////
                 if (indexPreferences.talks) {
                     let resultTalks = await Promise.resolve(functions.getPageTalks(Object.values(finalExport.pages), timespanArray, resultPreview.query));
 
@@ -399,7 +399,7 @@ async function Info(parsedRequest) {
                         console.log(finalExport.pages[el].talks);
                     }*/
                 }
-                /////////////////////////////////////////FINE RETRIEVE TALKS/////////////////////////////////////////////////
+                /////////////////////////////////////////FINE RICERCA TALKS/////////////////////////////////////////////////
 
                 console.log('Inizio preparazione file di export');
 

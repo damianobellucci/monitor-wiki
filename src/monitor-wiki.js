@@ -42,13 +42,14 @@ var fs = require('fs');
 
             let finalObject = { pages: resultPreview, query: parsedRequest };
 
-            fs.writeFile('../results/' + parsedRequest.e, JSON.stringify(finalObject), function (err) {
+            fs.writeFile('../results/' + parsedRequest.e.replace(" ", ""), JSON.stringify(finalObject), function (err) {
                 if (err) throw err;
                 console.log('Page list has been saved with name: ' + parsedRequest.e);
             });
         }
         else if (modality === 'info') {
 
+            start = new Date().getTime();
             await functions.sanityCheckInfo(parsedRequest);
 
             let finalExport = { query: parsedRequest, result: {} };
@@ -66,6 +67,7 @@ var fs = require('fs');
 
                 //console.log('Time elapsed for export: ' + resultInfo.timer / 1000 + 's');
             });
+            console.log('Time elapsed for all the process info: ', (new Date().getTime() - start) / 1000, 's');
         }
         else if (modality === 'aggregateInfo') {
 
@@ -105,15 +107,19 @@ var fs = require('fs');
                                 if (finalExport.result[resultPage].pages[page].revisions.history[revisionId].export.hasOwnProperty('links')) {
                                     if (finalExport.result[resultPage].pages[page].revisions.history[revisionId].export.links === 'deleted revision')
                                         finalExport.result[resultPage].pages[page].revisions.history[revisionId].export.links = 'n/a'
+                                    /*else finalExport.result[resultPage].pages[page].revisions.history[revisionId].export.links =
+                                        finalExport.result[resultPage].pages[page].revisions.history[revisionId].export.links.list.length;*/
                                     else finalExport.result[resultPage].pages[page].revisions.history[revisionId].export.links =
-                                        finalExport.result[resultPage].pages[page].revisions.history[revisionId].export.links.list.length;
+                                        finalExport.result[resultPage].pages[page].revisions.history[revisionId].export.links.count;
 
                                 }
                                 if (finalExport.result[resultPage].pages[page].revisions.history[revisionId].export.hasOwnProperty('externallinks')) {
                                     if (finalExport.result[resultPage].pages[page].revisions.history[revisionId].export.externallinks === 'deleted revision')
                                         finalExport.result[resultPage].pages[page].revisions.history[revisionId].export.externallinks = 'n/a'
+                                    /*else finalExport.result[resultPage].pages[page].revisions.history[revisionId].export.externallinks =
+                                        finalExport.result[resultPage].pages[page].revisions.history[revisionId].export.externallinks.list.length;*/
                                     else finalExport.result[resultPage].pages[page].revisions.history[revisionId].export.externallinks =
-                                        finalExport.result[resultPage].pages[page].revisions.history[revisionId].export.externallinks.list.length;
+                                        finalExport.result[resultPage].pages[page].revisions.history[revisionId].export.externallinks.count;
                                 }
                                 if (finalExport.result[resultPage].pages[page].revisions.history[revisionId].export.hasOwnProperty('sections')) {
                                     if (finalExport.result[resultPage].pages[page].revisions.history[revisionId].export.sections === 'deleted revision')
@@ -144,7 +150,7 @@ var fs = require('fs');
                 aggregatedExport.result[resultPage] = aggregatedResultPage;
             })
 
-            fs.writeFile(parsedRequest.d, JSON.stringify(aggregatedExport), function (err) {
+            fs.writeFile('../results/' + parsedRequest.d, JSON.stringify(aggregatedExport), function (err) {
                 if (err) throw err;
                 console.log('Export completed');
 
