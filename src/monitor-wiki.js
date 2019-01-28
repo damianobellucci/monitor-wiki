@@ -153,8 +153,6 @@ var fs = require('fs');
             fs.writeFile('../results/' + parsedRequest.d, JSON.stringify(aggregatedExport), function (err) {
                 if (err) throw err;
                 console.log('Export completed');
-
-                //console.log('Time elapsed for export: ' + resultInfo.timer / 1000 + 's');
             });
         }
     }

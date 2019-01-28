@@ -236,7 +236,6 @@ var wrapperExport = (params) => {
             }
             else {
 
-
                 if (params.indexPreferences.nlinks && params.indexPreferences.listlinks) {
 
                     let activeLinks = data[0].links.filter(link => { return link.hasOwnProperty('exists') && link.ns === 0 });
@@ -248,8 +247,9 @@ var wrapperExport = (params) => {
 
                     let activeLinks = data[0].links.filter(link => { return link.hasOwnProperty('exists') && link.ns === 0 });
 
-                    data[0].links = { count: activeLinks };
+                    data[0].links = { count: activeLinks.length };
                     data[0].externallinks = { count: data[0].externallinks.length }
+
 
                 } else if (params.indexPreferences.listlinks) {
 
@@ -259,7 +259,7 @@ var wrapperExport = (params) => {
                     data[0].externallinks = { count: data[0].externallinks.length, list: data[0].externallinks }
 
                 }
-
+                
                 data[0].sections = data[0].sections.length;
 
                 //console.log(data);
