@@ -5,6 +5,10 @@ var functions = require('./functions.js');
 var wrapper = require('./wrappers.js');
 const chalk = require('chalk');
 const _ = require('underscore');
+var counterPagesCreatedInTimespan = 0;
+var counterPagesBeforeTimespanFilter = 0;
+var counterSingleRevisions = 0;
+
 
 function Preview(parsedRequest) { //da splittare caso erro e caso body===undefined
     return new Promise((resolve, reject) => {
@@ -49,17 +53,24 @@ function Preview(parsedRequest) { //da splittare caso erro e caso body===undefin
             //nella ricerca, ho bisogno della data di creazione della pagina
             console.log('\n' + 'Tot. pagine prima della cernita (prima revisione):', pagesId.length);
 
+            counterPagesBeforeTimespanFilter = pagesId.length;
+
             let objectFirstRevision = await Promise.resolve(functions.searchFirstRevision(parsedRequest, timespanArray, pagesId));
 
             let infoPagesCreatedInTimespan = objectFirstRevision.pagesCreatedInTimespan;
+
+            counterPagesCreatedInTimespan = infoPagesCreatedInTimespan.length;
 
             console.log('\n' + 'Tot. pagine dopo la cernita (prima revisione):', infoPagesCreatedInTimespan.length);
             ///////////////////////////////////////// FINE DATA CREAZIONE PAGINE /////////////////////////////////////////
 
             ///////////////////////////////////////// RICERCA REVISIONI PAGINE /////////////////////////////////////////
             let revisions = [];
+
             if (parsedRequest.hasOwnProperty('n') || parsedRequest.hasOwnProperty('f')) revisions = await Promise.resolve(functions.searchRevisions(parsedRequest, timespanArray, infoPagesCreatedInTimespan.map(pageInfo => pageInfo.title)));
+
             ///////////////////////////////////////// FINE REVISIONI PAGINE /////////////////////////////////////////
+
 
             ///////////////////////////////////////// RICERCA COMMENTI PAGINE /////////////////////////////////////////
             let talksPagesInfo = [];
@@ -68,6 +79,7 @@ function Preview(parsedRequest) { //da splittare caso erro e caso body===undefin
             ///////////////////////////////////////// FINE COMMENT PAGINE /////////////////////////////////////////
 
             ///////////////////////////////////////// INZIO RICERCA VIEWS PAGINE /////////////////////////////////////////
+
             let viewsPagesInfo = [];
             if (parsedRequest.hasOwnProperty('v')) viewsPagesInfo = await Promise.resolve(functions.getPageViews(infoPagesCreatedInTimespan, parsedRequest.t.split(','), parsedRequest));
             //console.log(viewsPagesInfo);
@@ -234,6 +246,12 @@ function Preview(parsedRequest) { //da splittare caso erro e caso body===undefin
                 '\nTime elapsed:', Math.round((new Date().getTime() - start) / 1000) + 's', ',',
                 counterMisalignedPages, 'misaligned pages', '/', infoPagesCreatedInTimespan.length, 'total pages', '\n'
             );
+
+            wrapper.resetCounterDataCreazione();
+            wrapper.resetcounterDownloadedViews();
+            wrapper.resetcounterTalks();
+            wrapper.resetcounterRevision();
+
             resolve(aggregatedObject);
         });
     });
@@ -295,11 +313,14 @@ async function Info(parsedRequest) {
 
             parsedRequest.h = resultPreview.query.h;
 
-
+            counterPagesBeforeTimespanFilter = allPagesQuery.length;
+            //elimino quelli con id undefined
             let objectFirstRevision = await Promise.resolve(functions.searchFirstRevision(parsedRequest, timespanArray, allPagesQuery));
 
 
             let queueFirstRevisions = objectFirstRevision.pagesCreatedInTimespan;
+
+            counterPagesCreatedInTimespan = queueFirstRevisions.length;
 
             allPagesQuery = []
 
@@ -429,6 +450,12 @@ async function Info(parsedRequest) {
                 finalExport.query = parsedRequest;
 
                 wrapper.resetCounterExport();
+
+                wrapper.resetCounterDataCreazione();
+                wrapper.resetcounterDownloadedViews();
+                wrapper.resetcounterTalks();
+                wrapper.resetcounterRevision();
+
                 resolve(finalExport);
             }
         });
@@ -436,6 +463,24 @@ async function Info(parsedRequest) {
     });
 };
 
+function pageCounterCreatedInTimespan() {
+    return counterPagesCreatedInTimespan;
+}
+
+function pageCounterPagesBeforeTimespanFilter() {
+    return counterPagesBeforeTimespanFilter;
+}
+
+function singleRevisionsCounter() {
+    return counterSingleRevisions;
+}
+
+
+
 module.exports.Preview = Preview;
 module.exports.Info = Info;
+module.exports.pageCounterCreatedInTimespan = pageCounterCreatedInTimespan;
+module.exports.pageCounterPagesBeforeTimespanFilter = pageCounterPagesBeforeTimespanFilter;
+module.exports.singleRevisionsCounter = singleRevisionsCounter;
+
 

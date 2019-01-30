@@ -208,7 +208,7 @@ async function searchRevisions(parsedRequest, timespanArray, allPagesQuery) {
     return new Promise(async (resolve, reject) => {
         let queue = [];
 
-        console.log('\nInizio ricerca revisioni');
+        console.log('\nInizio ricerca revisioni\n');
 
         let resultOfQuery = [];
         do {
@@ -240,7 +240,7 @@ async function searchRevisions(parsedRequest, timespanArray, allPagesQuery) {
 
         //
         //console.log(resultOfQuery)
-        console.log('\nFine ricerca revisioni');
+        console.log('\n\nFine ricerca revisioni');
         resolve(resultOfQuery);
     });
 }
@@ -351,7 +351,7 @@ async function getPageViews(pagesInfo, timespanArray, parsedRequest) {
         let queueViews = [];
         let resultViews = [];
 
-        console.log('\nInizio ricerca views');
+        console.log('\nInizio ricerca views\n');
 
         do {
             if (pagesInfo.length > 500) {
@@ -393,7 +393,7 @@ async function getPageViews(pagesInfo, timespanArray, parsedRequest) {
         }
         while (pagesInfo.length > 0)
 
-        console.log('\nFine ricerca views\n');
+        console.log('\n\nFine ricerca views\n');
 
         resolve(resultViews);
     });
@@ -403,7 +403,7 @@ async function getPageTalks(pages, timespanArray) {
     return new Promise(async (resolve, reject) => {
         let queueTalks = [];
         let resultTalks = [];
-        console.log('\nInizio ricerca talks');
+        console.log('\nInizio ricerca talks\n');
         do {
             for (let page of pages) {
 
@@ -434,7 +434,7 @@ async function getPageTalks(pages, timespanArray) {
 
         } while (pages.length > 0)
 
-        console.log('\nFine ricerca talks');
+        console.log('\n\nFine ricerca talks');
 
         resolve(resultTalks);
     });

@@ -1,7 +1,8 @@
 const request = require('request');
 monitorWiki = require('./monitor-wiki.js');
-var counterExport = 0;
+var wrappersModality = require('./wrappersModality.js');
 
+var counterExport = 0;
 var counterDataCreazione = 0;
 var counterFailedFirstRevision = 0;
 var counterFailedRevisions = 0;
@@ -140,22 +141,27 @@ var wrapperGetPageId = (params) => {
     });
 };
 
+
 var wrapperFirstRevision = (params) => {
     return new Promise((resolve, reject) => {
         client.getAllParametricData(params, function (err, data) {
             if (err) {
                 console.log(err);
                 counterFailedFirstRevision += 1;
-                //console.log('\nID DELLA PAGINA INCRIMINATA', params.pageids);
-                console.log('\nError (first revision call API): try to do the call another time.', 'Tot', counterFailedFirstRevision, 'request failed.');
+                console.log('\nID DELLA PAGINA INCRIMINATA', params.pageids);
+                console.log('\nError (first revision call API): try to do the call another time.', 'Tot', counterFailedFirstRevision, 'request failed.\n');
                 resolve({ pageid: params.pageids, error: '' })
             }
             else {
                 counterDataCreazione += 1;
+
+
                 try {
                     body = {};
                     body.query = data[0];
-                    process.stdout.write("Counter data creazione: " + counterDataCreazione +' pageid: '+ params.pageids + '\r');
+                    process.stdout.write("Downloading " + counterDataCreazione + "/" + wrappersModality.pageCounterPagesBeforeTimespanFilter() + ": " + Math.round(counterDataCreazione * 100 / wrappersModality.pageCounterPagesBeforeTimespanFilter()) + "%" + "\r");
+
+                    //process.stdout.write("Counter data creazione: " + counterDataCreazione + ' pageid: ' + params.pageids + '\r');
                     body.query.pages[Object.keys(body.query.pages)[0]].firstRevision = body.query.pages[Object.keys(body.query.pages)[0]].revisions[0].timestamp;
                     delete body.query.pages[Object.keys(body.query.pages)[0]].revisions;
                     resolve(body.query.pages[Object.keys(body.query.pages)[0]]);
@@ -164,7 +170,7 @@ var wrapperFirstRevision = (params) => {
                     counterDataCreazione -= 1;
                     counterFailedFirstRevision += 1;
                     //console.log('\nID DELLA PAGINA INCRIMINATA', params.pageids);
-                    console.log('\nError (first revision call API): try to do the call another time.', 'Tot', counterFailedFirstRevision, 'request failed.');
+                    console.log('\nError (first revision call API): try to do the call another time.', 'Tot', counterFailedFirstRevision, 'request failed.\n');
                     resolve({ pageid: params.pageids, error: '' })
                 };
 
@@ -174,6 +180,7 @@ var wrapperFirstRevision = (params) => {
     });
 };
 
+var counterRevision = 0;
 var wrapperGetParametricRevisions = (params) => {
     return new Promise((resolve, reject) => {
 
@@ -184,8 +191,12 @@ var wrapperGetParametricRevisions = (params) => {
                 counterFailedRevisions += 1;
                 console.log('\nError (revisions): try to do the call another time for page', params.query.titles + '.', 'Tot.', counterFailedRevisions, 'request failed.');
                 resolve({ page: params.query.titles, error: '' });
-                return;
+                //return;
             }
+
+            counterRevision += 1;
+
+            process.stdout.write("Downloading " + counterRevision + "/" + wrappersModality.pageCounterCreatedInTimespan() + ": " + Math.round(counterRevision * 100 / wrappersModality.pageCounterCreatedInTimespan()) + "%" + "\r");
 
             if (data.length == 1) {
                 data = data[0].pages[Object.keys(data[0].pages)[0]];
@@ -228,7 +239,7 @@ var wrapperExport = (params) => {
                 else {
                     counterFailedExport += 1;
 
-                    console.log('\nError (export call API): try to do the call another time.', 'Tot', counterFailedExport, 'request failed.');
+                    console.log('\nError (export call API): try to do the call another time.', 'Tot', counterFailedExport, 'request failed.\n');
 
                     params.revision.error = '';
                     resolve(params.revision);
@@ -259,7 +270,7 @@ var wrapperExport = (params) => {
                     data[0].externallinks = { count: data[0].externallinks.length, list: data[0].externallinks }
 
                 }
-                
+
                 data[0].sections = data[0].sections.length;
 
                 //console.log(data);
@@ -276,13 +287,14 @@ var wrapperExport = (params) => {
     })
 };
 
+var counterTalks = 0;
 var wrapperTalks = (params3, page) => {
     return new Promise((resolve, reject) => {
         client.getAllParametricData(params3, function (err3, data3) {
             talk = {};
             if (err3 /*|| page.title === 'Steve Bucknall' && counterFailedTalks < 10*/) {
                 counterFailedTalks += 1;
-                console.log('\nError (talks call API): try to do the call another time for page', page.title + '.', 'Tot.', counterFailedTalks, 'request failed.');
+                console.log('\nError (talks call API): try to do the call another time for page', page.title + '.', 'Tot.', counterFailedTalks, 'request failed.\n');
 
                 page.error = '';
 
@@ -302,11 +314,17 @@ var wrapperTalks = (params3, page) => {
                 talk.history = data3.revisions;
                 talk.count = data3.revisions.length;
                 talk.pageid = page.pageid;
+
+                counterTalks += 1;
+                process.stdout.write("Downloading " + counterTalks + "/" + wrappersModality.pageCounterCreatedInTimespan() + ": " + Math.round(counterTalks * 100 / wrappersModality.pageCounterCreatedInTimespan()) + "%" + "\r");
+
                 resolve(talk);
             }
         });
     });
 };
+
+var counterDownloadedViews = 0;
 
 var wrapperViews = (params) => {
     return new Promise((resolve, reject) => {
@@ -336,9 +354,13 @@ var wrapperViews = (params) => {
                 delete (params.pageTitle);
                 counterFailedViews += 1;
 
-                console.log('\nError (views): try to do the call another time for page', params.title + '.', 'Tot.', counterFailedViews, 'request failed.');
+                console.log('\nError (views call API): try to do the call another time for page', params.title + '.', 'Tot.', counterFailedViews, 'request failed.\n');
                 resolve(params);
             }
+            counterDownloadedViews += 1;
+
+            process.stdout.write("Downloading " + counterDownloadedViews + "/" + wrappersModality.pageCounterCreatedInTimespan() + ": " + Math.round(counterDownloadedViews * 100 / wrappersModality.pageCounterCreatedInTimespan()) + "%" + "\r");
+
             if (body === undefined || body.title === 'Not found.') { /*return*/ /*console.log(params.pageTitle, err)*/; //caso views non disponibili per via del primo maggio 2015
                 resolve({ title: params.pageTitle, pageid: params.pageid, dailyViews: 'Not Available' });
             }
@@ -418,6 +440,26 @@ function resetCounterExport() {
     counterExport = 0;
 }
 
+function resetCounterDataCreazione() {
+    counterDataCreazione = 0;
+}
+
+function resetcounterDownloadedViews() {
+    counterDownloadedViews = 0;
+}
+
+function resetcounterTalks() {
+    counterTalks = 0;
+}
+
+function resetcounterRevision() {
+    counterRevision = 0;
+}
+
+
+
+
+
 module.exports.wrapperGetParametricRevisions = wrapperGetParametricRevisions;
 module.exports.wrapperGetPagesByCategory = wrapperGetPagesByCategory;
 module.exports.wrapperExport = wrapperExport;
@@ -431,4 +473,10 @@ module.exports.wrapperGetTalksId = wrapperGetTalksId;
 module.exports.resetCounterExport = resetCounterExport;
 module.exports.wrapperGetInfoCategory = wrapperGetInfoCategory;
 module.exports.wrapperFirstRevision = wrapperFirstRevision;
+
+
+module.exports.resetCounterDataCreazione = resetCounterDataCreazione;
+module.exports.resetcounterDownloadedViews = resetcounterDownloadedViews;
+module.exports.resetcounterTalks = resetcounterTalks;
+module.exports.resetcounterRevision = resetcounterRevision;
 
