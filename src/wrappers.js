@@ -183,7 +183,6 @@ var wrapperFirstRevision = (params) => {
 var counterRevision = 0;
 var wrapperGetParametricRevisions = (params) => {
     return new Promise((resolve, reject) => {
-
         client.getAllParametricData(params.query, function (err, data) {
             //console.log(params);
 
