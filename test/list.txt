@@ -1,1 +1,0 @@
--h en.wikipedia.org -q category:fabriano -t 20150101,20190101 -n 0,* -v 0,* -c 0,* -e list.json 
