@@ -1,1 +1,0 @@
--f list.json -t 20160101,20170101 -t 20151212,20161212 -d info.json -i edit,views,comments,nlinks
