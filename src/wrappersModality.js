@@ -354,7 +354,7 @@ async function Info(parsedRequest) {
 
                 console.log('\nInizio ricerca informazioni delle revisioni\n');
 
-                if (indexPreferences.edit) {
+                if (indexPreferences.edit || indexPreferences.nlinks || indexPreferences.listlinks) {
                     result = await functions.getPageExport(result, indexPreferences, counterRevisions)
                 }
 

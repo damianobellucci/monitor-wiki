@@ -105,11 +105,14 @@ var fs = require('fs');
 
                     //aggrego il numero di revisioni (utenti,minor edits)
 
-                    if (finalExport.result[resultPage].pages[page].hasOwnProperty('revisions')) {
-                        aggregatedPage.edits = finalExport.result[resultPage].pages[page].revisions.history.length;
-                        aggregatedPage.minorEdits = finalExport.result[resultPage].pages[page].revisions.history.filter(el => { return el.hasOwnProperty('minor') }).length;
-                        aggregatedPage.authors = Array.from(new Set(finalExport.result[resultPage].pages[page].revisions.history.map(el => el.user))).length;
 
+                    if (finalExport.result[resultPage].pages[page].hasOwnProperty('revisions')) {
+
+                        if (parsedRequest.i.includes('edit')) {
+                            aggregatedPage.edits = finalExport.result[resultPage].pages[page].revisions.history.length;
+                            aggregatedPage.minorEdits = finalExport.result[resultPage].pages[page].revisions.history.filter(el => { return el.hasOwnProperty('minor') }).length;
+                            aggregatedPage.authors = Array.from(new Set(finalExport.result[resultPage].pages[page].revisions.history.map(el => el.user))).length;
+                        }
 
                         Object.keys(finalExport.result[resultPage].pages[page].revisions.history).forEach((revisionId) => {
                             try {
@@ -135,11 +138,13 @@ var fs = require('fs');
                                         finalExport.result[resultPage].pages[page].revisions.history[revisionId].export.sections = 'n/a'
                                 }
 
-                            } catch (e) { console.log(finalExport.result[resultPage].pages[page].revisions.history[revisionId].export) }
+                            } catch (e) { /*console.log(finalExport.result[resultPage].pages[page].revisions.history[revisionId].export) */ }
                         });
 
-                        aggregatedPage.revisions = {};
-                        aggregatedPage.revisions.history = finalExport.result[resultPage].pages[page].revisions.history;
+                        if (parsedRequest.i.includes('nlinks') || parsedRequest.i.includes('listlinks')) {
+                            aggregatedPage.revisions = {};
+                            aggregatedPage.revisions.history = finalExport.result[resultPage].pages[page].revisions.history;
+                        }
                         //aggrego risultati di export
                     }
                     //aggrego numero di commenti
@@ -158,6 +163,8 @@ var fs = require('fs');
                 });
                 aggregatedExport.result[resultPage] = aggregatedResultPage;
             })
+
+
 
             console.log('\nFine preparazione file');
 
