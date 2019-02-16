@@ -183,13 +183,13 @@ var wrapperFirstRevision = (params) => {
 var counterRevision = 0;
 var wrapperGetParametricRevisions = (params) => {
     return new Promise((resolve, reject) => {
-        client.getAllParametricData(params.query, function (err, data) {
+        client.getAllParametricData(params, function (err, data) {
             //console.log(params);
 
             if (err) {
                 counterFailedRevisions += 1;
-                console.log('\nError (revisions): try to do the call another time for page', params.query.titles + '.', 'Tot.', counterFailedRevisions, 'request failed.');
-                resolve({ page: params.query.titles, error: '' });
+                console.log('\nError (revisions): try to do the call another time for page', params.titles + '.', 'Tot.', counterFailedRevisions, 'request failed.');
+                resolve({ page: params.titles, error: '' });
                 //return;
             }
 

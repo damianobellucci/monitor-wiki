@@ -1,6 +1,7 @@
 var wrapper = require('./wrappers.js');
 var _ = require('underscore');
 var fs = require('fs');
+const chalk = require('chalk');
 
 function parseRequest() {
     let stringArguments = [];
@@ -157,7 +158,7 @@ async function searchPages(parsedRequest) {
     });
 }
 
-async function searchFirstRevision(parsedRequest, timespanArray, allPagesQuery) {
+async function searchFirstRevision(timespanArray, allPagesQuery) {
     return new Promise(async (resolve, reject) => {
         console.log('\nInizio ricerca data creazione\n');
 
@@ -204,7 +205,7 @@ async function searchFirstRevision(parsedRequest, timespanArray, allPagesQuery) 
     });
 }
 
-async function searchRevisions(parsedRequest, timespanArray, allPagesQuery) {
+async function searchRevisions(timespanArray, allPagesQuery) {
     return new Promise(async (resolve, reject) => {
         let queue = [];
 
@@ -215,17 +216,14 @@ async function searchRevisions(parsedRequest, timespanArray, allPagesQuery) {
             //console.log(allPagesQuery);
             for (el of allPagesQuery) {
                 let params = {
-                    query: {
-                        action: 'query',
-                        prop: 'revisions',
-                        rvprop: ['ids', 'timestamp', 'size', 'flags', 'comment', 'user'].join('|'),
-                        rvdir: 'newer', // order by timestamp asc
-                        rvlimit: 'max',
-                        titles: el,
-                        rvstart: timespanArray[0],
-                        rvend: timespanArray[1]
-                    },
-                    parsedRequest: parsedRequest
+                    action: 'query',
+                    prop: 'revisions',
+                    rvprop: ['ids', 'timestamp', 'size', 'flags', 'comment', 'user'].join('|'),
+                    rvdir: 'newer', // order by timestamp asc
+                    rvlimit: 'max',
+                    titles: el,
+                    rvstart: timespanArray[0],
+                    rvend: timespanArray[1]
                 }
                 queue.push(wrapper.wrapperGetParametricRevisions(params));
             }
@@ -597,42 +595,6 @@ function readFile(file) {
 function isMisaligned(page, parsedRequest) {
     //se il numero tag di disallineamento ===true sono uguali al numero di tag immessi, la pagina è disallineata
 
-    /*console.log((
-        (
-            parsedRequest.hasOwnProperty('n') ? 1 : 0
-        )
-        +
-        (
-            parsedRequest.hasOwnProperty('f') ? 1 : 0
-        )
-        +
-        (
-            parsedRequest.hasOwnProperty('v') ? 1 : 0
-        )
-        +
-        (
-            parsedRequest.hasOwnProperty('c') ? 1 : 0
-        )
-    )
-    +
-    (
-        (
-            page.misalignment.hasOwnProperty('edits') && page.misalignment.edits ? 1 : 0
-        )
-        +
-        (
-            page.misalignment.hasOwnProperty('frequency') && page.misalignment.frequency ? 1 : 0
-        )
-        +
-        (
-            page.misalignment.hasOwnProperty('views') && page.misalignment.views ? 1 : 0
-        )
-        +
-        (
-            page.misalignment.hasOwnProperty('comments') && page.misalignment.comments ? 1 : 0
-        )
-    ));*/
-
     if (
         (
             (
@@ -673,6 +635,162 @@ function isMisaligned(page, parsedRequest) {
     return false;
 }
 
+function RecombineResultPreview(infoPagesCreatedInTimespan, revisions, talksPagesInfo, viewsPagesInfo, parsedRequest) {
+    let recombinedObject = {};
+    for (let page of infoPagesCreatedInTimespan) {
+        let object = { title: page.title, pageid: page.pageid };
+
+        if (parsedRequest.hasOwnProperty('n') || parsedRequest.hasOwnProperty('f')) {
+            object.edits = revisions.find((el) => { return el.pageid === page.pageid });
+        }
+
+        if (parsedRequest.hasOwnProperty('c')) {
+            object.comments = talksPagesInfo.find((el) => { return el.pageid === page.pageid });
+        }
+
+        if (parsedRequest.hasOwnProperty('v')) {
+            object.views = viewsPagesInfo.find((el) => { return el.pageid === page.pageid });
+        }
+
+        recombinedObject[page.pageid] = object;
+    }
+    return recombinedObject;
+}
+
+function AggregateResultPreview(recombinedObject, parsedRequest) {
+    let aggregatedObject = {};
+    for (let page in recombinedObject) {
+        let object = { title: recombinedObject[page].title, pageid: page };
+
+        if (parsedRequest.hasOwnProperty('n')) {
+            object.edits = recombinedObject[page].edits.revisions.history.length;
+        }
+
+        if (parsedRequest.hasOwnProperty('f')) {
+            object.frequency = Math.round(recombinedObject[page].edits.revisions.history.length * 1000 * 60 * 60 * 24 * 365 / (new Date(timespanArray[1]).getTime() - new Date(timespanArray[0]).getTime()), 2);
+        }
+
+        if (parsedRequest.hasOwnProperty('c')) {
+
+            if (recombinedObject[page].comments.history === 'n/a') {
+                //console.log(recombinedObject[page]);
+                object.comments = 'n/a';
+            }
+            else object.comments = recombinedObject[page].comments.history.length;
+        }
+
+        if (parsedRequest.hasOwnProperty('v')) {
+            recombinedObject[page].views.dailyViews === 'Not Available' ?
+                object.views = 'n/a' : object.views = recombinedObject[page].views.dailyViews.map(el => el.views).reduce((a, b) => a + b, 0);
+        }
+        aggregatedObject[page] = object;
+    }
+    return aggregatedObject;
+}
+
+function TagArticlesPreview(aggregatedObject, parsedRequest) {
+    for (let page in aggregatedObject) {
+        aggregatedObject[page].misalignment = {};
+
+        if (parsedRequest.hasOwnProperty('n')) {
+
+            if (parsedRequest.n.split(',')[1] === '*')
+                (aggregatedObject[page].edits >= parsedRequest.n.split(',')[0]) ?
+                    aggregatedObject[page].misalignment.edits = true : aggregatedObject[page].misalignment.edits = false
+            else
+                (aggregatedObject[page].edits >= parsedRequest.n.split(',')[0] && aggregatedObject[page].edits <= parsedRequest.n.split(',')[1]) ?
+                    aggregatedObject[page].misalignment.edits = true : aggregatedObject[page].misalignment.edits = false;
+
+        }
+
+        if (parsedRequest.hasOwnProperty('f')) {
+
+            if (parsedRequest.f.split(',')[1] === '*')
+                (aggregatedObject[page].frequency >= parsedRequest.f.split(',')[0]) ?
+                    aggregatedObject[page].misalignment.frequency = true : aggregatedObject[page].misalignment.frequency = false
+            else
+                (aggregatedObject[page].frequency >= parsedRequest.f.split(',')[0] && aggregatedObject[page].frequency <= parsedRequest.f.split(',')[1]) ?
+                    aggregatedObject[page].misalignment.frequency = true : aggregatedObject[page].misalignment.frequency = false;
+
+        }
+
+        if (parsedRequest.hasOwnProperty('c')) {
+
+            if (parsedRequest.c.split(',')[1] === '*')
+                (aggregatedObject[page].comments >= parsedRequest.c.split(',')[0]) ?
+                    aggregatedObject[page].misalignment.comments = true : aggregatedObject[page].misalignment.comments = false
+            else
+                (aggregatedObject[page].comments >= parsedRequest.c.split(',')[0] && aggregatedObject[page].comments <= parsedRequest.c.split(',')[1]) ?
+                    aggregatedObject[page].misalignment.comments = true : aggregatedObject[page].misalignment.comments = false;
+
+        }
+
+        if (parsedRequest.hasOwnProperty('v')) {
+
+            if (aggregatedObject[page].views === 'n/a') aggregatedObject[page].misalignment.views = 'n/a'; //mettendo come valore di misalignment.views n/a, in isMisaligned la pagina risulterà disallineata
+            else {
+                if (parsedRequest.v.split(',')[1] === '*')
+                    (aggregatedObject[page].views >= parsedRequest.v.split(',')[0]) ?
+                        aggregatedObject[page].misalignment.views = true : aggregatedObject[page].misalignment.views = false
+                else
+                    (aggregatedObject[page].views >= parsedRequest.v.split(',')[0] && aggregatedObject[page].views <= parsedRequest.v.split(',')[1]) ?
+                        aggregatedObject[page].misalignment.views = true : aggregatedObject[page].misalignment.views = false;
+            }
+
+        }
+    }
+
+    ///
+    for (let page in aggregatedObject) {
+        aggregatedObject[page].misalignment = { isMisaligned: isMisaligned(aggregatedObject[page], parsedRequest), misalignmentForFilter: aggregatedObject[page].misalignment };
+    }
+    return aggregatedObject;
+}
+
+function PrintResultPreview(aggregatedObject, start, nPagesCreatedInTimespan) {
+    for (let page in aggregatedObject) {
+        !aggregatedObject[page].misalignment.isMisaligned ?
+            (
+                console.log(
+                    'Title: ' + chalk.green(aggregatedObject[page].title), '|',
+                    'misalignment:', 'false', '|',
+                    aggregatedObject[page].hasOwnProperty('edits') ? 'edits: ' + aggregatedObject[page].edits : '',
+                    aggregatedObject[page].hasOwnProperty('frequency') ? 'frequency: ~ ' + aggregatedObject[page].frequency : '',
+                    aggregatedObject[page].hasOwnProperty('comments') ? 'comments: ' + aggregatedObject[page].comments : '',
+                    aggregatedObject[page].hasOwnProperty('views') ? 'views: ' + aggregatedObject[page].views : ''
+                )
+            ) : (
+                console.log(
+                    'Title: ' + chalk.green(aggregatedObject[page].title) + ' |',
+                    'misalignment:', chalk.red('true'), '|',
+                    aggregatedObject[page].hasOwnProperty('edits') ? 'edits: ' + aggregatedObject[page].edits : '',
+                    aggregatedObject[page].hasOwnProperty('frequency') ? 'frequency: ~ ' + aggregatedObject[page].frequency : '',
+                    aggregatedObject[page].hasOwnProperty('comments') ? 'comments: ' + aggregatedObject[page].comments : '',
+                    aggregatedObject[page].hasOwnProperty('views') ? 'views: ' + aggregatedObject[page].views : ''
+
+                )
+            );
+    }
+
+    let counterMisalignedPages = 0;
+    for (el in aggregatedObject) {
+        //if(aggregatedObject[el].misalignment.isMisaligned)console.log(aggregatedObject[el]);
+        counterMisalignedPages += aggregatedObject[el].misalignment.isMisaligned;
+    }
+
+    console.log(
+        '\nTime elapsed:', Math.round((new Date().getTime() - start) / 1000) + 's', ',',
+        counterMisalignedPages, 'misaligned pages', '/', nPagesCreatedInTimespan, 'total pages', '\n'
+    );
+}
+
+function ConvertYYYYMMDDtoISO(timespanYYYYMMMDD) {
+    timespanYYYYMMMDD = timespanYYYYMMMDD.split(',');
+    timespanYYYYMMMDD[0] = timespanYYYYMMMDD[0].substr(0, 4) + '-' + timespanYYYYMMMDD[0].substr(4, 2) + '-' + timespanYYYYMMMDD[0].substr(6, 2) + 'T00:00:00.000Z';
+    timespanYYYYMMMDD[1] = timespanYYYYMMMDD[1].substr(0, 4) + '-' + timespanYYYYMMMDD[1].substr(4, 2) + '-' + timespanYYYYMMMDD[1].substr(6, 2) + 'T23:59:59.999Z';
+    return timespanYYYYMMMDD;
+}
+
 module.exports.parseRequest = parseRequest;
 module.exports.searchPages = searchPages;
 module.exports.searchFirstRevision = searchFirstRevision;
@@ -686,3 +804,9 @@ module.exports.sanityCheckList = sanityCheckList;
 module.exports.sanityCheckInfo = sanityCheckInfo;
 module.exports.readFile = readFile;
 module.exports.isMisaligned = isMisaligned;
+module.exports.RecombineResultPreview = RecombineResultPreview;
+module.exports.AggregateResultPreview = AggregateResultPreview;
+module.exports.TagArticlesPreview = TagArticlesPreview;
+module.exports.PrintResultPreview = PrintResultPreview;
+module.exports.ConvertYYYYMMDDtoISO = ConvertYYYYMMDDtoISO;
+
