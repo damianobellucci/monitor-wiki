@@ -791,6 +791,110 @@ function ConvertYYYYMMDDtoISO(timespanYYYYMMMDD) {
     return timespanYYYYMMMDD;
 }
 
+function CalculateDaysOfAgeInfo(queueFirstRevisions, finalExport, timespanArray) {
+    for (el of queueFirstRevisions) {
+        //if (finalExport.pages[el.pageid] !== undefined) finalExport.pages[el.pageid].creationTimestamp = el;
+        pageDaysOfAge = Math.round((new Date(timespanArray[1]).getTime() - new Date(el.firstRevision).getTime()) / 1000 / 60 / 60 / 24);
+        if (finalExport.pages[el.pageid] !== undefined) {
+            finalExport.pages[el.pageid].daysOfAge = pageDaysOfAge;
+            //console.log(finalExport.pages[el.pageid].daysOfAge);
+            finalExport.pages[el.pageid].firstRevision = el.firstRevision;
+            //console.log(finalExport.pages[el.pageid]);
+        }
+    }
+    return finalExport;
+}
+
+function InsertNotYetCreatedPagesInfo(objectFirstRevision, finalExport) {
+    for (let el of objectFirstRevision.pagesNotCreatedInTimespan) {
+        el.notYetCreated = '';
+        finalExport.pages[el.pageid] = el;
+    }
+    return finalExport;
+}
+
+function ManageAggregateInfo(parsedRequest, finalExport) {
+    let aggregatedExport = { query: parsedRequest, result: {} };
+
+    Object.keys(finalExport.result).forEach((resultPage) => {
+        aggregatedResultPage = { timespan: parsedRequest.t[resultPage], pages: {} };
+        Object.keys(finalExport.result[resultPage].pages).forEach((page) => { //qui aggrego
+            let aggregatedPage = {
+                pageid: finalExport.result[resultPage].pages[page].pageid,
+                title: finalExport.result[resultPage].pages[page].title,
+                daysOfAge: finalExport.result[resultPage].pages[page].daysOfAge,
+                firstRevision: finalExport.result[resultPage].pages[page].firstRevision
+            };
+
+            if (finalExport.result[resultPage].pages[page].hasOwnProperty('notYetCreated')) {
+                aggregatedPage.notYetCreated = '';
+                delete (aggregatedPage.daysOfAge);
+                //console.log(aggregatedPage);
+            }
+
+            //aggrego il numero di revisioni (utenti,minor edits)
+
+
+            if (finalExport.result[resultPage].pages[page].hasOwnProperty('revisions')) {
+
+                if (parsedRequest.i.includes('edit')) {
+                    aggregatedPage.edits = finalExport.result[resultPage].pages[page].revisions.history.length;
+                    aggregatedPage.minorEdits = finalExport.result[resultPage].pages[page].revisions.history.filter(el => { return el.hasOwnProperty('minor') }).length;
+                    aggregatedPage.authors = Array.from(new Set(finalExport.result[resultPage].pages[page].revisions.history.map(el => el.user))).length;
+                }
+
+                Object.keys(finalExport.result[resultPage].pages[page].revisions.history).forEach((revisionId) => {
+                    try {
+                        if (finalExport.result[resultPage].pages[page].revisions.history[revisionId].export.hasOwnProperty('links')) {
+                            if (finalExport.result[resultPage].pages[page].revisions.history[revisionId].export.links === 'deleted revision')
+                                finalExport.result[resultPage].pages[page].revisions.history[revisionId].export.links = 'n/a'
+                            /*else finalExport.result[resultPage].pages[page].revisions.history[revisionId].export.links =
+                                finalExport.result[resultPage].pages[page].revisions.history[revisionId].export.links.list.length;*/
+                            else finalExport.result[resultPage].pages[page].revisions.history[revisionId].export.links =
+                                finalExport.result[resultPage].pages[page].revisions.history[revisionId].export.links.count;
+
+                        }
+                        if (finalExport.result[resultPage].pages[page].revisions.history[revisionId].export.hasOwnProperty('externallinks')) {
+                            if (finalExport.result[resultPage].pages[page].revisions.history[revisionId].export.externallinks === 'deleted revision')
+                                finalExport.result[resultPage].pages[page].revisions.history[revisionId].export.externallinks = 'n/a'
+                            /*else finalExport.result[resultPage].pages[page].revisions.history[revisionId].export.externallinks =
+                                finalExport.result[resultPage].pages[page].revisions.history[revisionId].export.externallinks.list.length;*/
+                            else finalExport.result[resultPage].pages[page].revisions.history[revisionId].export.externallinks =
+                                finalExport.result[resultPage].pages[page].revisions.history[revisionId].export.externallinks.count;
+                        }
+                        if (finalExport.result[resultPage].pages[page].revisions.history[revisionId].export.hasOwnProperty('sections')) {
+                            if (finalExport.result[resultPage].pages[page].revisions.history[revisionId].export.sections === 'deleted revision')
+                                finalExport.result[resultPage].pages[page].revisions.history[revisionId].export.sections = 'n/a'
+                        }
+
+                    } catch (e) { /*console.log(finalExport.result[resultPage].pages[page].revisions.history[revisionId].export) */ }
+                });
+
+                if (parsedRequest.i.includes('nlinks') || parsedRequest.i.includes('listlinks')) {
+                    aggregatedPage.revisions = {};
+                    aggregatedPage.revisions.history = finalExport.result[resultPage].pages[page].revisions.history;
+                }
+                //aggrego risultati di export
+            }
+            //aggrego numero di commenti
+            finalExport.result[resultPage].pages[page].hasOwnProperty('talks') ?
+                aggregatedPage.comments = finalExport.result[resultPage].pages[page].talks.history.length : null;
+
+            //aggrego views
+
+            if (finalExport.result[resultPage].pages[page].hasOwnProperty('views')) {
+                finalExport.result[resultPage].pages[page].views === 'Not Available' ?
+                    aggregatedPage.views = 'n/a' : aggregatedPage.views = finalExport.result[resultPage].pages[page].views.map(el => el.views).reduce((a, b) => a + b, 0);
+            }
+
+            aggregatedResultPage.pages[aggregatedPage.pageid] = aggregatedPage;
+
+        });
+        aggregatedExport.result[resultPage] = aggregatedResultPage;
+    });
+    return aggregatedExport;
+}
+
 module.exports.parseRequest = parseRequest;
 module.exports.searchPages = searchPages;
 module.exports.searchFirstRevision = searchFirstRevision;
@@ -809,4 +913,7 @@ module.exports.AggregateResultPreview = AggregateResultPreview;
 module.exports.TagArticlesPreview = TagArticlesPreview;
 module.exports.PrintResultPreview = PrintResultPreview;
 module.exports.ConvertYYYYMMDDtoISO = ConvertYYYYMMDDtoISO;
+module.exports.CalculateDaysOfAgeInfo = CalculateDaysOfAgeInfo;
+module.exports.InsertNotYetCreatedPagesInfo = InsertNotYetCreatedPagesInfo;
+module.exports.ManageAggregateInfo = ManageAggregateInfo;
 

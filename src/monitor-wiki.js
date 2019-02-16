@@ -85,88 +85,47 @@ var fs = require('fs');
 
             console.log('\nInizio preparazione file');
 
-            let aggregatedExport = { query: parsedRequest, result: {} };
-
-            Object.keys(finalExport.result).forEach((resultPage) => {
-                aggregatedResultPage = { timespan: parsedRequest.t[resultPage], pages: {} };
-                Object.keys(finalExport.result[resultPage].pages).forEach((page) => { //qui aggrego
-                    let aggregatedPage = {
-                        pageid: finalExport.result[resultPage].pages[page].pageid,
-                        title: finalExport.result[resultPage].pages[page].title,
-                        daysOfAge: finalExport.result[resultPage].pages[page].daysOfAge,
-                        firstRevision: finalExport.result[resultPage].pages[page].firstRevision
-                    };
-
-                    if (finalExport.result[resultPage].pages[page].hasOwnProperty('notYetCreated')) {
-                        aggregatedPage.notYetCreated = '';
-                        delete (aggregatedPage.daysOfAge);
-                        //console.log(aggregatedPage);
-                    }
-
-                    //aggrego il numero di revisioni (utenti,minor edits)
-
-
-                    if (finalExport.result[resultPage].pages[page].hasOwnProperty('revisions')) {
-
-                        if (parsedRequest.i.includes('edit')) {
-                            aggregatedPage.edits = finalExport.result[resultPage].pages[page].revisions.history.length;
-                            aggregatedPage.minorEdits = finalExport.result[resultPage].pages[page].revisions.history.filter(el => { return el.hasOwnProperty('minor') }).length;
-                            aggregatedPage.authors = Array.from(new Set(finalExport.result[resultPage].pages[page].revisions.history.map(el => el.user))).length;
-                        }
-
-                        Object.keys(finalExport.result[resultPage].pages[page].revisions.history).forEach((revisionId) => {
-                            try {
-                                if (finalExport.result[resultPage].pages[page].revisions.history[revisionId].export.hasOwnProperty('links')) {
-                                    if (finalExport.result[resultPage].pages[page].revisions.history[revisionId].export.links === 'deleted revision')
-                                        finalExport.result[resultPage].pages[page].revisions.history[revisionId].export.links = 'n/a'
-                                    /*else finalExport.result[resultPage].pages[page].revisions.history[revisionId].export.links =
-                                        finalExport.result[resultPage].pages[page].revisions.history[revisionId].export.links.list.length;*/
-                                    else finalExport.result[resultPage].pages[page].revisions.history[revisionId].export.links =
-                                        finalExport.result[resultPage].pages[page].revisions.history[revisionId].export.links.count;
-
-                                }
-                                if (finalExport.result[resultPage].pages[page].revisions.history[revisionId].export.hasOwnProperty('externallinks')) {
-                                    if (finalExport.result[resultPage].pages[page].revisions.history[revisionId].export.externallinks === 'deleted revision')
-                                        finalExport.result[resultPage].pages[page].revisions.history[revisionId].export.externallinks = 'n/a'
-                                    /*else finalExport.result[resultPage].pages[page].revisions.history[revisionId].export.externallinks =
-                                        finalExport.result[resultPage].pages[page].revisions.history[revisionId].export.externallinks.list.length;*/
-                                    else finalExport.result[resultPage].pages[page].revisions.history[revisionId].export.externallinks =
-                                        finalExport.result[resultPage].pages[page].revisions.history[revisionId].export.externallinks.count;
-                                }
-                                if (finalExport.result[resultPage].pages[page].revisions.history[revisionId].export.hasOwnProperty('sections')) {
-                                    if (finalExport.result[resultPage].pages[page].revisions.history[revisionId].export.sections === 'deleted revision')
-                                        finalExport.result[resultPage].pages[page].revisions.history[revisionId].export.sections = 'n/a'
-                                }
-
-                            } catch (e) { /*console.log(finalExport.result[resultPage].pages[page].revisions.history[revisionId].export) */ }
-                        });
-
-                        if (parsedRequest.i.includes('nlinks') || parsedRequest.i.includes('listlinks')) {
-                            aggregatedPage.revisions = {};
-                            aggregatedPage.revisions.history = finalExport.result[resultPage].pages[page].revisions.history;
-                        }
-                        //aggrego risultati di export
-                    }
-                    //aggrego numero di commenti
-                    finalExport.result[resultPage].pages[page].hasOwnProperty('talks') ?
-                        aggregatedPage.comments = finalExport.result[resultPage].pages[page].talks.history.length : null;
-
-                    //aggrego views
-
-                    if (finalExport.result[resultPage].pages[page].hasOwnProperty('views')) {
-                        finalExport.result[resultPage].pages[page].views === 'Not Available' ?
-                            aggregatedPage.views = 'n/a' : aggregatedPage.views = finalExport.result[resultPage].pages[page].views.map(el => el.views).reduce((a, b) => a + b, 0);
-                    }
-
-                    aggregatedResultPage.pages[aggregatedPage.pageid] = aggregatedPage;
-
-                });
-                aggregatedExport.result[resultPage] = aggregatedResultPage;
-            })
-
-
+            let aggregatedExport = functions.ManageAggregateInfo(parsedRequest, finalExport);
 
             console.log('\nFine preparazione file');
+
+
+            /*
+            function AggregateIndexExport(aggregatedExport) {
+                let results = aggregatedExport.result;
+
+                for (let result in results) {
+                    let articles = results[result].pages;
+                    let arrayTimespan = functions.ConvertYYYYMMDDtoISO(results[result].timespan);
+                    let timespan = (new Date(arrayTimespan[1]).getTime() - new Date(arrayTimespan[0]).getTime()) / 1000 / 60 / 60 / 24;
+                    console.log(timespan);
+
+                    for (let idArticle in articles) {
+
+                        let totLinks = 0; let totExternalLinks = 0; let totSections = 0;
+
+                        let historyRevisions = articles[idArticle].revisions.history;
+                        for (let revisionIndex in historyRevisions) {
+
+                            let infoExport = historyRevisions[revisionIndex].export;
+
+                            if (infoExport.links != 'n/a' && infoExport.externallinks != 'n/a' && infoExport.links != 'n/a') {
+                                totLinks += infoExport.links;
+                                totExternalLinks += infoExport.externallinks;
+                                totSections += infoExport.sections;
+                            }
+
+                        }
+                        results[result].pages[idArticle].linkMean = totLinks / timespan;
+                        results[result].pages[idArticle].externallinksMean = totExternalLinks / timespan;
+                        results[result].pages[idArticle].sectionsMean = totSections / timespan;
+                        //console.log(results[result].pages[idArticle]);
+                    }
+                }
+
+            }
+            AggregateIndexExport(aggregatedExport);
+            */
 
             fs.writeFile('../results/' + parsedRequest.d, JSON.stringify(aggregatedExport), function (err) {
                 if (err) throw err;

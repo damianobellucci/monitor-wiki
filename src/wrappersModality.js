@@ -108,13 +108,11 @@ async function Info(parsedRequest) {
     return new Promise(async (resolve, reject) => {
 
         console.log('\nInizio lettura file di input');
-        //jsonfile.readFile('results/'+parsedRequest.f, async function (err, resultPreview) {
 
         let resultPreview = JSON.parse((await functions.readFile('../results/' + parsedRequest.f)));
 
         if (resultPreview.pages.length == 0) { console.log('Error: input file doesn\'t contain any page.'); return; }
         console.log('\nFine lettura file di input');
-        //console.log(Object.values(resultPreview.pages).map(el => el.title)); return;
 
         let info = {
             "protocol": "https",  // default to 'http'
@@ -187,7 +185,8 @@ async function Info(parsedRequest) {
             console.log('\nInizio ricerca informazioni delle revisioni\n');
 
             if (indexPreferences.nlinks || indexPreferences.listlinks) {
-                result = await functions.getPageExport(result, indexPreferences, counterRevisions)
+                result = await functions.getPageExport(result, indexPreferences, counterRevisions);
+
             }
 
             let exportPagesObject = {};
@@ -203,6 +202,7 @@ async function Info(parsedRequest) {
             if (indexPreferences.edit) { //da mettere nell'if sopra
                 /////INIZIO GESTIONE REVID ELIMINATE///////
                 vediamoStart = new Date().getTime();
+
                 for (page in finalExport.pages) {
                     if (finalExport.pages[page].revisions === undefined) { console.log(allPagesQuery.pages[page]); return; }
                     for (revision in finalExport.pages[page].revisions.history) {
@@ -258,25 +258,14 @@ async function Info(parsedRequest) {
             console.log('\nInizio preparazione file');
 
             ///////////////////////////////////// INIZIO CALCOLO DAYS OF AGE ////////////////////////////////////////////////////
-            for (el of queueFirstRevisions) {
-                //if (finalExport.pages[el.pageid] !== undefined) finalExport.pages[el.pageid].creationTimestamp = el;
-                pageDaysOfAge = Math.round((new Date(timespanArray[1]).getTime() - new Date(el.firstRevision).getTime()) / 1000 / 60 / 60 / 24);
-                if (finalExport.pages[el.pageid] !== undefined) {
-                    finalExport.pages[el.pageid].daysOfAge = pageDaysOfAge;
-                    //console.log(finalExport.pages[el.pageid].daysOfAge);
-                    finalExport.pages[el.pageid].firstRevision = el.firstRevision;
-                    //console.log(finalExport.pages[el.pageid]);
-                }
-            }
+
+            finalExport = functions.CalculateDaysOfAgeInfo(queueFirstRevisions, finalExport, timespanArray);
+
             ///////////////////////////////////// FINE CALCOLO DAYS OF AGE ////////////////////////////////////////////////////
 
-            for (let el of objectFirstRevision.pagesNotCreatedInTimespan) {
-                //la pagina non era stata ancora creata quindi è inutile calcolare i giorni passati dalla creazione della pagina
-                //pageDaysOfAge = Math.round((new Date(timespanArray[1]).getTime() - new Date(el.firstRevision).getTime()) / 1000 / 60 / 60 / 24);
-                //el.daysOfAge = pageDaysOfAge;
-                el.notYetCreated = '';
-                finalExport.pages[el.pageid] = el;
-            }
+
+            finalExport = functions.InsertNotYetCreatedPagesInfo(objectFirstRevision, finalExport);
+
 
             finalExport.query = parsedRequest;
 
