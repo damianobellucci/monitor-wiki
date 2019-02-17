@@ -109,7 +109,7 @@ async function searchPages(parsedRequest) {
         let stack = [];
         let level = 0;
 
-        while (thereAreCategories(pagesInfo) && level < 3) {
+        while (thereAreCategories(pagesInfo) && level < 2) {
 
             var chunkList = [];
 
