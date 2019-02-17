@@ -10,13 +10,16 @@ var counterSingleRevisions = 0;
 
 
 async function Preview(parsedRequest) { //da splittare caso erro e caso body===undefined
-    return new Promise(async (resolve, reject) => {
+    return new Promise((resolve, reject) => {
 
         let info = {
             "protocol": "https",  // default to 'http'
             "server": parsedRequest.h,  // host name of MediaWiki-powered site
             "path": "/w",                  // path to api.php script
             "debug": false,                // is more verbose when set to true
+            "username": "Monitorwikibotdb",             // account to be used when logIn is called (optional)
+            "password": "Slart1bartfastW",             // password to be used when logIn is called (optional)
+            "userAgent": "belluccidamiano@gmail.com",      // define custom bot's user agent
             "concurrency": 100               // how many API requests can be run in parallel (defaults to 3)
         }
 
@@ -24,83 +27,92 @@ async function Preview(parsedRequest) { //da splittare caso erro e caso body===u
             client = new bot(info);
         } catch (e) { return; };
 
-        let start = new Date().getTime();
 
-        ///////////////////////////////////////// RICERCA PAGINE /////////////////////////////////////////
-        //Estrapolo i corrispondenti id delle pagine che soddisfano la query di ricerca (flag -q)
-        let pagesId = await Promise.resolve(functions.searchPages(parsedRequest));
-        console.log('\nTot. pagine dopo cernita (doppioni): ', pagesId.length);
-        ///////////////////////////////////////// FINE RICERCA PAGINE /////////////////////////////////////////
 
-        let timespanArray = functions.ConvertYYYYMMDDtoISO(parsedRequest.t);
+        client.logIn(async error => {
 
-        ///////////////////////////////////////// RICERCA DATA CREAZIONE PAGINE /////////////////////////////////////////
-        //Per determinare se una pagina è stata creata all'interno del timespan (flag -t) e quindi includerlo
-        //nella ricerca, ho bisogno della data di creazione della pagina
-        console.log('\n' + 'Tot. pagine prima della cernita (prima revisione):', pagesId.length);
-
-        counterPagesBeforeTimespanFilter = pagesId.length;
-
-        let objectFirstRevision = await Promise.resolve(functions.searchFirstRevision(timespanArray, pagesId));
-
-        let infoPagesCreatedInTimespan = objectFirstRevision.pagesCreatedInTimespan;
-
-        counterPagesCreatedInTimespan = infoPagesCreatedInTimespan.length;
-
-        console.log('\n' + 'Tot. pagine dopo la cernita (prima revisione):', infoPagesCreatedInTimespan.length);
-        ///////////////////////////////////////// FINE DATA CREAZIONE PAGINE /////////////////////////////////////////
-
-        ///////////////////////////////////////// RICERCA REVISIONI PAGINE /////////////////////////////////////////
-        let revisions = [];
-
-        if (parsedRequest.hasOwnProperty('n') || parsedRequest.hasOwnProperty('f')) revisions = await Promise.resolve(functions.searchRevisions(timespanArray, infoPagesCreatedInTimespan.map(pageInfo => pageInfo.title)));
-        ///////////////////////////////////////// FINE REVISIONI PAGINE /////////////////////////////////////////
-
-        ///////////////////////////////////////// RICERCA COMMENTI PAGINE /////////////////////////////////////////
-        let talksPagesInfo = [];
-        if (parsedRequest.hasOwnProperty('c')) talksPagesInfo = await Promise.resolve(functions.getPageTalks(infoPagesCreatedInTimespan, timespanArray));
-        ///////////////////////////////////////// FINE COMMENT PAGINE /////////////////////////////////////////
-
-        ///////////////////////////////////////// INZIO RICERCA VIEWS PAGINE /////////////////////////////////////////
-        let viewsPagesInfo = [];
-        if (parsedRequest.hasOwnProperty('v')) viewsPagesInfo = await Promise.resolve(functions.getPageViews(infoPagesCreatedInTimespan, parsedRequest.t.split(','), parsedRequest));
-        ///////////////////////////////////////// FINE RICERCA VIEWS PAGINE /////////////////////////////////////////
-
-        ///////////////////////////////////////// INZIO RICOMBINAZIONE /////////////////////////////////////////
-
-        let recombinedObject = functions.RecombineResultPreview(infoPagesCreatedInTimespan, revisions, talksPagesInfo, viewsPagesInfo, parsedRequest);
-
-        ///////////////////////////////////////// FINE RICOMBINAZIONE ////////////////////////////////////////
-
-        ///////////////////////////////////////// INZIO AGGREGAZIONE /////////////////////////////////////////
-
-        let aggregatedObject = functions.AggregateResultPreview(recombinedObject, parsedRequest);
-
-        ///////////////////////////////////////// FINE AGGREGAZIONE /////////////////////////////////////////
-
-        ///////////////////////////////////////// INIZIO TAG DISALLINEATE/NON DISALLINEATE /////////////////////////////////////////
-
-        aggregatedObject = functions.TagArticlesPreview(aggregatedObject, parsedRequest);
-
-        ///////////////////////////////////////// FINE TAG DISALLINEATE/NON DISALLINEATE /////////////////////////////////////////
-
-        ///////// se non c'è flag -a tolgo dal risultato le pagine non disallineate
-        if (!parsedRequest.hasOwnProperty('a'))
-            for (let page in aggregatedObject) {
-                !aggregatedObject[page].misalignment.isMisaligned ? delete (aggregatedObject[page]) : null;
+            if (error) {
+                console.log(error);
+                return;
             }
-        ///////////////////////////////////////// INIZIO STAMPA /////////////////////////////////////////
+            let start = new Date().getTime();
 
-        functions.PrintResultPreview(aggregatedObject, start, pagesCreatedInTimespan.length);
+            ///////////////////////////////////////// RICERCA PAGINE /////////////////////////////////////////
+            //Estrapolo i corrispondenti id delle pagine che soddisfano la query di ricerca (flag -q)
+            let pagesId = await Promise.resolve(functions.searchPages(parsedRequest));
+            console.log('\nTot. pagine dopo cernita (doppioni): ', pagesId.length);
+            ///////////////////////////////////////// FINE RICERCA PAGINE /////////////////////////////////////////
 
-        ///////////////////////////////////////// FINE STAMPA /////////////////////////////////////////
+            let timespanArray = functions.ConvertYYYYMMDDtoISO(parsedRequest.t);
 
-        wrapper.resetCounterDataCreazione();
-        wrapper.resetcounterDownloadedViews();
-        wrapper.resetcounterTalks();
-        wrapper.resetcounterRevision();
+            ///////////////////////////////////////// RICERCA DATA CREAZIONE PAGINE /////////////////////////////////////////
+            //Per determinare se una pagina è stata creata all'interno del timespan (flag -t) e quindi includerlo
+            //nella ricerca, ho bisogno della data di creazione della pagina
+            console.log('\n' + 'Tot. pagine prima della cernita (prima revisione):', pagesId.length);
 
-        resolve(aggregatedObject);
+            counterPagesBeforeTimespanFilter = pagesId.length;
+
+            let objectFirstRevision = await Promise.resolve(functions.searchFirstRevision(timespanArray, pagesId));
+
+            let infoPagesCreatedInTimespan = objectFirstRevision.pagesCreatedInTimespan;
+
+            counterPagesCreatedInTimespan = infoPagesCreatedInTimespan.length;
+
+            console.log('\n' + 'Tot. pagine dopo la cernita (prima revisione):', infoPagesCreatedInTimespan.length);
+            ///////////////////////////////////////// FINE DATA CREAZIONE PAGINE /////////////////////////////////////////
+
+            ///////////////////////////////////////// RICERCA REVISIONI PAGINE /////////////////////////////////////////
+            let revisions = [];
+
+            if (parsedRequest.hasOwnProperty('n') || parsedRequest.hasOwnProperty('f')) revisions = await Promise.resolve(functions.searchRevisions(timespanArray, infoPagesCreatedInTimespan.map(pageInfo => pageInfo.title)));
+            ///////////////////////////////////////// FINE REVISIONI PAGINE /////////////////////////////////////////
+
+            ///////////////////////////////////////// RICERCA COMMENTI PAGINE /////////////////////////////////////////
+            let talksPagesInfo = [];
+            if (parsedRequest.hasOwnProperty('c')) talksPagesInfo = await Promise.resolve(functions.getPageTalks(infoPagesCreatedInTimespan, timespanArray));
+            ///////////////////////////////////////// FINE COMMENT PAGINE /////////////////////////////////////////
+
+            ///////////////////////////////////////// INZIO RICERCA VIEWS PAGINE /////////////////////////////////////////
+            let viewsPagesInfo = [];
+            if (parsedRequest.hasOwnProperty('v')) viewsPagesInfo = await Promise.resolve(functions.getPageViews(infoPagesCreatedInTimespan, parsedRequest.t.split(','), parsedRequest));
+            ///////////////////////////////////////// FINE RICERCA VIEWS PAGINE /////////////////////////////////////////
+
+            ///////////////////////////////////////// INZIO RICOMBINAZIONE /////////////////////////////////////////
+
+            let recombinedObject = functions.RecombineResultPreview(infoPagesCreatedInTimespan, revisions, talksPagesInfo, viewsPagesInfo, parsedRequest);
+
+            ///////////////////////////////////////// FINE RICOMBINAZIONE ////////////////////////////////////////
+
+            ///////////////////////////////////////// INZIO AGGREGAZIONE /////////////////////////////////////////
+
+            let aggregatedObject = functions.AggregateResultPreview(recombinedObject, parsedRequest);
+
+            ///////////////////////////////////////// FINE AGGREGAZIONE /////////////////////////////////////////
+
+            ///////////////////////////////////////// INIZIO TAG DISALLINEATE/NON DISALLINEATE /////////////////////////////////////////
+
+            aggregatedObject = functions.TagArticlesPreview(aggregatedObject, parsedRequest);
+
+            ///////////////////////////////////////// FINE TAG DISALLINEATE/NON DISALLINEATE /////////////////////////////////////////
+
+            ///////// se non c'è flag -a tolgo dal risultato le pagine non disallineate
+            if (!parsedRequest.hasOwnProperty('a'))
+                for (let page in aggregatedObject) {
+                    !aggregatedObject[page].misalignment.isMisaligned ? delete (aggregatedObject[page]) : null;
+                }
+            ///////////////////////////////////////// INIZIO STAMPA /////////////////////////////////////////
+
+            functions.PrintResultPreview(aggregatedObject, start, pagesCreatedInTimespan.length);
+
+            ///////////////////////////////////////// FINE STAMPA /////////////////////////////////////////
+
+            wrapper.resetCounterDataCreazione();
+            wrapper.resetcounterDownloadedViews();
+            wrapper.resetcounterTalks();
+            wrapper.resetcounterRevision();
+
+            resolve(aggregatedObject);
+        });
     });
 };
 
@@ -119,165 +131,172 @@ async function Info(parsedRequest) {
             "server": resultPreview.query.h,  // host name of MediaWiki-powered site
             "path": "/w",                  // path to api.php script
             "debug": false,                // is more verbose when set to true
+            "username": "Monitorwikibotdb",             // account to be used when logIn is called (optional)
+            "password": "Slart1bartfastW",             // password to be used when logIn is called (optional)
+            "userAgent": "belluccidamiano@gmail.com",      // define custom bot's user agent
             "concurrency": 100               // how many API requests can be run in parallel (defaults to 3)
         }
 
         try {
             client = new bot(info);
         } catch (e) {
+
             console.log(e);
             return;
         };
 
-
-        var allPagesQuery = [];
-
-        let arrayOfPageId = [];
+        client.logIn(async error => {
 
 
-        for (let page in resultPreview.pages) {
-            arrayOfPageId.push(page);
-        }
+            var allPagesQuery = [];
 
-        allPagesQuery = arrayOfPageId;
+            let arrayOfPageId = [];
 
 
-        let timespanArray = functions.ConvertYYYYMMDDtoISO(parsedRequest.t);
-
-        parsedRequest.h = resultPreview.query.h;
-
-        counterPagesBeforeTimespanFilter = allPagesQuery.length;
-        //elimino quelli con id undefined
-        let objectFirstRevision = await Promise.resolve(functions.searchFirstRevision(timespanArray, allPagesQuery));
-
-        let queueFirstRevisions = objectFirstRevision.pagesCreatedInTimespan;
-
-        counterPagesCreatedInTimespan = queueFirstRevisions.length;
-
-        allPagesQuery = []
-
-        for (el of queueFirstRevisions) {
-            allPagesQuery.push(el.title);
-        }
-
-        let start = new Date().getTime();
-
-        let result = await Promise.resolve(functions.searchRevisions(timespanArray, allPagesQuery));
-
-        let counterRevisions = 0;
-
-        //conto revisioni totali
-        for (el of result) {
-            counterRevisions += el.revisions.history.length;
-        }
-
-        console.log('\n' + 'Time elapsed ' + (new Date().getTime() - start) / 1000 + 's', '|', result.length, 'total pages', '|', counterRevisions + " revisions");
-
-
-        if (result.length == 0) { console.log('Error: there aren\'t pages for the timespan ' + parsedRequest.t + '.'); return; }
-        else {
-
-            let indexPreferences = functions.getIndexFlagPreferences(parsedRequest);
-
-
-            /////////////////////////////////////////INIZIO RICERCA EXPORT/////////////////////////////////////////////////
-
-            console.log('\nInizio ricerca informazioni delle revisioni\n');
-
-            if (indexPreferences.nlinks || indexPreferences.listlinks) {
-                result = await functions.getPageExport(result, indexPreferences, counterRevisions);
-
+            for (let page in resultPreview.pages) {
+                arrayOfPageId.push(page);
             }
 
-            let exportPagesObject = {};
-            let finalExport = {};
-            finalExport.query = parsedRequest;
+            allPagesQuery = arrayOfPageId;
 
 
-            for (el in result) {
-                exportPagesObject[result[el].pageid] = result[el];
+            let timespanArray = functions.ConvertYYYYMMDDtoISO(parsedRequest.t);
+
+            parsedRequest.h = resultPreview.query.h;
+
+            counterPagesBeforeTimespanFilter = allPagesQuery.length;
+            //elimino quelli con id undefined
+            let objectFirstRevision = await Promise.resolve(functions.searchFirstRevision(timespanArray, allPagesQuery));
+
+            let queueFirstRevisions = objectFirstRevision.pagesCreatedInTimespan;
+
+            counterPagesCreatedInTimespan = queueFirstRevisions.length;
+
+            allPagesQuery = []
+
+            for (el of queueFirstRevisions) {
+                allPagesQuery.push(el.title);
             }
-            finalExport.pages = exportPagesObject;
 
-            if (indexPreferences.edit) { //da mettere nell'if sopra
-                /////INIZIO GESTIONE REVID ELIMINATE///////
-                vediamoStart = new Date().getTime();
+            let start = new Date().getTime();
 
-                for (page in finalExport.pages) {
-                    if (finalExport.pages[page].revisions === undefined) { console.log(allPagesQuery.pages[page]); return; }
-                    for (revision in finalExport.pages[page].revisions.history) {
-                        if (!finalExport.pages[page].revisions.history[revision].hasOwnProperty('export')) {
-                            finalExport.pages[page].revisions.history[revision].export = {
-                                title: finalExport.pages[page].title,
-                                pageid: finalExport.pages[page].pageid,
-                                revid: finalExport.pages[page].revisions.history[revision].revid,
-                                sections: 'deleted revision',
-                                displaytitle: finalExport.pages[page].title
+            let result = await Promise.resolve(functions.searchRevisions(timespanArray, allPagesQuery));
+
+            let counterRevisions = 0;
+
+            //conto revisioni totali
+            for (el of result) {
+                counterRevisions += el.revisions.history.length;
+            }
+
+            console.log('\n' + 'Time elapsed ' + (new Date().getTime() - start) / 1000 + 's', '|', result.length, 'total pages', '|', counterRevisions + " revisions");
+
+
+            if (result.length == 0) { console.log('Error: there aren\'t pages for the timespan ' + parsedRequest.t + '.'); return; }
+            else {
+
+                let indexPreferences = functions.getIndexFlagPreferences(parsedRequest);
+
+
+                /////////////////////////////////////////INIZIO RICERCA EXPORT/////////////////////////////////////////////////
+
+                console.log('\nInizio ricerca informazioni delle revisioni\n');
+
+                if (indexPreferences.nlinks || indexPreferences.listlinks) {
+                    result = await functions.getPageExport(result, indexPreferences, counterRevisions);
+
+                }
+
+                let exportPagesObject = {};
+                let finalExport = {};
+                finalExport.query = parsedRequest;
+
+
+                for (el in result) {
+                    exportPagesObject[result[el].pageid] = result[el];
+                }
+                finalExport.pages = exportPagesObject;
+
+                if (indexPreferences.edit) { //da mettere nell'if sopra
+                    /////INIZIO GESTIONE REVID ELIMINATE///////
+                    vediamoStart = new Date().getTime();
+
+                    for (page in finalExport.pages) {
+                        if (finalExport.pages[page].revisions === undefined) { console.log(allPagesQuery.pages[page]); return; }
+                        for (revision in finalExport.pages[page].revisions.history) {
+                            if (!finalExport.pages[page].revisions.history[revision].hasOwnProperty('export')) {
+                                finalExport.pages[page].revisions.history[revision].export = {
+                                    title: finalExport.pages[page].title,
+                                    pageid: finalExport.pages[page].pageid,
+                                    revid: finalExport.pages[page].revisions.history[revision].revid,
+                                    sections: 'deleted revision',
+                                    displaytitle: finalExport.pages[page].title
+                                }
+                                if (indexPreferences.nlinks || indexPreferences.listlinks) {
+                                    finalExport.pages[page].revisions.history[revision].export['links'] = 'deleted revision';
+                                    finalExport.pages[page].revisions.history[revision].export['externallinks'] = 'deleted revision';
+                                }
+                                //console.log(finalExport.pages[page].revisions.history[revision].export);
                             }
-                            if (indexPreferences.nlinks || indexPreferences.listlinks) {
-                                finalExport.pages[page].revisions.history[revision].export['links'] = 'deleted revision';
-                                finalExport.pages[page].revisions.history[revision].export['externallinks'] = 'deleted revision';
-                            }
-                            //console.log(finalExport.pages[page].revisions.history[revision].export);
                         }
                     }
+                    //console.log('tempo revid eliminate', ((new Date().getTime() - vediamoStart) / 1000));
+                    /////FINE GESTIONE REVID ELIMINATE///////
                 }
-                //console.log('tempo revid eliminate', ((new Date().getTime() - vediamoStart) / 1000));
-                /////FINE GESTIONE REVID ELIMINATE///////
-            }
-            /////////////////////////////////////////FINE RICERCA EXPORT/////////////////////////////////////////////////
+                /////////////////////////////////////////FINE RICERCA EXPORT/////////////////////////////////////////////////
 
 
-            /////////////////////////////////////////RICERCA VIEWS/////////////////////////////////////////////////
-            if (indexPreferences.views) {
-                let resultViews = await Promise.resolve(functions.getPageViews(Object.values(finalExport.pages), parsedRequest.t.split(','), resultPreview.query));
-                //console.log(resultViews);return;
-                for (el of resultViews) {
-                    finalExport.pages[el.pageid].views = el.dailyViews;
+                /////////////////////////////////////////RICERCA VIEWS/////////////////////////////////////////////////
+                if (indexPreferences.views) {
+                    let resultViews = await Promise.resolve(functions.getPageViews(Object.values(finalExport.pages), parsedRequest.t.split(','), resultPreview.query));
+                    //console.log(resultViews);return;
+                    for (el of resultViews) {
+                        finalExport.pages[el.pageid].views = el.dailyViews;
+                    }
+
+                    /*for (el in finalExport.pages) {
+                        console.log(finalExport.pages[el].views);
+                    }*/
                 }
+                /////////////////////////////////////////FINE RICERCA VIEWS/////////////////////////////////////////////////
 
-                /*for (el in finalExport.pages) {
-                    console.log(finalExport.pages[el].views);
-                }*/
-            }
-            /////////////////////////////////////////FINE RICERCA VIEWS/////////////////////////////////////////////////
+                /////////////////////////////////////////INIZIO RICERCA TALKS/////////////////////////////////////////////////
+                if (indexPreferences.talks) {
+                    let resultTalks = await Promise.resolve(functions.getPageTalks(Object.values(finalExport.pages), timespanArray, resultPreview.query));
 
-            /////////////////////////////////////////INIZIO RICERCA TALKS/////////////////////////////////////////////////
-            if (indexPreferences.talks) {
-                let resultTalks = await Promise.resolve(functions.getPageTalks(Object.values(finalExport.pages), timespanArray, resultPreview.query));
-
-                for (el of resultTalks) {
-                    finalExport.pages[el.pageid].talks = el;
+                    for (el of resultTalks) {
+                        finalExport.pages[el.pageid].talks = el;
+                    }
+                    /*for (el in finalExport.pages) {
+                        console.log(finalExport.pages[el].talks);
+                    }*/
                 }
-                /*for (el in finalExport.pages) {
-                    console.log(finalExport.pages[el].talks);
-                }*/
+                /////////////////////////////////////////FINE RICERCA TALKS/////////////////////////////////////////////////
+
+                console.log('\nInizio preparazione file');
+
+                ///////////////////////////////////// INIZIO CALCOLO DAYS OF AGE ////////////////////////////////////////////////////
+
+                finalExport = functions.CalculateDaysOfAgeInfo(queueFirstRevisions, finalExport, timespanArray);
+
+                ///////////////////////////////////// FINE CALCOLO DAYS OF AGE ////////////////////////////////////////////////////
+
+
+                finalExport = functions.InsertNotYetCreatedPagesInfo(objectFirstRevision, finalExport);
+
+
+                finalExport.query = parsedRequest;
+
+                wrapper.resetCounterExport();
+
+                wrapper.resetCounterDataCreazione();
+                wrapper.resetcounterDownloadedViews();
+                wrapper.resetcounterTalks();
+                wrapper.resetcounterRevision();
+
+                resolve(finalExport);
             }
-            /////////////////////////////////////////FINE RICERCA TALKS/////////////////////////////////////////////////
-
-            console.log('\nInizio preparazione file');
-
-            ///////////////////////////////////// INIZIO CALCOLO DAYS OF AGE ////////////////////////////////////////////////////
-
-            finalExport = functions.CalculateDaysOfAgeInfo(queueFirstRevisions, finalExport, timespanArray);
-
-            ///////////////////////////////////// FINE CALCOLO DAYS OF AGE ////////////////////////////////////////////////////
-
-
-            finalExport = functions.InsertNotYetCreatedPagesInfo(objectFirstRevision, finalExport);
-
-
-            finalExport.query = parsedRequest;
-
-            wrapper.resetCounterExport();
-
-            wrapper.resetCounterDataCreazione();
-            wrapper.resetcounterDownloadedViews();
-            wrapper.resetcounterTalks();
-            wrapper.resetcounterRevision();
-
-            resolve(finalExport);
-        }
+        });
     });
 };
 

@@ -108,8 +108,11 @@ async function searchPages(parsedRequest) {
 
         let stack = [];
         let level = 0;
+        let deepLevel = 0;
 
-        while (thereAreCategories(pagesInfo) && level < 2) {
+        parsedRequest.hasOwnProperty('l') ? deepLevel = parsedRequest.l : null;
+
+        while (thereAreCategories(pagesInfo) && level <= deepLevel) {
 
             var chunkList = [];
 
@@ -443,7 +446,7 @@ function sanityCheckPreview(parsedRequest) {
 
         //gestione parametri invalidi
         for (key of Object.keys(parsedRequest)) {
-            if (key !== 'a' && key !== 'h' && key !== 'q' && key !== 't' && key !== 'f' && key !== 'n' && key !== 'v' && key !== 'c') {
+            if (key !== 'l' && key !== 'a' && key !== 'h' && key !== 'q' && key !== 't' && key !== 'f' && key !== 'n' && key !== 'v' && key !== 'c') {
                 console.log('\nError:', '-' + key, 'is not a valid parameter.');
                 return;
             }
@@ -468,7 +471,7 @@ function sanityCheckPreview(parsedRequest) {
         }
 
         for (let key of Object.keys(parsedRequest)) {
-            if (key !== 'h' && key !== 'q' && key !== 't') {
+            if (key !== 'l' && key !== 'h' && key !== 'q' && key !== 't') {
                 if (parsedRequest.hasOwnProperty(key)) {
                     parsedRequest[key] = parsedRequest[key].replace(' ', '');
                     let control = parsedRequest[key].split(',');
@@ -484,6 +487,12 @@ function sanityCheckPreview(parsedRequest) {
                 }
             }
         }
+        if (parsedRequest.hasOwnProperty('l') && isNaN(parsedRequest.l)) {
+            console.log('\nError: ', parsedRequest[key], 'is an invalid parameter for', key);
+            return;
+        }
+
+        //qui controllo su livello
         resolve();
     });
 }
@@ -494,7 +503,7 @@ function sanityCheckList(parsedRequest) {
 
         //gestione parametri invalidi
         for (key of Object.keys(parsedRequest)) {
-            if (key !== 'a' && key !== 'h' && key !== 'q' && key !== 't' && key !== 'f' && key !== 'n' && key !== 'v' && key !== 'c' && key !== 'e') {
+            if (key !== 'l' && key !== 'a' && key !== 'h' && key !== 'q' && key !== 't' && key !== 'f' && key !== 'n' && key !== 'v' && key !== 'c' && key !== 'e') {
                 console.log('\nError:', '-' + key, 'is not a valid parameter.');
                 return;
             }
@@ -522,7 +531,7 @@ function sanityCheckList(parsedRequest) {
         }
 
         for (let key of Object.keys(parsedRequest)) {
-            if (key !== 'a' && key !== 'h' && key !== 'q' && key !== 't' && key !== 'e') {
+            if (key !== 'l' && key !== 'a' && key !== 'h' && key !== 'q' && key !== 't' && key !== 'e') {
                 if (parsedRequest.hasOwnProperty(key)) {
                     parsedRequest[key] = parsedRequest[key].replace(' ', '');
                     let control = parsedRequest[key].split(',');
@@ -537,6 +546,11 @@ function sanityCheckList(parsedRequest) {
                 }
             }
         }
+        if (parsedRequest.hasOwnProperty('l') && isNaN(parsedRequest.l)) {
+            console.log('\nError: ', parsedRequest[key], 'is an invalid parameter for', key);
+            return;
+        }
+
         resolve();
     });
 }
