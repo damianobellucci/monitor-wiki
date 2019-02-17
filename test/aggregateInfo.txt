@@ -1,1 +1,1 @@
--f list.json -t 20180101,20180501 -t 20190101,20190201 -d aggregateInfo.json -i edit,views,comments
+-f list.json -t 20180120,20180128 -t 20180105,20180115 -d aggregateInfo.json -i edit,views,comments
