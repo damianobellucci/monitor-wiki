@@ -45,7 +45,7 @@ Il flag -a se presente nelle lista delle pagine verranno comprese anche le pagin
 Il file verrà salvato nella cartella del progetto "results".
 </br>
 
-esempio: `node --max-old-space-size=8192 monitor-wiki.js list -h en.wikipedia.org -q category:emerging technologies -l 1 -t 20180101,20180130 -f 40 -e file.json`</br>
+Esempio: `node --max-old-space-size=8192 monitor-wiki.js list -h en.wikipedia.org -q category:emerging technologies -l 1 -t 20180101,20180130 -f 40 -e file.json`</br>
 
 Esempio test: `node --max-old-space-size=8192 monitor-wiki.js list list.txt`
 
@@ -54,7 +54,7 @@ flags: -m (modalità) , -f (file di input) , -t (timespan) , -d (file di downloa
 
 Il file verrà salvato nella cartella del progetto "results".
 
-esempio: `node --max-old-space-size=8192 monitor-wiki.js info -h en.wikipedia.org -q category:computer science -l 1 -t 20180101,20180130 -n 10,* -c 1,10 -v 1000,* -e list.json`</br>
+Esempio: `node --max-old-space-size=8192 monitor-wiki.js info -h en.wikipedia.org -q category:computer science -l 1 -t 20180101,20180130 -n 10,* -c 1,10 -v 1000,* -e list.json`</br>
 
 Esempio test: `node --max-old-space-size=8192 monitor-wiki.js info info.txt`
 
@@ -65,6 +65,6 @@ flags: -m (modalità) , -f (file di input) , -t (timespan) , -d (file di downloa
 Il file verrà salvato nella cartella del progetto "results".
 
 
-esempio: `node --max-old-space-size=8192 monitor-wiki.js aggregateInfo -f list.json -t 20180120,20180128 -t 20180105,20180115 -d aggregateInfo.json -i edit,views,comments`</br>
+Esempio: `node --max-old-space-size=8192 monitor-wiki.js aggregateInfo -f list.json -t 20180120,20180128 -t 20180105,20180115 -d aggregateInfo.json -i edit,views,comments`</br>
 
 Esempio test: `node --max-old-space-size=8192 monitor-wiki.js aggregateInfo aggregateInfo.txt`
