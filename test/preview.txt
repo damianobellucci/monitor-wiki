@@ -1,1 +1,1 @@
--h en.wikipedia.org -q category:computer science -l 1 -t 20180101,20180130 -n 10,* -c 1,10 -v 1000,* -e list.json
+-h en.wikipedia.org -q category:computer science -l 1 -t 20180101,20180130 -n 10,* -c 1,10 -v 1000,*
