@@ -192,31 +192,33 @@ var wrapperGetParametricRevisions = (params) => {
                 resolve({ page: params.titles, error: '' });
                 //return;
             }
-
-            counterRevision += 1;
-
-            process.stdout.write("Downloading " + counterRevision + "/" + wrappersModality.pageCounterCreatedInTimespan() + ": " + Math.round(counterRevision * 100 / wrappersModality.pageCounterCreatedInTimespan()) + "%" + "\r");
-
-            if (data.length == 1) {
-                data = data[0].pages[Object.keys(data[0].pages)[0]];
-            }
             else {
-                for (let index = 1; index < data.length; index++) {
-                    data[0].pages[Object.keys(data[0].pages)].revisions = data[0].pages[Object.keys(data[0].pages)].revisions.concat(data[index].pages[Object.keys(data[index].pages)].revisions)
+
+                counterRevision += 1;
+
+                process.stdout.write("Downloading " + counterRevision + "/" + wrappersModality.pageCounterCreatedInTimespan() + ": " + Math.round(counterRevision * 100 / wrappersModality.pageCounterCreatedInTimespan()) + "%" + "\r");
+
+                if (data.length == 1) {
+                    data = data[0].pages[Object.keys(data[0].pages)[0]];
                 }
-                data = data[0].pages[Object.keys(data[0].pages)[0]];
+                else {
+                    for (let index = 1; index < data.length; index++) {
+                        data[0].pages[Object.keys(data[0].pages)].revisions = data[0].pages[Object.keys(data[0].pages)].revisions.concat(data[index].pages[Object.keys(data[index].pages)].revisions)
+                    }
+                    data = data[0].pages[Object.keys(data[0].pages)[0]];
+                }
+
+                if (!data.hasOwnProperty('revisions')) data.revisions = [];
+
+                var newData = {};
+                newData.pageid = data.pageid;
+                newData.title = data.title;
+                newData.revisions = {};
+                newData.revisions.history = data.revisions;
+                newData.revisions.count = data.revisions.length;
+
+                resolve(newData);
             }
-
-            if (!data.hasOwnProperty('revisions')) data.revisions = [];
-
-            var newData = {};
-            newData.pageid = data.pageid;
-            newData.title = data.title;
-            newData.revisions = {};
-            newData.revisions.history = data.revisions;
-            newData.revisions.count = data.revisions.length;
-
-            resolve(newData);
         });
     })
 };
