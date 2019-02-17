@@ -32,9 +32,9 @@ Il flag -l viene ignorato se non ci sono categorie in -q.</br>
 Il flag -a se presente nelle lista delle pagine verranno comprese anche le pagine misaligned false. Se non è presente, si avrà la lista delle sole pagine misaligned true.
 </br>
 
-esempio: `node --max-old-space-size=8192 path/monitor-wiki.js preview -h en.wikipedia.org -q category:computer science -l 1 -t 20180101,20180130 -n 10,* -c 1,10 -v 1000,* -e list.json`</br>
+esempio: `node --max-old-space-size=8192 monitor-wiki.js preview -h en.wikipedia.org -q category:computer science -l 1 -t 20180101,20180130 -n 10,* -c 1,10 -v 1000,* -e list.json`</br>
 
-esempio: `node --max-old-space-size=8192 path/monitor-wiki.js preview preview.txt`
+esempio: `node --max-old-space-size=8192 monitor-wiki.js preview preview.txt`
 
 ## List
 flags: -m (modalità) , -h (host), -q (query), -l (livello profondità ricerca articoli in categorie), -t (timespan), -n (n. Edit), -f (frequency Edit), -c (n. commenti), -v (n. views) -e (file di output) -a (comprendere tutti gli articoli). 
