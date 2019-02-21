@@ -2,6 +2,7 @@ var wrapper = require('./wrappers.js');
 var _ = require('underscore');
 var fs = require('fs');
 const chalk = require('chalk');
+var functions = require('./functions.js');
 
 function parseRequest() {
     let stringArguments = [];
@@ -96,22 +97,32 @@ async function searchPages(parsedRequest) {
 
         //finché ci saranno pagine con ns 14:
 
-        let stackParsedCategories = [];
-        var conteggio = 0;
-
-        function thereAreCategories(pagesInfo) {
-            for (index in pagesInfo) {
-                if (pagesInfo[index].ns === 14) return true;
-            }
-            return false;
-        }
-
-        let stack = [];
-        let level = 0;
         let deepLevel = 0;
 
         parsedRequest.hasOwnProperty('l') ? deepLevel = parsedRequest.l : null;
 
+        pagesInfo = await CategorySearchPages(pagesInfo, deepLevel);
+
+        //console.log(pagesInfo.map(el => el.title).join('|'));
+
+        console.log('\n\nTot pagine prima della cernita (doppioni): ', pagesInfo.filter(el => { return el.ns !== 14 }).map(el => el.pageid).length);
+
+        resolve(_.uniq(pagesInfo.filter(el => { return el.ns !== 14 }).map(el => el.pageid)));
+
+
+    });
+}
+
+function thereAreCategories(pagesInfo) {
+    for (index in pagesInfo) {
+        if (pagesInfo[index].ns === 14) return true;
+    }
+    return false;
+}
+
+function CategorySearchPages(pagesInfo, deepLevel) {
+    let level = 0; let conteggio = 0; let stack = [];
+    return new Promise(async (resolve, reject) => {
         while (thereAreCategories(pagesInfo) && level <= deepLevel) {
 
             var chunkList = [];
@@ -151,13 +162,7 @@ async function searchPages(parsedRequest) {
             //console.log('iterate:', conteggio, 'pageInfo:', pagesInfo.length);
             level += 1;
         }
-        //console.log(pagesInfo.map(el => el.title).join('|'));
-
-        console.log('\n\nTot pagine prima della cernita (doppioni): ', pagesInfo.filter(el => { return el.ns !== 14 }).map(el => el.pageid).length);
-
-        resolve(_.uniq(pagesInfo.filter(el => { return el.ns !== 14 }).map(el => el.pageid)));
-
-
+        resolve(pagesInfo);
     });
 }
 
@@ -680,6 +685,8 @@ function AggregateResultPreview(recombinedObject, parsedRequest) {
             object.edits = recombinedObject[page].edits.revisions.history.length;
         }
 
+        timespanArray = functions.ConvertYYYYMMDDtoISO(parsedRequest.t);
+
         if (parsedRequest.hasOwnProperty('f')) {
             object.frequency = Math.round(recombinedObject[page].edits.revisions.history.length * 1000 * 60 * 60 * 24 * 365 / (new Date(timespanArray[1]).getTime() - new Date(timespanArray[0]).getTime()), 2);
         }
@@ -909,6 +916,15 @@ function ManageAggregateInfo(parsedRequest, finalExport) {
     return aggregatedExport;
 }
 
+function RescaleTimespanForViews(date, shift) {
+    date = date.substr(0, 4) + '-' + date.substr(4, 2) + '-' + date.substr(6, 2) + 'T00:00:00.000Z';
+    shift == 'right' ? date = new Date(date).getTime() + 1000 * 60 * 60 * 24 : date = new Date(date).getTime() - 1000 * 60 * 60 * 24;
+    date = new Date(date);
+    date = date.toISOString().substring(0, 10);
+    date = date.substr(0, 4) + date.substr(5, 2) + date.substr(8, 2);
+    return date;
+}
+
 module.exports.parseRequest = parseRequest;
 module.exports.searchPages = searchPages;
 module.exports.searchFirstRevision = searchFirstRevision;
@@ -930,4 +946,5 @@ module.exports.ConvertYYYYMMDDtoISO = ConvertYYYYMMDDtoISO;
 module.exports.CalculateDaysOfAgeInfo = CalculateDaysOfAgeInfo;
 module.exports.InsertNotYetCreatedPagesInfo = InsertNotYetCreatedPagesInfo;
 module.exports.ManageAggregateInfo = ManageAggregateInfo;
+module.exports.RescaleTimespanForViews = RescaleTimespanForViews;
 

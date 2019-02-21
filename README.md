@@ -60,7 +60,7 @@ Esempio test: `node --max-old-space-size=8192 monitor-wiki.js info info.txt`
 
 
 ## Aggregate Info
-flags: -m (modalità) , -f (file di input) , -t (timespan) , -d (file di download) , -i (indici delle pagine da comprendere nel downlaoad, i valori possibili sono: edit, views, comments, nlinks, listlinks, 'all' per comprenderli tutti).</br>
+flags: -m (modalità) , -f (file di input) , -t (timespan) , -d (file di download) , -i (indici delle pagine da comprendere nel downlaoad, i valori possibili sono: edit, views, comments, nlinks, 'all' per comprenderli tutti).</br>
 
 Il file verrà salvato nella cartella del progetto "results".
 
