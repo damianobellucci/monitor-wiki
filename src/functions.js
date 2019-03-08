@@ -518,6 +518,8 @@ function sanityCheckList(parsedRequest) {
         if (!parsedRequest.hasOwnProperty('h')) { console.log('\nError: ', 'missing -h parameter.'); return; };
         if (!parsedRequest.hasOwnProperty('q')) { console.log('\nError: ', 'missing -q parameter.'); return; };
         if (!parsedRequest.hasOwnProperty('t')) { console.log('\nError: ', 'missing -t parameter.'); return; };
+        if (!parsedRequest.hasOwnProperty('e')) { console.log('\nError: ', 'missing -e parameter.'); return; };
+
         //if (!parsedRequest.hasOwnProperty('e')) { console.log('Error: ', 'missing -e parameter.'); return; };
 
 
