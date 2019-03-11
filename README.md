@@ -40,7 +40,7 @@ E' possibile passare i parametri allo script attraverso un file di configurazion
 </br>
 <b>NB: Il file di configurazione deve essere nella directory "test" e l'ouput sarà salvato nella directory "results".</b> 
 </br>
-Di seguito un esempio:
+Di seguito un esempio: </br>
 `node --max-old-space-size=8192 monitor-wiki.js preview preview.txt`
 
 ## List
@@ -61,7 +61,7 @@ E' possibile passare i parametri allo script attraverso un file di configurazion
 </br>
 <b>NB: Il file di configurazione deve essere nella directory "test" e l'ouput sarà salvato nella directory "results".</b> 
 </br>
-Di seguito un esempio:
+Di seguito un esempio: </br>
 `node --max-old-space-size=8192 monitor-wiki.js list list.txt`
 
 ## Info
@@ -78,7 +78,7 @@ E' possibile passare i parametri allo script attraverso un file di configurazion
 </br>
 <b>NB: Il file di configurazione deve essere nella directory "test" e l'ouput sarà salvato nella directory "results".</b> 
 </br>
-Di seguito un esempio:
+Di seguito un esempio: </br>
 `node --max-old-space-size=8192 monitor-wiki.js info info.txt`
 
 
@@ -97,5 +97,5 @@ E' possibile passare i parametri allo script attraverso un file di configurazion
 </br>
 <b>NB: Il file di configurazione deve essere nella directory "test" e l'ouput sarà salvato nella directory "results".</b> 
 </br>
-Di seguito un esempio:
+Di seguito un esempio: </br>
 `node --max-old-space-size=8192 monitor-wiki.js aggregateInfo aggregateInfo.txt`
