@@ -34,7 +34,14 @@ Il flag -a se presente nelle lista delle pagine verranno comprese anche le pagin
 
 Esempio: `node --max-old-space-size=8192 monitor-wiki.js preview -h en.wikipedia.org -q category:computer science -l 1 -t 20180101,20180130 -n 10,* -c 1,10 -v 1000,* -e list.json`</br>
 
-Esempio test: `node --max-old-space-size=8192 monitor-wiki.js preview preview.txt`
+### Uso di un file di configurazione
+
+E' possibile passare i parametri allo script attraverso un file di configurazione.
+</br>
+<b>NB: Il file di configurazione deve essere nella directory "test" e l'ouput sarà salvato nella directory "results".</b> 
+</br>
+Di seguito un esempio:
+`node --max-old-space-size=8192 monitor-wiki.js preview preview.txt`
 
 ## List
 flags: -m (modalità) , -h (host), -q (query), -l (livello profondità ricerca articoli in categorie), -t (timespan), -n (n. Edit), -f (frequency Edit), -c (n. commenti), -v (n. views) -e (file di output) -a (comprendere tutti gli articoli). 
@@ -47,7 +54,15 @@ Il file verrà salvato nella cartella del progetto "results".
 
 Esempio: `node --max-old-space-size=8192 monitor-wiki.js list -h en.wikipedia.org -q category:emerging technologies -l 1 -t 20180101,20180130 -f 40 -e file.json`</br>
 
-Esempio test: `node --max-old-space-size=8192 monitor-wiki.js list list.txt`
+
+### Uso di un file di configurazione
+
+E' possibile passare i parametri allo script attraverso un file di configurazione.
+</br>
+<b>NB: Il file di configurazione deve essere nella directory "test" e l'ouput sarà salvato nella directory "results".</b> 
+</br>
+Di seguito un esempio:
+`node --max-old-space-size=8192 monitor-wiki.js list list.txt`
 
 ## Info
 flags: -m (modalità) , -f (file di input) , -t (timespan) , -d (file di download) , -i (indici delle pagine da comprendere nel downlaoad, i valori possibili sono: edit, views, comments, nlinks, listlinks, 'all' (per comprenderli tutti).</br>
@@ -56,7 +71,15 @@ Il file verrà salvato nella cartella del progetto "results".
 
 Esempio: `node --max-old-space-size=8192 monitor-wiki.js info -h en.wikipedia.org -q category:computer science -l 1 -t 20180101,20180130 -n 10,* -c 1,10 -v 1000,* -e list.json`</br>
 
-Esempio test: `node --max-old-space-size=8192 monitor-wiki.js info info.txt`
+
+### Uso di un file di configurazione
+
+E' possibile passare i parametri allo script attraverso un file di configurazione.
+</br>
+<b>NB: Il file di configurazione deve essere nella directory "test" e l'ouput sarà salvato nella directory "results".</b> 
+</br>
+Di seguito un esempio:
+`node --max-old-space-size=8192 monitor-wiki.js info info.txt`
 
 
 ## Aggregate Info
@@ -67,4 +90,12 @@ Il file verrà salvato nella cartella del progetto "results".
 
 Esempio: `node --max-old-space-size=8192 monitor-wiki.js aggregateInfo -f list.json -t 20180120,20180128 -t 20180105,20180115 -d aggregateInfo.json -i edit,views,comments`</br>
 
-Esempio test: `node --max-old-space-size=8192 monitor-wiki.js aggregateInfo aggregateInfo.txt`
+
+### Uso di un file di configurazione
+
+E' possibile passare i parametri allo script attraverso un file di configurazione.
+</br>
+<b>NB: Il file di configurazione deve essere nella directory "test" e l'ouput sarà salvato nella directory "results".</b> 
+</br>
+Di seguito un esempio:
+`node --max-old-space-size=8192 monitor-wiki.js aggregateInfo aggregateInfo.txt`
