@@ -83,11 +83,11 @@ var fs = require('fs');
                 finalExport.result[i] = await Promise.resolve(wrappersModality.Info(params));
             }
 
-            console.log('\nInizio preparazione file');
+            console.log('\nInizio preparazione file (ManageAggregateInfo)');
 
             let aggregatedExport = functions.ManageAggregateInfo(parsedRequest, finalExport);
 
-            console.log('\nFine preparazione file');
+            console.log('\nFine preparazione file (ManageAggregateInfo)');
 
 
             /*

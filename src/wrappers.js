@@ -375,6 +375,37 @@ var wrapperViews = (params) => {
     });
 };
 
+
+var wrapperDiffs = (params) => {
+    return new Promise((resolve, reject) => {
+
+    	let urlRequest = "https://en.wikipedia.org/w/api.php?action=compare&fromrev=" + params.fromrev + "&torev=" + params.torev + "&format=json"
+
+    	request(urlRequest, { json: true }, (err, res, body) => {
+            if ((err)) {
+                params.error = '';
+                console.log('\nError (diff call API): try to do the call another time for page ID:', pageid);
+                resolve(params);
+            }
+            if (body === undefined) {
+            		params.error = '';
+            		console.log('\nError (diff call API): try to do the call another time for page ID:', pageid);
+            		resolve(params);
+            }
+            else {
+            	
+                console.log(body.compare["*"]);
+                
+                var annotatedDiff = functions.buildAnnotatedHistoryFromDiffTableToJSON(body.compare["*"]);
+                
+                resolve({ pageid: params.pageid, annotatedHistory: annotatedDiff});
+            
+            }
+        });
+    });
+};
+
+
 var wrapperGetPagesInfo = (params) => { // category/noncategory 
     return new Promise((resolve, reject) => {
         client.getAllParametricData(params, function (err, data) {
@@ -451,6 +482,7 @@ function resetcounterRevision() {
 module.exports.wrapperGetParametricRevisions = wrapperGetParametricRevisions;
 module.exports.wrapperGetPagesByCategory = wrapperGetPagesByCategory;
 module.exports.wrapperExport = wrapperExport;
+module.exports.wrapperDiffs = wrapperDiffs;
 module.exports.wrapperViews = wrapperViews;
 module.exports.wrapperTalks = wrapperTalks;
 module.exports.wrapperFirstRevision = wrapperFirstRevision;

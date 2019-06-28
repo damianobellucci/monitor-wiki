@@ -4,6 +4,10 @@ var fs = require('fs');
 const chalk = require('chalk');
 var functions = require('./functions.js');
 
+const jsdom = require("jsdom");
+const { JSDOM } = jsdom;
+
+
 function parseRequest() {
     let stringArguments = [];
     let requestObject = {};
@@ -592,7 +596,7 @@ function sanityCheckInfo(parsedRequest) {
             }
         }
 
-        for (el of parsedRequest.i.replace(' ', '').split(',')) {
+        for (el of parsedRequest.i.replace(' ', '').replace('\n', '').split(',')) {
             if (el !== 'edit' && el !== 'views' && el !== 'comments' && el !== 'nlinks' && el !== 'listlinks') {
                 console.log('\nError: ', el, 'is an invalid value for -i');
                 return;
@@ -846,7 +850,8 @@ function ManageAggregateInfo(parsedRequest, finalExport) {
                 pageid: finalExport.result[resultPage].pages[page].pageid,
                 title: finalExport.result[resultPage].pages[page].title,
                 daysOfAge: finalExport.result[resultPage].pages[page].daysOfAge,
-                firstRevision: finalExport.result[resultPage].pages[page].firstRevision
+                firstRevision: finalExport.result[resultPage].pages[page].firstRevision,
+                annotatedHistory: finalExport.result[resultPage].pages[page].annotatedHistory
             };
 
             if (finalExport.result[resultPage].pages[page].hasOwnProperty('notYetCreated')) {
@@ -864,6 +869,7 @@ function ManageAggregateInfo(parsedRequest, finalExport) {
                     aggregatedPage.edits = finalExport.result[resultPage].pages[page].revisions.history.length;
                     aggregatedPage.minorEdits = finalExport.result[resultPage].pages[page].revisions.history.filter(el => { return el.hasOwnProperty('minor') }).length;
                     aggregatedPage.authors = Array.from(new Set(finalExport.result[resultPage].pages[page].revisions.history.map(el => el.user))).length;
+                
                 }
 
                 Object.keys(finalExport.result[resultPage].pages[page].revisions.history).forEach((revisionId) => {
@@ -926,6 +932,76 @@ function RescaleTimespanForViews(date, shift) {
     date = date.substr(0, 4) + date.substr(5, 2) + date.substr(8, 2);
     return date;
 }
+
+
+async function getAnnotatedHistories(pagesInfo, parsedRequest) {
+    return new Promise(async (resolve, reject) => {
+    		console.log("Inizio Annotated Histories");
+    		
+    		let queueDiffs = [];
+        let resultDiffs = [];
+
+        for (let page of pagesInfo) {
+        	
+        			//console.log(page);
+        					
+        			var frev = page.revisions.history[0].revid;
+                var trev = page.revisions.history[page.revisions.count - 1].revid;
+                    		
+                //console.log(frev, trev);
+                    		
+        			queueDiffs.push(wrapper.wrapperDiffs({
+        				  pageid: page.pageid,
+                      fromrev: page.revisions.history[0].revid,
+                      torev: page.revisions.history[page.revisions.count - 1].revid,
+                      server: parsedRequest.h
+                }));
+               
+        }
+        
+        
+        resultDiffs = resultDiffs.concat(await Promise.all(queueDiffs));
+
+        queueDiffs = []
+        resultDiffs = resultDiffs.filter(el => { return !el.hasOwnProperty('error') });
+        
+		console.log("Fine Annotated Histories");
+		
+        resolve(resultDiffs);
+        
+    });
+}
+
+
+function buildAnnotatedHistoryFromDiffTableToJSON(diffTable){
+	
+	console.log(diffTable);
+	
+	const frag = JSDOM.fragment(diffTable);
+	 
+	var tds = frag.querySelectorAll("td.diff-addedline");
+	
+	var addedText = "";
+	for (var i = 0, len = tds.length; i < len; i++)
+		addedText += tds[i].textContent;
+	
+	tds = frag.querySelectorAll("td.diff-deletedline");
+	var deletedText = "";
+	for (var i = 0, len = tds.length; i < len; i++)
+		deletedText += tds[i].textContent;
+	
+    return {
+			addedchars: addedText.length, 
+			deletedchars: deletedText.length
+		}
+    
+}
+
+
+
+module.exports.getAnnotatedHistories = getAnnotatedHistories;
+module.exports.buildAnnotatedHistoryFromDiffTableToJSON = buildAnnotatedHistoryFromDiffTableToJSON;
+
 
 module.exports.parseRequest = parseRequest;
 module.exports.searchPages = searchPages;

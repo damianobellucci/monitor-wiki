@@ -119,7 +119,7 @@ async function Preview(parsedRequest) { //da splittare caso erro e caso body===u
 async function Info(parsedRequest) {
     return new Promise(async (resolve, reject) => {
 
-        console.log('\nInizio lettura file di input');
+        console.log('\n>>>Inizio lettura file di input ('+ parsedRequest.f+")");
 
         let resultPreview = JSON.parse((await functions.readFile('../results/' + parsedRequest.f)));
 
@@ -245,7 +245,18 @@ async function Info(parsedRequest) {
                 }
                 /////////////////////////////////////////FINE RICERCA EXPORT/////////////////////////////////////////////////
 
-
+                /////////////////////////////////////////INIT ANNOTATED HISTORY/////////////////////////////////////////////////
+                
+                let resultAnnotatedHistory = await Promise.resolve(functions.getAnnotatedHistories(Object.values(finalExport.pages), parsedRequest));
+                
+                for (ah of resultAnnotatedHistory) {
+                		finalExport.pages[ah.pageid].annotatedHistory = ah.annotatedHistory;
+                }
+                
+                /////////////////////////////////////////END ANNOTATED HISTORY/////////////////////////////////////////////////
+                
+                
+                
                 /////////////////////////////////////////RICERCA VIEWS/////////////////////////////////////////////////
                 if (indexPreferences.views) {
                     let resultViews = await Promise.resolve(functions.getPageViews(Object.values(finalExport.pages), parsedRequest.t.split(','), resultPreview.query));
@@ -273,7 +284,7 @@ async function Info(parsedRequest) {
                 }
                 /////////////////////////////////////////FINE RICERCA TALKS/////////////////////////////////////////////////
 
-                console.log('\nInizio preparazione file');
+                console.log('\nInizio preparazione file (finalExport)');
 
                 ///////////////////////////////////// INIZIO CALCOLO DAYS OF AGE ////////////////////////////////////////////////////
 
