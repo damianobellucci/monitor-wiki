@@ -381,6 +381,8 @@ var wrapperDiffs = (params) => {
 
     	let urlRequest = "https://en.wikipedia.org/w/api.php?action=compare&fromrev=" + params.fromrev + "&torev=" + params.torev + "&format=json"
 
+    //	console.log(urlRequest);
+    	
     	request(urlRequest, { json: true }, (err, res, body) => {
             if ((err)) {
                 params.error = '';
@@ -394,7 +396,7 @@ var wrapperDiffs = (params) => {
             }
             else {
             	
-                console.log(body.compare["*"]);
+                //console.log(body.compare["*"]);
                 
                 var annotatedDiff = functions.buildAnnotatedHistoryFromDiffTableToJSON(body.compare["*"]);
                 

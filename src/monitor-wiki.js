@@ -2,7 +2,6 @@ var functions = require('./functions.js');
 var wrappersModality = require('./wrappersModality.js');
 var fs = require('fs');
 
-
 //MAIN
 (async () => {
     try {
@@ -17,7 +16,7 @@ var fs = require('fs');
 
 
         let commandLineQuery = process.argv.slice(3);
-        //caso in cui c'è un file di settaggio in input
+        //caso in cui c'√® un file di settaggio in input
         if (commandLineQuery.length == 1) {
             commandLineQuery = (await functions.readFile('../test/' + commandLineQuery[0])).toString();
         }

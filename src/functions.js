@@ -975,26 +975,96 @@ async function getAnnotatedHistories(pagesInfo, parsedRequest) {
 
 function buildAnnotatedHistoryFromDiffTableToJSON(diffTable){
 	
-	console.log(diffTable);
+	//console.log(diffTable);
 	
 	const frag = JSDOM.fragment(diffTable);
 	 
-	var tds = frag.querySelectorAll("td.diff-addedline");
+	//var tds = frag.querySelectorAll("td.diff-addedline");
+	var tds = frag.querySelectorAll("ins");
 	
 	var addedText = "";
-	for (var i = 0, len = tds.length; i < len; i++)
+	var numberOfTextFragmentINS = 0;
+	for (var i = 0, len = tds.length; i < len; i++) {
 		addedText += tds[i].textContent;
+		numberOfTextFragmentINS++;
+		}
+	
+	tds = frag.querySelectorAll("del");
+	var deletedText = "";
+	var numberOfTextFragmentDEL = 0;
+	for (var i = 0, len = tds.length; i < len; i++) {
+		deletedText += tds[i].textContent;
+		numberOfTextFragmentDEL++;
+	}
+	
+	var changesOnHeadings = 0;
+	
+	tds = frag.querySelectorAll("td.diff-addedline");
+	
+	var newLines = 0;
+	var newLinesAddingTemplateCall = 0;
+	var newLinesAddingParameterInInfobox = 0;
+	for (var i = 0, len = tds.length; i < len; i++) {
+		
+		if (tds[i].parentNode.querySelector("td.diff-deletedline") === null) {
+			addedText += tds[i].textContent;
+			newLines++;
+			
+			if (tds[i].textContent.trim().startsWith("{{"))
+				newLinesAddingTemplateCall++;
+			
+			if (tds[i].textContent.trim().startsWith("|"))
+				newLinesAddingParameterInInfobox++;
+			
+		}
+		
+		if (tds[i].textContent.includes("==="))
+			changesOnHeadings++;
+	}
+	
+	
 	
 	tds = frag.querySelectorAll("td.diff-deletedline");
-	var deletedText = "";
-	for (var i = 0, len = tds.length; i < len; i++)
-		deletedText += tds[i].textContent;
 	
-    return {
-			addedchars: addedText.length, 
-			deletedchars: deletedText.length
+	var deletedLines = 0;
+	var deletedLinesRemovingTemplateCall = 0;
+	var deletedLinesRemovingParameterInInfobox = 0;
+	for (var i = 0, len = tds.length; i < len; i++) {
+		
+		if (tds[i].parentNode.querySelector("td.diff-addedline") === null) {
+			deletedText += tds[i].textContent;
+			deletedLines++;
+			
+			if (tds[i].textContent.trim().startsWith("{{"))
+				deletedLinesRemovingTemplateCall++;
+			
+			if (tds[i].textContent.trim().startsWith("|"))
+				deletedLinesRemovingParameterInInfobox++;
+			
+			// Operazioni di cancellazione su headings 
+			// Gli altri casi (inserimenti o modifiche su headings) gestiti nel ciclo precedente
+			if (tds[i].textContent.includes("==="))
+				changesOnHeadings++;
+			
+			//console.log(" * " + tds[i].textContent);
 		}
-    
+		
+	}
+	
+	return {
+			insertedChars: addedText.length, 
+			numberOfTextFragmentINS: numberOfTextFragmentINS,
+			deletedChars: deletedText.length,
+			numberOfTextFragmentDEL: numberOfTextFragmentDEL,
+			changesOnHeadings: changesOnHeadings,
+			newLines: newLines,
+			newLinesAddingTemplateCall: newLinesAddingTemplateCall,
+			newLinesAddingParameterInInfobox: newLinesAddingParameterInInfobox,
+			deletedLines: deletedLines,
+			deletedLinesRemovingTemplateCall: deletedLinesRemovingTemplateCall,
+			deletedLinesRemovingParameterInInfobox: deletedLinesRemovingParameterInInfobox
+		}
+	
 }
 
 
