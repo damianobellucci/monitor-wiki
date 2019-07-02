@@ -943,7 +943,9 @@ async function getAnnotatedDiffs(pagesInfo, parsedRequest) {
 
         for (let page of pagesInfo) {
         	
-        			//console.log(page.revisions);
+        		//console.log(page.revisions.history);
+			
+        		if (page.revisions.history.length > 0 ) {
         			
         			var initialDocLength = page.revisions.history[0].size;
         			var frev = page.revisions.history[0].revid;
@@ -956,6 +958,8 @@ async function getAnnotatedDiffs(pagesInfo, parsedRequest) {
                       torev: trev,
                       server: parsedRequest.h
                 }));
+                
+        		}
                
         }
         
