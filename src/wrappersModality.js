@@ -247,10 +247,10 @@ async function Info(parsedRequest) {
 
                 /////////////////////////////////////////INIT ANNOTATED HISTORY/////////////////////////////////////////////////
                 
-                let resultAnnotatedHistory = await Promise.resolve(functions.getAnnotatedHistories(Object.values(finalExport.pages), parsedRequest));
+                let resultAnnotatedDiff = await Promise.resolve(functions.getAnnotatedDiffs(Object.values(finalExport.pages), parsedRequest));
                 
-                for (ah of resultAnnotatedHistory) {
-                		finalExport.pages[ah.pageid].annotatedHistory = ah.annotatedHistory;
+                for (ah of resultAnnotatedDiff) {
+                		finalExport.pages[ah.pageid].annotatedDiff = ah.annotatedDiff;
                 }
                 
                 /////////////////////////////////////////END ANNOTATED HISTORY/////////////////////////////////////////////////

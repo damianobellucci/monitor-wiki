@@ -398,9 +398,9 @@ var wrapperDiffs = (params) => {
             	
                 //console.log(body.compare["*"]);
                 
-                var annotatedDiff = functions.buildAnnotatedHistoryFromDiffTableToJSON(body.compare["*"]);
+                var annotatedDiff = functions.buildAnnotatedDiffFromDiffTable(body.compare["*"]);
                 
-                resolve({ pageid: params.pageid, annotatedHistory: annotatedDiff});
+                resolve({ pageid: params.pageid, annotatedDiff: annotatedDiff});
             
             }
         });

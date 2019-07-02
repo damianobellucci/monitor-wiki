@@ -851,7 +851,7 @@ function ManageAggregateInfo(parsedRequest, finalExport) {
                 title: finalExport.result[resultPage].pages[page].title,
                 daysOfAge: finalExport.result[resultPage].pages[page].daysOfAge,
                 firstRevision: finalExport.result[resultPage].pages[page].firstRevision,
-                annotatedHistory: finalExport.result[resultPage].pages[page].annotatedHistory
+                annotatedDiff: finalExport.result[resultPage].pages[page].annotatedDiff
             };
 
             if (finalExport.result[resultPage].pages[page].hasOwnProperty('notYetCreated')) {
@@ -934,7 +934,7 @@ function RescaleTimespanForViews(date, shift) {
 }
 
 
-async function getAnnotatedHistories(pagesInfo, parsedRequest) {
+async function getAnnotatedDiffs(pagesInfo, parsedRequest) {
     return new Promise(async (resolve, reject) => {
     		console.log("Inizio Annotated Histories");
     		
@@ -973,7 +973,7 @@ async function getAnnotatedHistories(pagesInfo, parsedRequest) {
 }
 
 
-function buildAnnotatedHistoryFromDiffTableToJSON(diffTable){
+function buildAnnotatedDiffFromDiffTable(diffTable){
 	
 	//console.log(diffTable);
 	
@@ -983,38 +983,38 @@ function buildAnnotatedHistoryFromDiffTableToJSON(diffTable){
 	var tds = frag.querySelectorAll("ins");
 	
 	var addedText = "";
-	var numberOfTextFragmentINS = 0;
+	var insertedInlineTextFragments = 0;
 	for (var i = 0, len = tds.length; i < len; i++) {
 		addedText += tds[i].textContent;
-		numberOfTextFragmentINS++;
+		insertedInlineTextFragments++;
 		}
 	
 	tds = frag.querySelectorAll("del");
 	var deletedText = "";
-	var numberOfTextFragmentDEL = 0;
+	var deletedInlineTextFragments = 0;
 	for (var i = 0, len = tds.length; i < len; i++) {
 		deletedText += tds[i].textContent;
-		numberOfTextFragmentDEL++;
+		deletedInlineTextFragments++;
 	}
 	
 	var changesOnHeadings = 0;
 	
 	tds = frag.querySelectorAll("td.diff-addedline");
 	
-	var newLines = 0;
-	var newLinesAddingTemplateCall = 0;
-	var newLinesAddingParameterInInfobox = 0;
+	var insertedTextBlocks = 0;
+	var insertedTextBlocksWithATemplateCall = 0;
+	var insertedTextBlocksWithAParameterInInfobox = 0;
 	for (var i = 0, len = tds.length; i < len; i++) {
 		
 		if (tds[i].parentNode.querySelector("td.diff-deletedline") === null) {
 			addedText += tds[i].textContent;
-			newLines++;
+			insertedTextBlocks++;
 			
 			if (tds[i].textContent.trim().startsWith("{{"))
-				newLinesAddingTemplateCall++;
+				insertedTextBlocksWithATemplateCall++;
 			
 			if (tds[i].textContent.trim().startsWith("|"))
-				newLinesAddingParameterInInfobox++;
+				insertedTextBlocksWithAParameterInInfobox++;
 			
 		}
 		
@@ -1026,20 +1026,20 @@ function buildAnnotatedHistoryFromDiffTableToJSON(diffTable){
 	
 	tds = frag.querySelectorAll("td.diff-deletedline");
 	
-	var deletedLines = 0;
-	var deletedLinesRemovingTemplateCall = 0;
-	var deletedLinesRemovingParameterInInfobox = 0;
+	var deletedTextBlocks = 0;
+	var deletedTextBlocksWithATemplateCall = 0;
+	var deletedTextBlocksWithAParameterInInfobox = 0;
 	for (var i = 0, len = tds.length; i < len; i++) {
 		
 		if (tds[i].parentNode.querySelector("td.diff-addedline") === null) {
 			deletedText += tds[i].textContent;
-			deletedLines++;
+			deletedTextBlocks++;
 			
 			if (tds[i].textContent.trim().startsWith("{{"))
-				deletedLinesRemovingTemplateCall++;
+				deletedTextBlocksWithATemplateCall++;
 			
 			if (tds[i].textContent.trim().startsWith("|"))
-				deletedLinesRemovingParameterInInfobox++;
+				deletedTextBlocksWithAParameterInInfobox++;
 			
 			// Operazioni di cancellazione su headings 
 			// Gli altri casi (inserimenti o modifiche su headings) gestiti nel ciclo precedente
@@ -1053,24 +1053,24 @@ function buildAnnotatedHistoryFromDiffTableToJSON(diffTable){
 	
 	return {
 			insertedChars: addedText.length, 
-			numberOfTextFragmentINS: numberOfTextFragmentINS,
+			insertedInlineTextFragments: insertedInlineTextFragments,
 			deletedChars: deletedText.length,
-			numberOfTextFragmentDEL: numberOfTextFragmentDEL,
+			deletedInlineTextFragments: deletedInlineTextFragments,
 			changesOnHeadings: changesOnHeadings,
-			newLines: newLines,
-			newLinesAddingTemplateCall: newLinesAddingTemplateCall,
-			newLinesAddingParameterInInfobox: newLinesAddingParameterInInfobox,
-			deletedLines: deletedLines,
-			deletedLinesRemovingTemplateCall: deletedLinesRemovingTemplateCall,
-			deletedLinesRemovingParameterInInfobox: deletedLinesRemovingParameterInInfobox
+			insertedTextBlocks: insertedTextBlocks,
+			insertedTextBlocksWithATemplateCall: insertedTextBlocksWithATemplateCall,
+			insertedTextBlocksWithAParameterInInfobox: insertedTextBlocksWithAParameterInInfobox,
+			deletedTextBlocks: deletedTextBlocks,
+			deletedTextBlocksWithATemplateCall: deletedTextBlocksWithATemplateCall,
+			deletedTextBlocksWithAParameterInInfobox: deletedTextBlocksWithAParameterInInfobox
 		}
 	
 }
 
 
 
-module.exports.getAnnotatedHistories = getAnnotatedHistories;
-module.exports.buildAnnotatedHistoryFromDiffTableToJSON = buildAnnotatedHistoryFromDiffTableToJSON;
+module.exports.getAnnotatedDiffs = getAnnotatedDiffs;
+module.exports.buildAnnotatedDiffFromDiffTable = buildAnnotatedDiffFromDiffTable;
 
 
 module.exports.parseRequest = parseRequest;
