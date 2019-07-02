@@ -943,17 +943,17 @@ async function getAnnotatedDiffs(pagesInfo, parsedRequest) {
 
         for (let page of pagesInfo) {
         	
-        			//console.log(page);
-        					
+        			//console.log(page.revisions);
+        			
+        			var initialDocLength = page.revisions.history[0].size;
         			var frev = page.revisions.history[0].revid;
-                var trev = page.revisions.history[page.revisions.count - 1].revid;
+        			var trev = page.revisions.history[page.revisions.count - 1].revid;
                     		
-                //console.log(frev, trev);
-                    		
-        			queueDiffs.push(wrapper.wrapperDiffs({
+                queueDiffs.push(wrapper.wrapperDiffs({
+        				  initialDocLength: initialDocLength,
         				  pageid: page.pageid,
-                      fromrev: page.revisions.history[0].revid,
-                      torev: page.revisions.history[page.revisions.count - 1].revid,
+                      fromrev: frev,
+                      torev: trev,
                       server: parsedRequest.h
                 }));
                

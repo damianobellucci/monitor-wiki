@@ -400,6 +400,10 @@ var wrapperDiffs = (params) => {
                 
                 var annotatedDiff = functions.buildAnnotatedDiffFromDiffTable(body.compare["*"]);
                 
+
+                annotatedDiff.lengthBeforeEditing = params.initialDocLength;
+
+                
                 resolve({ pageid: params.pageid, annotatedDiff: annotatedDiff});
             
             }
