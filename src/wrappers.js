@@ -494,7 +494,6 @@ module.exports.wrapperGetPagesInfo = wrapperGetPagesInfo;
 module.exports.wrapperGetTalksId = wrapperGetTalksId;
 module.exports.resetCounterExport = resetCounterExport;
 module.exports.wrapperGetInfoCategory = wrapperGetInfoCategory;
-module.exports.wrapperFirstRevision = wrapperFirstRevision;
 
 
 module.exports.resetCounterDataCreazione = resetCounterDataCreazione;
