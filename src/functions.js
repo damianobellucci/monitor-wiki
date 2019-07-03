@@ -906,15 +906,19 @@ function ManageAggregateInfo(parsedRequest, finalExport) {
                 //aggrego risultati di export
             }
             //aggrego numero di commenti
-            finalExport.result[resultPage].pages[page].hasOwnProperty('talks') ?
-                aggregatedPage.comments = finalExport.result[resultPage].pages[page].talks.history.length : null;
-
-            //aggrego views
-
-            if (finalExport.result[resultPage].pages[page].hasOwnProperty('views')) {
+            if (finalExport.result[resultPage].pages[page].hasOwnProperty('talks')) {
+                aggregatedPage.comments = finalExport.result[resultPage].pages[page].talks.history.length;
+                aggregatedPage.commentAuthors = Array.from(new Set(finalExport.result[resultPage].pages[page].talks.history.map(el => el.user))).length;
+            }
+           
+           //aggrego views
+            
+           if (finalExport.result[resultPage].pages[page].hasOwnProperty('views')) {
                 finalExport.result[resultPage].pages[page].views === 'Not Available' ?
                     aggregatedPage.views = 'n/a' : aggregatedPage.views = finalExport.result[resultPage].pages[page].views.map(el => el.views).reduce((a, b) => a + b, 0);
-            }
+            
+           
+           }
 
             aggregatedResultPage.pages[aggregatedPage.pageid] = aggregatedPage;
 
