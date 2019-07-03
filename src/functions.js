@@ -868,7 +868,7 @@ function ManageAggregateInfo(parsedRequest, finalExport) {
                 if (parsedRequest.i.includes('edit')) {
                     aggregatedPage.edits = finalExport.result[resultPage].pages[page].revisions.history.length;
                     aggregatedPage.minorEdits = finalExport.result[resultPage].pages[page].revisions.history.filter(el => { return el.hasOwnProperty('minor') }).length;
-                    aggregatedPage.authors = Array.from(new Set(finalExport.result[resultPage].pages[page].revisions.history.map(el => el.user))).length;
+                    aggregatedPage.editAuthors = Array.from(new Set(finalExport.result[resultPage].pages[page].revisions.history.map(el => el.user))).length;
                 
                 }
 
