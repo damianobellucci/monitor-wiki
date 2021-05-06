@@ -14,6 +14,6 @@
     "jsonfile": "^5.0.0",
     "nodemw": "git+https://github.com/damianobellucci/nodemw.git",
     "request": "^2.88.0",
-    "underscore": "^1.9.1"
+    "underscore": "^1.12.1"
   }
 }
